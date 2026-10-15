@@ -378,21 +378,21 @@ export function Editor({ saved, startInCrochetar, onBack, onSave }: EditorProps)
         <main className="studio__main">
           {!crocheting && (
             <div className="etoolbar" role="toolbar" aria-label="Ferramentas">
-              <div className="etoolbar__group">
+              <div className="etoolbar__group etoolbar__tools">
                 {TOOLS.map((t) => (
-                  <button key={t.id} className={tool === t.id ? 'tbtn tbtn--on' : 'tbtn'} aria-pressed={tool === t.id} onClick={() => setTool(t.id)} disabled={view === 'croche'}>
-                    <span aria-hidden>{t.icon}</span> {t.label}
+                  <button key={t.id} className={tool === t.id ? 'tbtn tbtn--on' : 'tbtn'} aria-pressed={tool === t.id} aria-label={t.label} title={t.label} onClick={() => setTool(t.id)} disabled={view === 'croche'}>
+                    <span aria-hidden>{t.icon}</span> <span className="tbtn__label">{t.label}</span>
                   </button>
                 ))}
+                <button className="tbtn" onClick={doUndo} disabled={!canUndo} aria-label="Desfazer" title="Desfazer (Ctrl+Z)"><span aria-hidden>↶</span> <span className="tbtn__label">Desfazer</span></button>
+                <button className="tbtn" onClick={doRedo} disabled={!canRedo} aria-label="Refazer" title="Refazer (Ctrl+Y)"><span aria-hidden>↷</span> <span className="tbtn__label">Refazer</span></button>
               </div>
               <div className="etoolbar__group etoolbar__colors" role="radiogroup" aria-label="Cor para pintar">
                 {chart.palette.map((p, i) => (
                   <button key={p.letter} role="radio" aria-checked={color === i} className={color === i ? 'dot dot--on' : 'dot'} style={{ background: p.hex }} title={`${p.letter}${yarnLabel(i) ? ' · ' + yarnLabel(i) : ''}`} aria-label={`Cor ${p.letter}`} onClick={() => setColor(i)} />
                 ))}
               </div>
-              <div className="etoolbar__group etoolbar__right">
-                <button className="tbtn" onClick={doUndo} disabled={!canUndo}>↶ Desfazer</button>
-                <button className="tbtn" onClick={doRedo} disabled={!canRedo}>↷ Refazer</button>
+              <div className="etoolbar__group etoolbar__actions">
                 <span className="zoomctl">
                   <button className="tbtn tbtn--icon" onClick={() => setZoom((z) => Math.max(4, z - 1))} aria-label="Diminuir o zoom">−</button>
                   <b>{zoom}</b>

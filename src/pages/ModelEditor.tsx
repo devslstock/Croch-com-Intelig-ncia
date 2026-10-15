@@ -3,6 +3,7 @@ import { AppBar } from '../components/AppBar'
 import { ChartCanvas, type ViewMode } from '../components/ChartCanvas'
 import { ColorPicker } from '../components/ColorPicker'
 import { Stepper } from '../components/Stepper'
+import { fitCell, useViewport } from '../hooks/useViewport'
 import { composeModel, MODEL_MAX_WIDTH, MODEL_MIN_WIDTH } from '../models/compose'
 import { nameLabel, type Model } from '../models/library'
 import type { StartSide } from '../engine/types'
@@ -29,7 +30,12 @@ export function ModelEditor({ model, onBack, onSave, onSaved }: {
   const [error, setError] = useState<string | null>(null)
 
   const chart = useMemo(() => composeModel(model, { name, date, textColor, width, withBg }), [model, name, date, textColor, width, withBg])
-  const cell = Math.max(4, Math.min(14, Math.floor(640 / chart.height)))
+  const vp = useViewport()
+  const small = vp.w < 900
+  // Celular: o desenho inteiro cabe na largura e (quase) na altura da área fixa do topo; computador: até 640 px de altura.
+  const cell = small
+    ? Math.max(3, Math.min(fitCell(vp.w, chart.width, 14, 3), Math.floor((vp.h * 0.5 - 60) / chart.height)))
+    : Math.max(4, Math.min(14, Math.floor(640 / chart.height)))
   const options = useMemo(() => ({ cell, symbols: false, startSide: 'right' as StartSide, legend: false }), [cell])
   const swatches = [...new Set([model.sampleColor, ...LETTER_COLORS, ...custom])]
   const showText = !model.plain || Boolean(model.recipe)
@@ -52,7 +58,7 @@ export function ModelEditor({ model, onBack, onSave, onSaved }: {
   return (
     <div className="studio-page">
       <AppBar title={model.title} onBack={onBack} />
-      <div className="studio">
+      <div className="studio studio--flat studio--model">
         <aside className="studio__side" aria-label="Personalizar o modelo">
           <button className="linkbtn linkbtn--left" onClick={onBack}>← Ver todos os modelos</button>
 

@@ -7,6 +7,7 @@ import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
 import { PlainLegend } from '../components/PlainLegend'
 import { Stepper } from '../components/Stepper'
+import { fitCell, useViewport } from '../hooks/useViewport'
 import { YarnLegend } from '../components/YarnLegend'
 import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
@@ -70,6 +71,8 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   const [startSide, setStartSide] = useState<StartSide>(() => (localStorage.getItem('tramado:side') as StartSide) || 'right')
   const [symbols, setSymbols] = useState(false)
   const [zoom, setZoom] = useState(14)
+  const [zoomTouched, setZoomTouched] = useState(false)
+  const viewport = useViewport()
   const [tab, setTab] = useState<ViewMode>('grafico')
   const [chart, setChart] = useState<ChartResult | null>(null)
   const [previews, setPreviews] = useState<Partial<Record<Style, ChartResult>>>({})
@@ -94,6 +97,12 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   }, [yarnId])
 
   useEffect(() => () => { if (loaded) URL.revokeObjectURL(loaded.url) }, [loaded])
+
+  // No celular o gráfico começa inteiro na tela; a pessoa aproxima com o zoom quando quiser.
+  useEffect(() => {
+    if (zoomTouched || !chart) return
+    setZoom(viewport.w < 900 ? fitCell(viewport.w, chart.width) : 14)
+  }, [chart?.width, viewport.w, zoomTouched]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Gera de novo (com pequena espera) sempre que foto, recorte ou ajustes mudam.
   useEffect(() => {
@@ -223,7 +232,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
     <div className="studio-page">
       <AppBar title="Foto em gráfico" onBack={onBack} />
 
-      <div className="studio">
+      <div className="studio studio--flat">
         <aside className="studio__side" aria-label="Opções do gráfico">
           <label className="field">
             <span className="side-label">Nome do gráfico</span>
@@ -358,7 +367,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
                   )}
                   <label className="field field--inline">
                     <span>Zoom</span>
-                    <input type="range" min={4} max={28} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+                    <input type="range" min={4} max={28} value={zoom} onChange={(e) => { setZoom(Number(e.target.value)); setZoomTouched(true) }} />
                   </label>
                 </div>
                 <div className="chart-scroll">
@@ -366,6 +375,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
                 </div>
               </section>
 
+              <div className="results">
               <section className="card">
                 <h2>Cores{yarn ? ` · ${yarn.brand} ${yarn.line}` : ''}</h2>
                 {yarn ? (
@@ -396,6 +406,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
               )}
 
               <button className="btn btn--primary" onClick={downloadChart}>Baixar gráfico (PNG)</button>
+              </div>
             </>
           )}
         </main>

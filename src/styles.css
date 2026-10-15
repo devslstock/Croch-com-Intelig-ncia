@@ -269,3 +269,82 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .appbar__brand, .savestate { white-space: nowrap; }
 .appbar__right { display: flex; align-items: center; gap: 8px; }
 .menu { z-index: 20; }
+
+/* ===== Celular ===== */
+input[type='checkbox'] { width: 22px; height: 22px; accent-color: var(--brand); flex: none; }
+.avatar { flex: none; min-width: 40px; }
+.dot { min-width: 28px; }
+.tbtn__label { white-space: nowrap; }
+
+@media (pointer: coarse), (max-width: 899px) {
+  .dot { width: 40px; height: 40px; min-width: 40px; border-radius: 10px; }
+  .dot--lg { width: 40px; height: 40px; }
+  .tbtn { min-height: 44px; }
+  .stepper__btn, .tbtn--icon { min-height: 44px; }
+  .cpicker__eye { width: 44px; height: 44px; }
+}
+
+@media (max-width: 899px) {
+  /* Foto em gráfico e Modelos: gráfico primeiro (fixo no topo ao rolar), depois as opções, depois os resultados */
+  .studio--flat .studio__main, .studio--flat .studio__side { display: contents; }
+  .studio--flat .studio__main > * { order: 1; }
+  .studio--flat .studio__main > .viewtabs { order: 2; }
+  .studio--flat .studio__main > .chartcard { order: 3; position: sticky; top: 56px; z-index: 5; padding: 8px; }
+  .studio--flat .studio__side > * { order: 4; }
+  .studio--flat .studio__main > .results { order: 5; display: flex; flex-direction: column; gap: 14px; }
+  .studio--flat .studio__main > .dropzone { order: 3; }
+  .studio--flat .chart-scroll { max-height: 38vh; min-height: 160px; }
+  .results { display: flex; flex-direction: column; gap: 14px; }
+}
+@media (min-width: 900px) { .results { display: flex; flex-direction: column; gap: 14px; } }
+
+@media (max-width: 599px) {
+  .appbar { padding: 6px 10px; }
+  .appbar__title { display: none; }
+  .appbar__brand { padding: 6px 2px; font-size: 1.05rem; }
+  .appbar__right { gap: 6px; }
+  .app { padding: 0 12px 40px; }
+  .studio { padding: 12px; gap: 12px; }
+  /* Editor: 3 fileiras compactas, deslizando para o lado, em vez de uma parede de botões */
+  .etoolbar { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; padding: 6px; }
+  .etoolbar__group { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+  .etoolbar__group::-webkit-scrollbar { display: none; }
+  .etoolbar__group > * { flex: none; }
+  .etoolbar__right { margin-left: 0; }
+  .etoolbar__tools .tbtn__label { display: none; }
+  .etoolbar__tools .tbtn { min-width: 48px; justify-content: center; font-size: 1.15rem; }
+  .etoolbar__tools { justify-content: space-between; }
+  .home-grid { grid-template-columns: 1fr; }
+  .model-grid { grid-template-columns: repeat(2, 1fr); }
+  .chartcard__bar { gap: 8px 12px; }
+  .runs .run__what { font-size: 0.88rem; }
+  .crochetar__big b { font-size: 3.4rem; }
+  .cpicker__rgb { flex-wrap: wrap; }
+  .cpicker__rgb label { flex: 1 1 56px; }
+  .cpicker__hex { flex: 2 1 100px !important; }
+  .chart-card__thumb { width: 64px; }
+}
+@media (max-width: 899px) {
+  .studio--model .chart-scroll { max-height: 50vh; }
+}
+
+/* Ajustes finos para celular (iPhone/Android) */
+button, a, label, summary, select { touch-action: manipulation; }
+.cpicker__rgb input, .stepper__input, .input, select, textarea { font-size: 16px; } /* abaixo de 16px o iPhone dá zoom ao tocar no campo */
+.app, .studio { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.appbar { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+@media (max-width: 899px) {
+  .chartcard__bar { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .chartcard__bar .field--inline { grid-column: 1 / -1; }
+  .chartcard__bar .field--inline input { flex: 1; width: 100%; }
+}
+/* A barra do navegador do celular muda a altura da tela: usa a altura dinâmica quando existe */
+@supports (height: 100dvh) {
+  .chart-scroll--tall { max-height: calc(100dvh - 220px); }
+  .studio .chart-scroll { max-height: 70dvh; }
+  @media (max-width: 899px) {
+    .studio--crochetar .chart-scroll--tall { max-height: 42dvh; }
+    .studio--flat .chart-scroll { max-height: 38dvh; }
+    .studio--model .chart-scroll { max-height: 50dvh; }
+  }
+}

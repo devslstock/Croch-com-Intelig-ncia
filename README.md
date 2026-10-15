@@ -53,6 +53,14 @@ Depois de **Salvar gráfico** na tela de foto, abre o editor (`src/pages/Editor.
   fica fixo no topo.
 - A lógica pura (alfabeto, pintura, balde, histórico, carreiras) está em `src/editor/` e tem testes.
 
+## Celular
+
+O app é pensado primeiro para o celular. Conferido em 390, 360 e 320 px de largura (emulação de toque): nenhuma tela tem
+rolagem lateral, os botões têm pelo menos 40 px, os campos têm 16 px (sem zoom automático no iPhone) e o toque com o dedo
+pinta um ponto, enquanto arrastar o dedo rola a imagem. Foto em gráfico, Modelos e Crochetar mantêm o gráfico fixo no topo
+enquanto o resto rola; o editor usa 3 fileiras de ferramentas que deslizam para o lado. Ainda **não** foi testado em aparelho
+real (iOS Safari/Chrome Android) e não há instalação como app (PWA).
+
 ## Rodar
 
 ```bash
