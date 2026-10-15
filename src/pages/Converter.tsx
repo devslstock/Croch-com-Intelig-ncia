@@ -12,7 +12,7 @@ import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
 import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide, type Style } from '../engine/types'
 import type { SavedChart, SavedChartInput } from '../storage/charts'
-import { KIND_LABEL, YARN_PALETTES } from '../yarn/library'
+import { KIND_LABEL, YARN_PALETTES, defaultYarnId } from '../yarn/library'
 import { matchPalette, shoppingList } from '../yarn/yarn'
 
 const MAX_SIDE = 1600
@@ -76,12 +76,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Abre já com um fio escolhido, para a legenda e as imagens sempre trazerem o número das linhas.
-  const [yarnId, setYarnId] = useState(() => {
-    let saved: string | null = null
-    try { saved = localStorage.getItem('tramado:yarn') } catch { /* sem armazenamento */ }
-    if (saved === '') return ''
-    return YARN_PALETTES.find((y) => y.id === saved)?.id ?? YARN_PALETTES.find((y) => y.id === 'DMC__Mouline')?.id ?? YARN_PALETTES[0]?.id ?? ''
-  })
+  const [yarnId, setYarnId] = useState(defaultYarnId)
   const [picked, setPicked] = useState<Record<string, string>>({})
   const [savedId, setSavedId] = useState<string | undefined>(undefined)
   const [name, setName] = useState(`Meu gráfico · ${today()}`)

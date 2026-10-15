@@ -26,6 +26,18 @@ Nome de trabalho: **Tramado** (nome e domínio ainda por confirmar).
   em modo demonstração fica só no navegador (`src/storage/charts.ts`). A estrutura do banco e o passo a passo
   de ativação estão em `supabase/` (`supabase/README.md`). `npm run test:db` valida o SQL localmente.
 
+## Modelos
+
+Tela **Modelos** (início → Modelos): 21 modelos **desenhados do zero** (nada copiado de outros apps), em formas geométricas
+(`src/models/library.ts`) que são rasterizadas no tamanho pedido (`src/models/shapes.ts`, `compose.ts`):
+
+- **Bebê** (ursinho, coelhinho, patinho, leãozinho, baleinha, pandinha, raposinha, coruja, elefantinho),
+  **Pet** (gatinho, cachorrinho, passarinho), **Casal** (coração, corações apaixonados, alianças),
+  **Gráficos prontos** (estrela, flor, sol, coroa) e **Receitas** (alfabeto e números).
+- Personalização: nome, data (opcional), cor das letras (com seletor), tamanho (30–110 pontos) e fundo colorido.
+  O gráfico fica com letras em pontos, e **Criar gráfico** abre o editor.
+- Para criar mais modelos, acrescente um item em `MODELS` com `colors` e `art` (caixa de 100 × 100).
+
 ## Editor e modo Crochetar
 
 Depois de **Salvar gráfico** na tela de foto, abre o editor (`src/pages/Editor.tsx`):

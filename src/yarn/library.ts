@@ -20,3 +20,11 @@ export const YARN_PALETTES: YarnPalette[] = Object.entries(files)
   })
   .filter((p) => p.colors.length > 0)
   .sort((a, b) => a.id.localeCompare(b.id))
+
+/** Fio padrão ao abrir uma tela: o último escolhido, senão o DMC, senão o primeiro da lista. */
+export function defaultYarnId(): string {
+  let saved: string | null = null
+  try { saved = localStorage.getItem('tramado:yarn') } catch { /* sem armazenamento */ }
+  if (saved === '') return ''
+  return YARN_PALETTES.find((y) => y.id === saved)?.id ?? YARN_PALETTES.find((y) => y.id === 'DMC__Mouline')?.id ?? YARN_PALETTES[0]?.id ?? ''
+}

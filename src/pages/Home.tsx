@@ -20,7 +20,7 @@ const TOOLS: Tool[] = [
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
+export function Home({ store, onNew, onModels, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -70,11 +70,11 @@ export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () =>
             <b>Foto em gráfico</b>
             <span>Envie uma foto e receba o gráfico com os fios certos.</span>
           </button>
-          <div className="tile tile--soon" aria-disabled="true">
+          <button className="tile" onClick={onModels}>
             <span className="tile__icon" aria-hidden>🧸</span>
-            <b>Modelos <em className="badge">Em breve</em></b>
+            <b>Modelos</b>
             <span>Desenhos, nomes e alfabeto prontos para usar.</span>
-          </div>
+          </button>
           <div className="tile tile--soon" aria-disabled="true">
             <span className="tile__icon" aria-hidden>▦</span>
             <b>Gráfico em branco <em className="badge">Em breve</em></b>
