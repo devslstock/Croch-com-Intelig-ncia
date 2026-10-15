@@ -16,6 +16,15 @@ Nome de trabalho: **Tramado** (nome e domínio ainda por confirmar).
   símbolos nos pontos, zoom, legenda com contagem de pontos.
 - Exportação em PNG (gráfico + legenda).
 
+## Login e página inicial
+
+- Primeira tela: **Entrar / Criar conta** (e-mail e senha; Google opcional). Depois do login: página inicial
+  com atalhos (Foto em gráfico; Modelos e Gráfico em branco como "em breve"), ferramentas "em breve" e **Meus gráficos**.
+- O login usa Supabase Auth. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (veja `.env.example`).
+  Sem essas variáveis o app abre em **modo demonstração** (nada vai para a nuvem).
+- "Meus gráficos" hoje fica no navegador, por usuário (`src/storage/charts.ts`). A interface `ChartStore`
+  permite trocar por tabela no Supabase sem mexer nas telas.
+
 ## Rodar
 
 ```bash

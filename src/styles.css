@@ -66,3 +66,49 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .chip__dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.3); vertical-align: -2px; }
 .shop { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .shop th, .shop td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+
+/* Login e início */
+.top--bar { display: flex; align-items: center; gap: 12px; }
+.top--between { justify-content: space-between; }
+.btn--ghost { background: transparent; border-color: transparent; color: var(--brand); font-weight: 600; min-height: 40px; padding: 0 10px; }
+.btn--sm { min-height: 40px; padding: 0 14px; font-size: 0.95rem; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.linkbtn { background: none; border: 0; color: var(--brand); text-decoration: underline; font-size: 0.95rem; min-height: 40px; cursor: pointer; }
+.input { width: 100%; min-height: 48px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1rem; }
+.input-wrap { position: relative; }
+.input-wrap .input { padding-right: 90px; }
+.input-wrap__btn { position: absolute; right: 4px; top: 4px; bottom: 4px; padding: 0 12px; border: 0; background: transparent; color: var(--brand); font-weight: 600; cursor: pointer; }
+.notice { margin: 0; padding: 12px 14px; border-radius: 10px; background: rgba(122, 59, 94, 0.1); font-size: 0.9rem; }
+.ok { color: #1c7a43; margin: 0; }
+@media (prefers-color-scheme: dark) { .ok { color: #7bd9a0; } }
+.login { max-width: 420px; margin: 0 auto; padding: 32px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+.login__brand { text-align: center; }
+.login__brand h1 { margin: 4px 0; color: var(--brand); font-size: 2rem; }
+.login__brand p { margin: 0; color: var(--muted); }
+.login__logo { font-size: 2.5rem; }
+.login__form { display: flex; flex-direction: column; gap: 12px; }
+.login__foot { text-align: center; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tab { min-height: 44px; border: 0; background: transparent; color: var(--muted); font-size: 1rem; cursor: pointer; }
+.tab--on { background: var(--brand); color: var(--brand-ink); font-weight: 600; }
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+.tile { display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.tile--main { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.tile--soon { opacity: 0.7; cursor: default; }
+.tile__icon { font-size: 1.6rem; }
+.tile span:last-child { font-size: 0.9rem; opacity: 0.85; }
+.badge { font-style: normal; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(122, 59, 94, 0.15); color: var(--brand); margin-left: 6px; }
+.section-title { margin: 28px 0 10px; font-size: 1.15rem; }
+.tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.tool { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; border: 1px dashed var(--line); background: var(--card); opacity: 0.8; }
+.tool span:not(.tile__icon) { font-size: 0.88rem; color: var(--muted); }
+.tool .badge { align-self: flex-start; margin: 4px 0 0; }
+.empty-card { align-items: flex-start; }
+.empty-card p { margin: 0; }
+.my-charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.chart-card { display: flex; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); }
+.chart-card__thumb { width: 84px; flex: none; display: flex; align-items: flex-start; }
+.chart-card__body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.chart-card__body h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.row--tight > * { flex: 0 0 auto; }
+.thumb { width: 100%; height: auto; image-rendering: pixelated; border-radius: 6px; border: 1px solid var(--line); background: #fff; }
