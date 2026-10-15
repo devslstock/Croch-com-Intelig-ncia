@@ -20,7 +20,7 @@ const TOOLS: Tool[] = [
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () => void; onOpen: (c: SavedChart) => void }) {
+export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -115,8 +115,10 @@ export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () =>
                     {c.width} × {c.height} pontos · {c.palette.length} cores
                     {yarn ? ` · ${yarn.brand} ${yarn.line}` : ''} · {fmtDate(c.createdAt)}
                   </p>
+                  {c.progress > 0 && <p className="hint">Crochetando: carreira {Math.min(c.height, c.progress + 1)} de {c.height}</p>}
                   <div className="row row--tight">
-                    <button className="btn btn--primary btn--sm" onClick={() => onOpen(c)}>Abrir</button>
+                    <button className="btn btn--primary btn--sm" onClick={() => onOpen(c, true)}>Crochetar ▶</button>
+                    <button className="btn btn--sm" onClick={() => onOpen(c)}>Editar</button>
                     <button className="btn btn--sm" onClick={() => remove(c)}>Apagar</button>
                   </div>
                 </div>

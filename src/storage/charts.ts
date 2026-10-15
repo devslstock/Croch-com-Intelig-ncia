@@ -13,11 +13,17 @@ export interface SavedChart {
   /** Fios trocados à mão: letra da cor → código do fio. */
   picked: Record<string, string>
   startSide: StartSide
+  /** Modo Crochetar: quantas carreiras já foram feitas (de baixo para cima). */
+  progress: number
+  /** Modo Crochetar: pontos já feitos na carreira atual. */
+  progressStitch: number
 }
 
-export type SavedChartInput = Omit<SavedChart, 'id' | 'createdAt' | 'grid' | 'width' | 'height' | 'palette'> & {
+export type SavedChartInput = Omit<SavedChart, 'id' | 'createdAt' | 'grid' | 'width' | 'height' | 'palette' | 'progress' | 'progressStitch'> & {
   id?: string
   chart: ChartResult
+  progress?: number
+  progressStitch?: number
 }
 
 export function encodeGrid(grid: Uint8Array): string {
@@ -49,6 +55,8 @@ export function toSaved(input: SavedChartInput, existing?: SavedChart): SavedCha
     yarnId: input.yarnId,
     picked: input.picked,
     startSide: input.startSide,
+    progress: Math.max(0, Math.min(input.chart.height, input.progress ?? existing?.progress ?? 0)),
+    progressStitch: Math.max(0, Math.min(input.chart.width, input.progressStitch ?? existing?.progressStitch ?? 0)),
   }
 }
 

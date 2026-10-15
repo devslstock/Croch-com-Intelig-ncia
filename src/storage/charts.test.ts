@@ -37,4 +37,13 @@ describe('gráficos salvos', () => {
     expect(second.createdAt).toBe(first.createdAt)
     expect(second.name).toBe('B')
   })
+
+  it('progresso do Crochetar é guardado e limitado à altura do gráfico', () => {
+    const a = toSaved({ name: 'A', chart, yarnId: '', picked: {}, startSide: 'right', progress: 1 })
+    expect(a.progress).toBe(1)
+    expect(toSaved({ name: 'A', chart, yarnId: '', picked: {}, startSide: 'right', progress: 99 }).progress).toBe(chart.height)
+    expect(toSaved({ name: 'A', chart, yarnId: '', picked: {}, startSide: 'right', progress: -3 }).progress).toBe(0)
+    // ao atualizar sem informar, mantém o que já existia
+    expect(toSaved({ id: a.id, name: 'A', chart, yarnId: '', picked: {}, startSide: 'right' }, a).progress).toBe(1)
+  })
 })

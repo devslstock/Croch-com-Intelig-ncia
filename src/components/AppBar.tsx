@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 
-/** Barra do topo: marca, título da tela e menu da usuária. */
-export function AppBar({ title, onBack }: { title?: string; onBack?: () => void }) {
+/** Barra do topo: marca, título da tela, ações (ex.: Salvo, Crochetar) e menu da usuária. */
+export function AppBar({ title, onBack, children }: { title?: string; onBack?: () => void; children?: ReactNode }) {
   const { user, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   if (!user) return null
@@ -21,6 +21,7 @@ export function AppBar({ title, onBack }: { title?: string; onBack?: () => void 
         {title && <span className="appbar__title">{title}</span>}
       </div>
       <div className="appbar__right">
+        {children}
         <button className="avatar" onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} aria-label="Menu da conta">{initial}</button>
         {open && (
           <div className="menu" role="menu">

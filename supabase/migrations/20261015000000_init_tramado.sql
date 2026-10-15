@@ -75,6 +75,10 @@ create table public.charts (
   -- Fios trocados à mão: { "A": "310" }.
   picked     jsonb not null default '{}'::jsonb check (jsonb_typeof(picked) = 'object'),
   start_side text not null default 'right' check (start_side in ('right', 'left')),
+  -- Modo Crochetar: carreiras já feitas (de baixo para cima).
+  progress   smallint not null default 0 check (progress between 0 and 1000),
+  -- Modo Crochetar: pontos já feitos na carreira atual.
+  progress_stitch smallint not null default 0 check (progress_stitch between 0 and 150),
   origin     text not null default 'foto' check (origin in ('foto', 'modelo', 'branco')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

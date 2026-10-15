@@ -12,7 +12,6 @@ import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
 import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide, type Style } from '../engine/types'
 import type { SavedChart, SavedChartInput } from '../storage/charts'
-import { toChartResult } from '../storage/charts'
 import { KIND_LABEL, YARN_PALETTES } from '../yarn/library'
 import { matchPalette, shoppingList } from '../yarn/yarn'
 
@@ -58,48 +57,46 @@ function download(blob: Blob, filename: string) {
 }
 
 export interface ConverterProps {
-  /** Gráfico salvo para abrir sem foto (modo visualização). */
-  initial?: SavedChart
   onBack: () => void
   onSave: (input: SavedChartInput) => Promise<SavedChart>
+  /** Chamado depois de salvar: a tela segue para o editor. */
+  onSaved: (saved: SavedChart) => void
 }
 
-export function Converter({ initial, onBack, onSave }: ConverterProps) {
+export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [crop, setCrop] = useState<Crop>(FULL_CROP)
   const [params, setParams] = useState<EngineParams>(DEFAULT_PARAMS)
-  const [startSide, setStartSide] = useState<StartSide>(() => initial?.startSide ?? ((localStorage.getItem('tramado:side') as StartSide) || 'right'))
+  const [startSide, setStartSide] = useState<StartSide>(() => (localStorage.getItem('tramado:side') as StartSide) || 'right')
   const [symbols, setSymbols] = useState(false)
   const [zoom, setZoom] = useState(14)
   const [tab, setTab] = useState<ViewMode>('grafico')
-  const [chart, setChart] = useState<ChartResult | null>(() => (initial ? toChartResult(initial) : null))
+  const [chart, setChart] = useState<ChartResult | null>(null)
   const [previews, setPreviews] = useState<Partial<Record<Style, ChartResult>>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Abre já com um fio escolhido, para a legenda e as imagens sempre trazerem o número das linhas.
   const [yarnId, setYarnId] = useState(() => {
-    if (initial) return initial.yarnId
     let saved: string | null = null
     try { saved = localStorage.getItem('tramado:yarn') } catch { /* sem armazenamento */ }
     if (saved === '') return ''
     return YARN_PALETTES.find((y) => y.id === saved)?.id ?? YARN_PALETTES.find((y) => y.id === 'DMC__Mouline')?.id ?? YARN_PALETTES[0]?.id ?? ''
   })
-  const [picked, setPicked] = useState<Record<string, string>>(() => initial?.picked ?? {})
-  const [savedId, setSavedId] = useState<string | undefined>(initial?.id)
-  const [name, setName] = useState(initial?.name ?? `Meu gráfico · ${today()}`)
-  const [nameTouched, setNameTouched] = useState(Boolean(initial))
+  const [picked, setPicked] = useState<Record<string, string>>({})
+  const [savedId, setSavedId] = useState<string | undefined>(undefined)
+  const [name, setName] = useState(`Meu gráfico · ${today()}`)
+  const [nameTouched, setNameTouched] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const run = useRef(0)
   const previewRun = useRef(0)
 
   useEffect(() => {
-    if (!initial) localStorage.setItem('tramado:side', startSide)
-  }, [startSide, initial])
+    localStorage.setItem('tramado:side', startSide)
+  }, [startSide])
 
   useEffect(() => {
-    if (initial) return
     try { localStorage.setItem('tramado:yarn', yarnId) } catch { /* sem armazenamento */ }
-  }, [yarnId, initial])
+  }, [yarnId])
 
   useEffect(() => () => { if (loaded) URL.revokeObjectURL(loaded.url) }, [loaded])
 
@@ -216,8 +213,7 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
     try {
       const saved = await onSave({ id: savedId, name: name.trim() || `Meu gráfico · ${today()}`, chart, yarnId, picked, startSide })
       setSavedId(saved.id)
-      setName(saved.name)
-      setSaveMsg({ ok: true, text: 'Salvo em “Meus gráficos”.' })
+      onSaved(saved) // segue para o editor
     } catch (e) {
       setSaveMsg({ ok: false, text: e instanceof Error ? e.message : 'Não foi possível salvar.' })
     }
@@ -230,7 +226,7 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
 
   return (
     <div className="studio-page">
-      <AppBar title={initial ? initial.name : 'Foto em gráfico'} onBack={onBack} />
+      <AppBar title="Foto em gráfico" onBack={onBack} />
 
       <div className="studio">
         <aside className="studio__side" aria-label="Opções do gráfico">
@@ -239,34 +235,32 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
             <input className="input" value={name} onChange={(e) => { setName(e.target.value); setNameTouched(true); setSaveMsg(null) }} />
           </label>
 
-          {!initial && (
-            <div>
-              <span className="side-label">Estilo</span>
-              <div className="styles" role="radiogroup" aria-label="Estilo do gráfico">
-                {[styleTiles[0], null, styleTiles[1]].map((s) =>
-                  s ? (
-                    <button
-                      key={s.id}
-                      role="radio"
-                      aria-checked={params.style === s.id}
-                      className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
-                      onClick={() => set('style', s.id)}
-                      disabled={!loaded}
-                    >
-                      <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
-                      <span>{s.label}</span>
-                    </button>
-                  ) : (
-                    <div key="fofinho" className="style-tile style-tile--soon" aria-disabled="true">
-                      <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🧸</span></span>
-                      <span>Fofinho</span>
-                      <em className="badge badge--tiny">Em breve</em>
-                    </div>
-                  ),
-                )}
-              </div>
+          <div>
+            <span className="side-label">Estilo</span>
+            <div className="styles" role="radiogroup" aria-label="Estilo do gráfico">
+              {[styleTiles[0], null, styleTiles[1]].map((s) =>
+                s ? (
+                  <button
+                    key={s.id}
+                    role="radio"
+                    aria-checked={params.style === s.id}
+                    className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
+                    onClick={() => set('style', s.id)}
+                    disabled={!loaded}
+                  >
+                    <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
+                    <span>{s.label}</span>
+                  </button>
+                ) : (
+                  <div key="fofinho" className="style-tile style-tile--soon" aria-disabled="true">
+                    <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🧸</span></span>
+                    <span>Fofinho</span>
+                    <em className="badge badge--tiny">Em breve</em>
+                  </div>
+                ),
+              )}
             </div>
-          )}
+          </div>
 
           <label className="field">
             <span className="side-label">Fio</span>
@@ -328,18 +322,16 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
 
         <main className="studio__main">
           <div className="toolbar">
-            {!initial ? (
-              <label className="btn">
-                {loaded ? 'Trocar foto' : 'Escolher foto'}
-                <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-              </label>
-            ) : <span />}
+            <label className="btn">
+              {loaded ? 'Trocar foto' : 'Escolher foto'}
+              <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+            </label>
             <button className="btn btn--primary" onClick={save} disabled={!chart}>{savedId ? 'Atualizar gráfico' : 'Salvar gráfico'}</button>
           </div>
           {saveMsg && <p className={saveMsg.ok ? 'ok' : 'error'} role="status">{saveMsg.text}</p>}
           {error && <p className="error" role="alert">{error}</p>}
 
-          {!initial && !loaded && (
+          {!loaded && (
             <div className="card dropzone">
               <p><b>Escolha uma foto</b> para ver o gráfico aparecer.</p>
               <label className="btn btn--primary">

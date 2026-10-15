@@ -125,6 +125,7 @@ export function shoppingList(matches: ColorMatch[]): ShoppingItem[] {
   const byCode = new Map<string, ShoppingItem>()
   const pools = new Map<string, YarnChoice[]>()
   for (const m of matches) {
+    if (m.count === 0) continue // cor que deixou de ser usada depois das edições
     const cur = byCode.get(m.best.yarn.code)
     if (cur) {
       cur.letters.push(m.letter)

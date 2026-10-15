@@ -8,9 +8,13 @@ export interface RenderOptions {
   legend: boolean
   /** Fio escolhido por letra ("8176 Off-White"), mostrado na legenda. */
   legendLabels?: Record<string, string>
+  /** Modo Crochetar: carreiras já feitas (de baixo para cima). As feitas ficam esmaecidas e a próxima, em destaque. */
+  progress?: number
+  /** Modo Crochetar: pontos já feitos na carreira atual, contados a partir do lado em que ela começa. */
+  rowDone?: { from: StartSide; count: number }
 }
 
-const MARGIN = 30
+export const MARGIN = 30
 const LEGEND_ROW = 26
 
 function isDark(hex: string): boolean {
@@ -55,7 +59,7 @@ export function drawChart(ctx: CanvasRenderingContext2D, chart: ChartResult, o: 
       if (o.symbols && cell >= 10) {
         ctx.fillStyle = isDark(p.hex) ? '#ffffff' : '#000000'
         ctx.font = symbolFont
-        ctx.fillText(p.symbol, px + cell / 2, py + cell / 2 + 1)
+        ctx.fillText(p.letter, px + cell / 2, py + cell / 2 + 1)
       }
     }
   }
@@ -98,6 +102,26 @@ export function drawChart(ctx: CanvasRenderingContext2D, chart: ChartResult, o: 
   ctx.stroke()
   ctx.strokeRect(gridLeft, gridTop, gridW, gridH)
 
+  // Modo Crochetar: esmaece as carreiras feitas e contorna a próxima.
+  if (o.progress !== undefined) {
+    const done = Math.max(0, Math.min(h, o.progress))
+    if (done > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      ctx.fillRect(gridLeft, gridTop + (h - done) * cell, gridW, done * cell)
+    }
+    if (done < h && o.rowDone && o.rowDone.count > 0) {
+      const n = Math.min(w, o.rowDone.count)
+      const x0 = o.rowDone.from === 'right' ? w - n : 0
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      ctx.fillRect(gridLeft + x0 * cell, gridTop + (h - done - 1) * cell, n * cell, cell)
+    }
+    if (done < h) {
+      ctx.strokeStyle = '#7a3b5e'
+      ctx.lineWidth = 3
+      ctx.strokeRect(gridLeft + 1.5, gridTop + (h - done - 1) * cell + 1.5, gridW - 3, cell - 3)
+    }
+  }
+
   // Números nos quatro lados.
   ctx.fillStyle = '#222222'
   ctx.font = '11px sans-serif'
@@ -135,7 +159,7 @@ export function drawChart(ctx: CanvasRenderingContext2D, chart: ChartResult, o: 
       ctx.lineWidth = 1
       ctx.strokeRect(lx + 0.5, ly - 8.5, 20, 18)
       ctx.fillStyle = '#222222'
-      ctx.fillText(`${p.letter} ${p.symbol}  ${o.legendLabels?.[p.letter] ? o.legendLabels[p.letter] + ' · ' : ''}${p.count} pontos`, lx + 28, ly)
+      ctx.fillText(`${p.letter}  ${o.legendLabels?.[p.letter] ? o.legendLabels[p.letter] + ' · ' : ''}${p.count} pontos`, lx + 28, ly)
     })
   }
 }

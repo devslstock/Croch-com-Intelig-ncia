@@ -13,10 +13,12 @@ export interface ChartRow {
   yarn_id: string
   picked: Record<string, string>
   start_side: StartSide
+  progress: number
+  progress_stitch: number
   created_at: string
 }
 
-export const CHART_COLUMNS = 'id,name,width,height,grid,palette,yarn_id,picked,start_side,created_at'
+export const CHART_COLUMNS = 'id,name,width,height,grid,palette,yarn_id,picked,start_side,progress,progress_stitch,created_at'
 
 export function rowToSaved(r: ChartRow): SavedChart {
   return {
@@ -30,6 +32,8 @@ export function rowToSaved(r: ChartRow): SavedChart {
     yarnId: r.yarn_id,
     picked: r.picked,
     startSide: r.start_side,
+    progress: r.progress,
+    progressStitch: r.progress_stitch,
   }
 }
 
@@ -45,6 +49,8 @@ export function savedToRow(s: SavedChart) {
     yarn_id: s.yarnId,
     picked: s.picked,
     start_side: s.startSide,
+    progress: s.progress,
+    progress_stitch: s.progressStitch,
   }
 }
 

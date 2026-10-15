@@ -11,6 +11,8 @@ const row: ChartRow = {
   yarn_id: 'DMC__Mouline',
   picked: { A: '310' },
   start_side: 'left',
+  progress: 12,
+  progress_stitch: 5,
   created_at: '2026-10-15T12:00:00Z',
 }
 
