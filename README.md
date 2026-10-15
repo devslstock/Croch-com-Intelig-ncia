@@ -22,8 +22,9 @@ Nome de trabalho: **Tramado** (nome e domínio ainda por confirmar).
   com atalhos (Foto em gráfico; Modelos e Gráfico em branco como "em breve"), ferramentas "em breve" e **Meus gráficos**.
 - O login usa Supabase Auth. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (veja `.env.example`).
   Sem essas variáveis o app abre em **modo demonstração** (nada vai para a nuvem).
-- "Meus gráficos" hoje fica no navegador, por usuário (`src/storage/charts.ts`). A interface `ChartStore`
-  permite trocar por tabela no Supabase sem mexer nas telas.
+- "Meus gráficos": com login real grava na tabela `charts` do Supabase (`src/storage/supabaseCharts.ts`);
+  em modo demonstração fica só no navegador (`src/storage/charts.ts`). A estrutura do banco e o passo a passo
+  de ativação estão em `supabase/` (`supabase/README.md`). `npm run test:db` valida o SQL localmente.
 
 ## Rodar
 
