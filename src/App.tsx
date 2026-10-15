@@ -51,7 +51,7 @@ export function App() {
     let saved: string | null = null
     try { saved = localStorage.getItem('tramado:yarn') } catch { /* sem armazenamento */ }
     if (saved === '') return ''
-    return YARN_PALETTES.find((y) => y.id === saved)?.id ?? YARN_PALETTES[0]?.id ?? ''
+    return YARN_PALETTES.find((y) => y.id === saved)?.id ?? YARN_PALETTES.find((y) => y.id === 'DMC__Mouline')?.id ?? YARN_PALETTES[0]?.id ?? ''
   })
   const [picked, setPicked] = useState<Record<string, string>>({})
   const run = useRef(0)

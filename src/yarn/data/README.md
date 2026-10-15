@@ -20,3 +20,10 @@ codigo,nome,hex
   baixada pelo dono do projeto em stitchmate.app. **Antes de publicar o Tramado para o público,
   confirme nos Termos de uso do Stitchmate (ou com eles) se a redistribuição é permitida**
   e, para crochê, troque/some a tabela da linha de crochê usada pelas artesãs.
+- `ponto-cruz/Anchor__Mouline.csv`: 475 números Anchor, **gerada** por `node scripts/gerar-anchor.mjs`
+  a partir da tabela de equivalência Anchor ↔ DMC em `src/yarn/fontes/Anchor-DMC-equivalencia.tsv`.
+  Cada número Anchor tem 1 ou mais equivalentes DMC; a cor (hex) usada é a da primeira linha do número
+  e o nome lista todos os equivalentes ("≈ DMC 150, 326, 3350"). Os hex vêm do equivalente DMC, não de
+  uma medição da própria Anchor, então são **aproximados**. Números cujos equivalentes têm cores bem
+  diferentes (ex.: 410, 1009, 1089 e os variegados 1203–1220) devem ser conferidos com a cartela real.
+  Para atualizar: edite o `.tsv` e rode o script.

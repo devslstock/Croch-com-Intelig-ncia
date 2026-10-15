@@ -1,0 +1,476 @@
+codigo,nome,hex
+1,"white · ≈ DMC White, B5200",#fafafa
+2,"white · ≈ DMC White, 3865",#fafafa
+6,"peach · ≈ DMC 353",#f2a898
+8,"lt apricot · ≈ DMC 3824",#ffb496
+9,"lt coral · ≈ DMC 352",#ea8079
+10,"coral · ≈ DMC 351",#de605e
+11,"md coral · ≈ DMC 350",#d64542
+13,"dk coral · ≈ DMC 349, 817",#c72e33
+19,"red · ≈ DMC 321",#c32a3c
+20,"garnet · ≈ DMC 816",#940b24
+22,"md garnet · ≈ DMC 815, 902",#840720
+23,"vy lt dustry rose · ≈ DMC 151, 963",#f3c1cd
+24,"md pink · ≈ DMC 776",#f3949f
+25,"vy lt dusty rose · ≈ DMC 3716",#f6a7b4
+26,"vy lt carnation · ≈ DMC 894",#ff9bb2
+27,"lt carnation · ≈ DMC 893",#fb7493
+28,"geranium · ≈ DMC 956",#fb5c84
+29,"dk carnation · ≈ DMC 891",#f32d3e
+31,"lt melon · ≈ DMC 3708",#ffa2b0
+33,"md melon · ≈ DMC 3706, 892",#ff7f8c
+35,"dk melon · ≈ DMC 3705, 891",#f75156
+36,"lt rose · ≈ DMC 3326",#f3949f
+38,"geranium · ≈ DMC 956",#fb5c84
+39,"md raspberry · ≈ DMC 3832",#e0577e
+40,"geranium · ≈ DMC 956",#fb5c84
+41,"lt carnation · ≈ DMC 893",#fb7493
+42,"dk rose · ≈ DMC 309, 3831",#c9344d
+43,"md garnet · ≈ DMC 815",#840720
+44,"md garnet · ≈ DMC 815",#840720
+45,"dk garnet · ≈ DMC 814",#79001c
+46,"bright red · ≈ DMC 666",#d90028
+47,"red · ≈ DMC 321",#c32a3c
+48,"ul vy lt dusty rose · ≈ DMC 963",#ffced7
+49,"lt mauve · ≈ DMC 3689",#fdbace
+50,"pale geranium · ≈ DMC 957",#ff9bba
+52,"md rose · ≈ DMC 899",#e2697b
+54,"geranium · ≈ DMC 956",#fb5c84
+55,"cranberry · ≈ DMC 603, 604",#ee6195
+57,"dk cranberry · ≈ DMC 601, 602",#de2271
+59,"ul vy dk dustry rose · ≈ DMC 150, 326, 3350, 3831, 600",#a8024a
+60,"md mauve · ≈ DMC 3688",#e890ac
+62,"cyclamen pink · ≈ DMC 3805, 3806, 603",#f34188
+63,"dk cyclamen pink · ≈ DMC 3804, 602",#e6367c
+65,"ul dk dusty rose · ≈ DMC 3350, 777",#b84263
+66,"md mauve · ≈ DMC 3688",#e890ac
+68,"mauve · ≈ DMC 3687",#c65375
+69,"dk mauve · ≈ DMC 3803",#a83255
+70,"vy dk mauve · ≈ DMC 3685",#851531
+72,"vy dk garnet · ≈ DMC 902",#6d1a2b
+73,"baby pink · ≈ DMC 818, 963",#ffcece
+74,"lt dusty rose · ≈ DMC 3354, 605",#eea1b2
+75,"dusty rose · ≈ DMC 3733, 962",#e78197
+76,"vy dk dusty rose · ≈ DMC 3731, 3833, 961",#d96280
+77,"mauve · ≈ DMC 3687",#c65375
+78,"md plum · ≈ DMC 917",#a4175d
+79,"mauve · ≈ DMC 3687",#c65375
+85,"ul lt plum · ≈ DMC 3609",#ffaacf
+86,"vy lt plum · ≈ DMC 3608",#e67dac
+87,"lt plum · ≈ DMC 3607",#d25292
+88,"plum · ≈ DMC 718",#b73275
+89,"md plum · ≈ DMC 917",#a4175d
+90,"lt grape · ≈ DMC 3836",#b78da7
+92,"violet · ≈ DMC 553",#a16089
+94,"md plum · ≈ DMC 917",#a4175d
+95,"vy lt violet · ≈ DMC 153",#e3c6d5
+96,"lt violet · ≈ DMC 554",#d8aec7
+97,"lt violet · ≈ DMC 554",#d8aec7
+98,"md grape · ≈ DMC 3835, 553",#915e81
+99,"md violet · ≈ DMC 552",#793666
+100,"dk violet · ≈ DMC 327, 3834, 3837",#551346
+101,"vy dk violet · ≈ DMC 550",#4a133f
+102,"vy dk violet · ≈ DMC 550",#4a133f
+103,"vy lt violet · ≈ DMC 153",#e3c6d5
+108,"md lavender · ≈ DMC 210",#c09bc0
+109,"dk lavender · ≈ DMC 209",#a078a5
+110,"vy dk blue violet · ≈ DMC 333",#604e87
+111,"vy dk lavender · ≈ DMC 208",#805988
+112,"ul dk lavender · ≈ DMC 3837",#69396c
+117,"lt blue violet · ≈ DMC 341, 3840",#b8bfdc
+118,"md lt blue violet · ≈ DMC 156, 340",#a5b0d1
+119,"vy dk blue violet · ≈ DMC 333",#604e87
+120,"vy lt cornflower blue · ≈ DMC 157, 159, 3747",#b7c4e4
+121,"lt cornflower blue · ≈ DMC 794, 809",#8e9dc6
+122,"cornflower blue · ≈ DMC 3807",#5b648f
+123,"md vy dk cornflower blue · ≈ DMC 158, 791",#403d6d
+127,"dk navy blue · ≈ DMC 823",#071f3a
+128,"vy lt baby blue · ≈ DMC 775",#d7ebf2
+129,"lt baby blue · ≈ DMC 3325",#a6c3d9
+130,"delft blue · ≈ DMC 809",#82a8c9
+131,"dk delft blue · ≈ DMC 798",#3e5ea0
+132,"royal blue · ≈ DMC 797",#223f88
+133,"dk royal blue · ≈ DMC 796",#0f2075
+134,"vy dk royal blue · ≈ DMC 820",#000861
+136,"md delft blue · ≈ DMC 799",#5b81b5
+137,"dk lavender blue · ≈ DMC 3838, 798",#5d6f9d
+139,"royal blue · ≈ DMC 797",#223f88
+140,"baby blue · ≈ DMC 3755",#83a4c1
+142,"dk delft blue · ≈ DMC 798",#3e5ea0
+143,"royal blue · ≈ DMC 797",#223f88
+144,"pale delft blue · ≈ DMC 800",#adcbe1
+145,"md delft blue · ≈ DMC 799",#5b81b5
+146,"dk delft blue · ≈ DMC 798",#3e5ea0
+147,"royal blue · ≈ DMC 797",#223f88
+148,"md navy blue · ≈ DMC 311",#064055
+149,"ul vy dk baby blue · ≈ DMC 803",#1e4669
+150,"navy blue · ≈ DMC 336",#0f3251
+152,"dk navy blue · ≈ DMC 823, 939",#071f3a
+158,"vy lt sky blue · ≈ DMC 747",#d3fff9
+159,"ul vy lt blue · ≈ DMC 162",#c7e2ef
+160,"vy lt blue · ≈ DMC 827",#acd4e9
+161,"lt blue · ≈ DMC 813, 826",#7eacc9
+162,"dk wedgewood · ≈ DMC 517, 825",#2e7288
+164,"dk wedgwood · ≈ DMC 3842, 824",#17566d
+167,"lt peacock blue · ≈ DMC 3766",#9acdcd
+168,"peacock blue · ≈ DMC 807",#5f9ea5
+169,"md wedgewood · ≈ DMC 3760, 806",#3d839f
+170,"vy dk peacock blue · ≈ DMC 3765",#17616d
+175,"md gray blue · ≈ DMC 160, 794",#8293b3
+176,"gray blue · ≈ DMC 161, 3839, 793",#5c6694
+177,"dk cornflower blue · ≈ DMC 792",#4b497d
+178,"md vy dk cornflower blue · ≈ DMC 158, 791",#403d6d
+185,"md seagreen · ≈ DMC 959, 993",#85d5b6
+186,"md seagreen · ≈ DMC 959",#85d5b6
+187,"lt bright green · ≈ DMC 3851, 958",#66bf9d
+188,"vy dk seagreen · ≈ DMC 3812, 943",#1c925f
+189,"dk bright green · ≈ DMC 3850",#0f9161
+203,"nile green · ≈ DMC 954",#99e5a6
+204,"md nile green · ≈ DMC 913",#76d185
+205,"md emerald green · ≈ DMC 911",#36a459
+206,"vy lt jade · ≈ DMC 564, 955, 966",#b5e1be
+208,"lt jade · ≈ DMC 563",#8cd2a8
+209,"lt emerald green · ≈ DMC 912",#53bd6a
+210,"jade green · ≈ DMC 505, 562",#328060
+211,"bright green · ≈ DMC 700",#07711a
+212,"vy dk jade · ≈ DMC 561",#2b6843
+213,"vy lt blue green · ≈ DMC 504",#b2d4bd
+214,"lt pistachio green · ≈ DMC 368",#aad99f
+215,"md pistachio green · ≈ DMC 320",#75bb71
+216,"md jade · ≈ DMC 562",#519468
+217,"dk pistachio green · ≈ DMC 367",#4b924b
+218,"vy dkpistachio green · ≈ DMC 319, 890",#236831
+219,"lt blue green · ≈ DMC 3813",#b2d4bd
+221,"blue green · ≈ DMC 502",#598d6e
+224,"ul vy dk emerald greene · ≈ DMC 3818",#00692d
+225,"kelly green · ≈ DMC 702",#46a42e
+226,"kelly green · ≈ DMC 702",#46a42e
+227,"lt green · ≈ DMC 701",#1c8817
+228,"bright green · ≈ DMC 700",#07711a
+229,"dk emerald green · ≈ DMC 910",#1e9044
+230,"vy dk emerald green · ≈ DMC 909",#0b7c38
+231,"lt shell gray · ≈ DMC 453",#d1c3cf
+232,"md shell gray · ≈ DMC 452",#ae9aa4
+233,"dk shell gray · ≈ DMC 451",#7c696d
+234,"vy lt pearl gray · ≈ DMC 762",#e2e2e7
+235,"dk steel gray · ≈ DMC 414",#7c7c84
+236,"vy dk pewter gray · ≈ DMC 3799, 413",#2b2c2f
+237,"bright chartreuse · ≈ DMC 704",#aeda62
+238,"chartreuse · ≈ DMC 703",#7ab146
+239,"kelly green · ≈ DMC 702",#46a42e
+240,"lt forest green · ≈ DMC 164",#b6d4a3
+241,"forest green · ≈ DMC 989",#92bf68
+242,"forest green · ≈ DMC 989",#92bf68
+243,"md forest green · ≈ DMC 988",#68a046
+244,"dk forest green · ≈ DMC 987",#408128
+245,"dk forest green · ≈ DMC 987",#408128
+246,"vy dk forest green · ≈ DMC 986",#2b671f
+253,"apple green pale · ≈ DMC 14, 472",#d0fbb2
+254,"ul lt avocado green · ≈ DMC 472",#d5e191
+255,"lt parrot green · ≈ DMC 907",#c6e560
+256,"bright chartreuse · ≈ DMC 704, 906",#aeda62
+257,"dk parrot green · ≈ DMC 905",#568f2e
+258,"vy dk parrot green · ≈ DMC 904",#2f6800
+259,"vy lt yellow green · ≈ DMC 772",#e4feb0
+260,"pine green · ≈ DMC 3364",#9db275
+261,"green gray · ≈ DMC 3053",#a4b583
+262,"dk green gray · ≈ DMC 3051, 3363",#516132
+263,"dk pine green · ≈ DMC 3362",#4a6332
+264,"lt yellow green · ≈ DMC 3348, 772",#ceeb90
+265,"vy lt avocado green · ≈ DMC 471",#b9c572
+266,"md yellow green · ≈ DMC 3347, 471",#76a451
+267,"hunter green · ≈ DMC 3346, 469, 470",#4b8835
+268,"dk hunter green · ≈ DMC 3345, 3346, 937",#2f6913
+269,"vy dk avocado green · ≈ DMC 936",#52651a
+271,"lt baby pink · ≈ DMC 819",#ffe1e1
+273,"dk brown gray · ≈ DMC 3787, 645",#656040
+274,"vy lt antique blue · ≈ DMC 3752, 928",#9ab3cd
+275,"off white · ≈ DMC 746",#ffffe1
+276,"ul vy lt beige brown · ≈ DMC 543, 739",#eaded3
+277,"dk golden olive · ≈ DMC 830, 831",#766400
+278,"vy lt moss green · ≈ DMC 165, 3819",#eff39d
+279,"lt olive green · ≈ DMC 734",#d4ce75
+280,"md lt moss green · ≈ DMC 166, 581, 733",#ced129
+281,"dk moss green · ≈ DMC 580, 732",#667913
+288,"lt lemon · ≈ DMC 445",#fff983
+289,"lemon · ≈ DMC 307",#fee73d
+290,"dk lemon · ≈ DMC 444",#fac800
+291,"dk lemon · ≈ DMC 444",#fac800
+292,"vy lt golden yellow · ≈ DMC 3078",#faf6b7
+293,"vy lt topaz · ≈ DMC 727",#f6e990
+295,"lt straw · ≈ DMC 3822, 726",#f2df70
+297,"bright canary · ≈ DMC 973",#fadd00
+298,"deep canary · ≈ DMC 972",#f7be12
+300,"lt pale yellow · ≈ DMC 745",#fff1b2
+301,"pale yellow · ≈ DMC 743, 744",#ffe48b
+302,"md yellow · ≈ DMC 743",#ffdd64
+303,"lt tangerine · ≈ DMC 742",#ffbc50
+304,"md tangerine · ≈ DMC 741",#ff9d25
+305,"straw · ≈ DMC 3821, 725, 728",#f2cd49
+306,"dk straw · ≈ DMC 3820, 3852, 783",#e2b735
+307,"dk topaz · ≈ DMC 782",#c77e00
+308,"vy dk topaz · ≈ DMC 781",#c77e00
+309,"ul vy dk topaz · ≈ DMC 780",#af5e00
+310,"lt brown · ≈ DMC 434",#8c602a
+311,"pale golden brown · ≈ DMC 3827, 3855",#f7b670
+313,"md autumn gold · ≈ DMC 3854",#f9b460
+314,"md tangerine · ≈ DMC 741",#ff9d25
+316,"tangerine · ≈ DMC 740, 970, 971",#fa8500
+323,"pale pumpkin · ≈ DMC 3825, 722",#fdb78e
+324,"md orange spice · ≈ DMC 721",#f37c51
+326,"dk orange spice · ≈ DMC 720",#ef6a41
+328,"apricot · ≈ DMC 3341",#ff9774
+329,"md apricot · ≈ DMC 3340",#fa8155
+330,"burnt orange · ≈ DMC 947",#e66007
+332,"bright orange · ≈ DMC 608, 946",#fd552f
+333,"dk burnt orange · ≈ DMC 900",#db3700
+334,"bright orange-red · ≈ DMC 606",#fd340c
+335,"bright orange-red · ≈ DMC 606",#fd340c
+336,"ul vy lt terra cotta · ≈ DMC 3771",#f3b5a2
+337,"lt terra cotta · ≈ DMC 3778",#da8e7f
+338,"lt terra cotta · ≈ DMC 3778",#da8e7f
+339,"md copper · ≈ DMC 920",#cf501e
+340,"red copper · ≈ DMC 919",#bb3a0f
+341,"dk red copper · ≈ DMC 918",#a02500
+342,"lt lavender · ≈ DMC 211",#e0c5e0
+343,"vy lt antique blue · ≈ DMC 3752",#9ab3cd
+347,"desert sand · ≈ DMC 3064",#ca9073
+349,"golden brown · ≈ DMC 3826",#b66e2a
+351,"dk mahogany · ≈ DMC 400",#8c410f
+352,"vy dk mahogany · ≈ DMC 300",#6d2d00
+354,"drab brown · ≈ DMC 611",#847a57
+355,"dk golden brown · ≈ DMC 975",#8e4c12
+357,"md brown · ≈ DMC 433",#79511a
+358,"dk mocha beige · ≈ DMC 3862, 433",#8c6f4e
+359,"dk coffee brown · ≈ DMC 801",#653d0f
+360,"vy dk coffee brown · ≈ DMC 898",#512d07
+361,"vy lt tan · ≈ DMC 738",#ddb689
+362,"lt tan · ≈ DMC 437",#c99f6a
+363,"lt golden brown · ≈ DMC 977",#db9851
+365,"vy lt brown · ≈ DMC 435",#a0743e
+366,"vy lt tan · ≈ DMC 738, 945",#ddb689
+367,"vy lt tan · ≈ DMC 738",#ddb689
+368,"lt tan · ≈ DMC 437",#c99f6a
+369,"vy lt brown · ≈ DMC 435",#a0743e
+370,"ul vy dk topaz · ≈ DMC 780",#af5e00
+371,"dk golden brown · ≈ DMC 975",#8e4c12
+372,"lt hazelnut brown · ≈ DMC 422",#d5b067
+373,"hazelnut brown · ≈ DMC 3828",#b2913c
+374,"dk hazelnut brown · ≈ DMC 420",#9a7b33
+375,"vy dk hazelnut brown · ≈ DMC 869",#745e27
+376,"lt mocha beige · ≈ DMC 3864, 842",#cbb69c
+378,"lt cocoa · ≈ DMC 3861",#a4857e
+379,"cocoa · ≈ DMC 3860, 3863",#8f6d65
+380,"dk cocoa · ≈ DMC 779",#604944
+381,"vy dk beige brown · ≈ DMC 838, 938",#523516
+382,"black brown · ≈ DMC 3371",#3a2723
+386,"ul pale yellow · ≈ DMC 3823",#fefbce
+387,"ecru · ≈ DMC Ecru, 739",#f5f0ec
+388,"vy lt beige brown · ≈ DMC 842",#d9c2a8
+390,"lt beige gray · ≈ DMC 822",#f3ecdc
+391,"vy lt mocha brown · ≈ DMC 3033",#e0d4c3
+392,"dk beige gray · ≈ DMC 642",#b8ad92
+393,"ul dk beige gray · ≈ DMC 3790",#776847
+397,"vy lt brown gray · ≈ DMC 3024",#d7d7c3
+398,"vy lt pewter · ≈ DMC 168, 415",#c7cdce
+399,"lt steel gray · ≈ DMC 318",#9c9ca4
+400,"pewter gray · ≈ DMC 317",#575d61
+401,"vy lt ash gray · ≈ DMC 535",#555545
+403,"black · ≈ DMC 310",#000000
+410,"dk bright turquoise · ≈ DMC 3844, 995",#099d89
+433,"md electric blue · ≈ DMC 996",#13bcde
+675,"ul vy dk turquoise · ≈ DMC 3808",#0b525d
+676,"md shell gray · ≈ DMC 452",#ae9aa4
+677,"md mocha beige · ≈ DMC 3863",#a88764
+678,"drab brown · ≈ DMC 611",#847a57
+679,"vy dk desert sand · ≈ DMC 3772",#aa7959
+681,"dk green gray · ≈ DMC 3051",#516132
+683,"vy dk blue green · ≈ DMC 500",#055538
+772,"vy dk desert sand · ≈ DMC 3772",#aa7959
+778,"vy lt desert sand · ≈ DMC 3774",#f1dbd0
+779,"dk gray green · ≈ DMC 3768",#528779
+781,"md antique blue · ≈ DMC 931",#46728c
+799,"dk red · ≈ DMC 498",#a4132b
+802,"lt lemon · ≈ DMC 445",#fff983
+803,"md golden brown · ≈ DMC 976",#cb8234
+815,"dk steel gray · ≈ DMC 414",#7c7c84
+816,"vy dk gray green · ≈ DMC 924",#166059
+817,"dk moss green · ≈ DMC 580",#667913
+820,"md old gold · ≈ DMC 729",#e3b344
+830,"md beige gray · ≈ DMC 644",#ddd3bc
+831,"vy lt drab brown · ≈ DMC 613",#d4c7a8
+832,"lt drab brown · ≈ DMC 612",#a29670
+837,"lt gray green · ≈ DMC 927",#a0bebe
+840,"dk antique blue · ≈ DMC 930",#316274
+842,"lt khaki green · ≈ DMC 3013, 3348",#b7b77e
+843,"md khaki green · ≈ DMC 3012",#939857
+844,"md khaki green · ≈ DMC 3012",#939857
+845,"vy dk olive green · ≈ DMC 730",#706c21
+846,"dk khaki green · ≈ DMC 3011",#6e783b
+847,"vy lt beaver gray · ≈ DMC 3072",#e3e7d9
+848,"lt gray green · ≈ DMC 927",#a0bebe
+849,"lt pewter · ≈ DMC 169",#7f8887
+850,"md gray green · ≈ DMC 926",#79a296
+851,"vy dk gray green · ≈ DMC 924",#166059
+852,"lt yellow beige · ≈ DMC 3047",#e7e1b8
+853,"lt mustard · ≈ DMC 372",#c1ba7e
+854,"mustard · ≈ DMC 371",#b7a765
+855,"md mustard · ≈ DMC 370",#ae9b54
+856,"md green gray · ≈ DMC 3052",#798855
+858,"vy lt fern green · ≈ DMC 524",#c1caa7
+859,"lt fern green · ≈ DMC 523",#b3be95
+860,"fern green · ≈ DMC 522",#819569
+861,"dk avocado green · ≈ DMC 935",#3b4d0f
+862,"dk fern green · ≈ DMC 520, 934",#42612b
+868,"vy lt terra cotta · ≈ DMC 758",#eda394
+869,"vy lt antique violet · ≈ DMC 3743",#d3c6cf
+870,"lt antique violet · ≈ DMC 3042",#b499a4
+871,"md antique violet · ≈ DMC 3041",#937580
+872,"dk antique violet · ≈ DMC 3740",#765561
+873,"vy dk grape · ≈ DMC 154, 3740",#552332
+874,"vy lt golden olive · ≈ DMC 834",#d5c77f
+875,"lt blue green · ≈ DMC 3813, 3817",#b2d4bd
+876,"celadon green · ≈ DMC 3816, 503",#78b48a
+877,"md celadon green · ≈ DMC 163, 3815, 502",#559a6e
+878,"dk blue green · ≈ DMC 501",#3d7654
+879,"vy dk blue green · ≈ DMC 500",#055538
+880,"lt tawny · ≈ DMC 951",#ffddc6
+881,"tawny · ≈ DMC 945",#ffc9ae
+882,"vy lt terra cotta · ≈ DMC 758",#eda394
+883,"desert sand · ≈ DMC 3064",#ca9073
+884,"dk terra cotta · ≈ DMC 355, 920",#a5463c
+885,"ul vy lt tan · ≈ DMC 739",#f2d3a8
+886,"vy lt old gold · ≈ DMC 677",#f4e7b4
+887,"md yellow beige · ≈ DMC 3046",#d9cda3
+888,"dk yellow beige · ≈ DMC 3045",#c5ad66
+889,"dk drab brown · ≈ DMC 610",#6f6641
+890,"md old gold · ≈ DMC 729",#e3b344
+891,"pale pumpkin · ≈ DMC 3825, 676",#fdb78e
+892,"ul vy lt shell pink · ≈ DMC 225",#ffd7ce
+893,"vy lt shell pink · ≈ DMC 224",#e9b1a8
+895,"lt shell pink · ≈ DMC 223",#d58582
+896,"dk shell pink · ≈ DMC 3721",#ac4a52
+897,"vy dk shell pink · ≈ DMC 221, 902",#9a3d43
+898,"vy dk yellow beige · ≈ DMC 167, 611",#ac8d3e
+899,"lt mocha brown · ≈ DMC 3782",#cabca3
+900,"lt beaver gray · ≈ DMC 648",#bcc0a8
+901,"vy dk old gold · ≈ DMC 3829, 680",#a67d04
+903,"md mocha brown · ≈ DMC 3032, 640",#ae9d78
+904,"dk mocha brown · ≈ DMC 3781",#574d2a
+905,"vy dk brown gray · ≈ DMC 3021, 3031",#44452a
+906,"vy dk golden olive · ≈ DMC 829",#694f00
+907,"golden olive · ≈ DMC 832, 833",#a89234
+914,"lt rosewood · ≈ DMC 3859, 407",#b88778
+920,"lt antique blue · ≈ DMC 932",#80a3ba
+921,"md antique blue · ≈ DMC 931",#46728c
+922,"dk antique blue · ≈ DMC 930",#316274
+923,"ul vy dk emerald greene · ≈ DMC 3818, 699, 909",#00692d
+924,"dk olive green · ≈ DMC 731",#989239
+925,"md orange spice · ≈ DMC 721",#f37c51
+926,"ul vy lt mocha brown · ≈ DMC 3866, 712",#f8f2e9
+928,"lt sky blue · ≈ DMC 3761",#9dd5dd
+933,"ul vy lt beige brown · ≈ DMC 543",#eaded3
+936,"ul vy dk desert sand · ≈ DMC 632",#936148
+939,"baby blue · ≈ DMC 3755",#83a4c1
+940,"vy dk blue · ≈ DMC 824",#224271
+941,"dk cornflower blue · ≈ DMC 792",#4b497d
+942,"vy lt tan · ≈ DMC 738",#ddb689
+943,"lt hazelnut brown · ≈ DMC 422",#d5b067
+944,"vy dk hazelnut brown · ≈ DMC 869",#745e27
+945,"vy lt golden olive · ≈ DMC 834",#d5c77f
+956,"vy lt drab brown · ≈ DMC 613",#d4c7a8
+968,"vy lt antique mauve · ≈ DMC 778",#ddadb6
+969,"md lt shell pink · ≈ DMC 152",#e09a93
+970,"mauve · ≈ DMC 3687",#c65375
+972,"dk mauve · ≈ DMC 3803",#a83255
+975,"ul vy very lt blue · ≈ DMC 828",#b9e1e9
+976,"vy lt antique blue · ≈ DMC 3752",#9ab3cd
+977,"md baby blue · ≈ DMC 334",#5f8da9
+978,"dk dark baby blue · ≈ DMC 322",#467194
+979,"vy dk baby blue · ≈ DMC 312",#2e597c
+1001,"md golden brown · ≈ DMC 976",#cb8234
+1002,"lt golden brown · ≈ DMC 977",#db9851
+1003,"dk autumn gold · ≈ DMC 3853, 921, 922",#e58632
+1004,"md copper · ≈ DMC 920",#cf501e
+1005,"dk red · ≈ DMC 498, 816",#a4132b
+1006,"md red · ≈ DMC 304",#b31e32
+1007,"vy dk desert sand · ≈ DMC 3772, 3858",#aa7959
+1008,"md desert sand · ≈ DMC 3773",#bb8871
+1009,"vy lt tawny · ≈ DMC 3770, 3773",#fff3e1
+1010,"ul vy lt mahogany · ≈ DMC 3856, 951",#f5c3a9
+1011,"vy lt peach · ≈ DMC 948",#fddcc5
+1012,"ul vy lt terra cotta · ≈ DMC 3779, 754, 967",#efbdba
+1013,"lt terra cotta · ≈ DMC 3778",#da8e7f
+1014,"rose · ≈ DMC 335, 355",#d64a5f
+1015,"vy dk terra cotta · ≈ DMC 3777",#8e3230
+1016,"lt antique mauve · ≈ DMC 3727",#c98c97
+1017,"md antique mauve · ≈ DMC 316",#b56f7c
+1018,"dk antique mauve · ≈ DMC 3726",#a45561
+1019,"md dk antique mauve · ≈ DMC 315, 3802",#903e4e
+1020,"vy lt salmon · ≈ DMC 3713",#ffd5d5
+1021,"lt salmon · ≈ DMC 761",#f2acac
+1022,"salmon · ≈ DMC 760",#e6858f
+1023,"md salmon · ≈ DMC 3712",#da6270
+1024,"dk salmon · ≈ DMC 3328",#ce3f54
+1025,"vy dk salmon · ≈ DMC 347",#bf2642
+1026,"ul vy lt shell pink · ≈ DMC 225",#ffd5d5
+1027,"md shell pink · ≈ DMC 3722",#c16363
+1028,"vy dk mauve · ≈ DMC 3685",#851531
+1029,"dk plum · ≈ DMC 915",#90004f
+1030,"md dk blue violet · ≈ DMC 155, 3746",#948db3
+1031,"ul vy lt antique blue · ≈ DMC 3753",#cddbe8
+1032,"vy lt antique blue · ≈ DMC 3752",#9ab3cd
+1033,"lt antique blue · ≈ DMC 932",#80a3ba
+1034,"md antique blue · ≈ DMC 931",#46728c
+1035,"dk antique blue · ≈ DMC 930",#316274
+1036,"vy dk antique blue · ≈ DMC 3750",#1b3e49
+1037,"ul vy lt baby blue · ≈ DMC 3756",#e7f9f9
+1038,"sky blue · ≈ DMC 519",#6fb1c1
+1039,"lt wedgewood · ≈ DMC 518",#4d91a4
+1040,"lt brown gray · ≈ DMC 3023, 647",#aeab8a
+1041,"ul dk beaver gray · ≈ DMC 844",#31372d
+1042,"vy lt blue green · ≈ DMC 504",#b2d4bd
+1043,"apple green pale · ≈ DMC 14, 369",#d0fbb2
+1044,"vy dk hunter green · ≈ DMC 895",#1b5100
+1045,"tan · ≈ DMC 436",#b58c53
+1046,"vy lt brown · ≈ DMC 435",#a0743e
+1047,"vy lt mahogany · ≈ DMC 402",#f7a170
+1048,"lt mahogany · ≈ DMC 3776",#ce7535
+1049,"md mahogany · ≈ DMC 301, 3826",#af5b2a
+1050,"dk mocha brown · ≈ DMC 3781",#574d2a
+1060,"vy lt turquoise · ≈ DMC 3811",#b4e0e9
+1062,"lt turquoise · ≈ DMC 598",#82c1cd
+1064,"turquoise · ≈ DMC 597",#57a2b1
+1066,"vy dk turquoise · ≈ DMC 3809, 3810",#1e6a79
+1068,"ul vy dk turquoise · ≈ DMC 3808",#0b525d
+1070,"vy lt aquamarine · ≈ DMC 992",#7ecdaf
+1072,"lt aquamarine · ≈ DMC 992",#4aac88
+1074,"aquamarine · ≈ DMC 3814, 3848",#228c69
+1076,"dk teal green · ≈ DMC 3847, 991",#2b6f51
+1080,"vy lt beige brown · ≈ DMC 842",#d9c2a8
+1082,"lt beige brown · ≈ DMC 841",#b39a7d
+1084,"md beige brown · ≈ DMC 840",#967954
+1086,"dk beige brown · ≈ DMC 839",#6a4726
+1088,"ul dk coffee brown · ≈ DMC 938",#3e2200
+1089,"electric blue · ≈ DMC 3843, 3845",#0493be
+1090,"lt bright turquoise · ≈ DMC 3846",#44dec7
+1092,"lt seagreen · ≈ DMC 964",#b4f2df
+1094,"vy lt cranberry · ≈ DMC 605",#ffaac5
+1096,"ul vy lt antique blue · ≈ DMC 3753",#cddbe8
+1098,"vy dk melon · ≈ DMC 3801",#f03646
+1203,"variegated tan/brown · ≈ DMC 105, 107, 57",#a5765a
+1204,"variegated carnation · ≈ DMC 107",#d6527a
+1206,"variegated garnet · ≈ DMC 115",#82192a
+1209,"variegated violet · ≈ DMC 52, 94",#8c7ab6
+1210,"variegated delft blue · ≈ DMC 121",#7bb4d6
+1213,"variegated seafoam green · ≈ DMC 125, 99",#63b47c
+1215,"variegated avocado · ≈ DMC 92",#c5ce95
+1217,"variegated royal blue · ≈ DMC 103, 90",#426da2
+1218,"variegated coral · ≈ DMC 106, 111, 69",#f65b3c
+1220,"variegated burnt orange · ≈ DMC 51",#cf5232
+4146,"lt desert sand · ≈ DMC 950",#ebc8b3
+5975,"md terra cotta · ≈ DMC 356, 3830",#d37863
+8581,"md brown gray · ≈ DMC 3022, 646",#84835c
+9046,"red · ≈ DMC 321",#c32a3c
+9159,"pale baby blue · ≈ DMC 3841, 828",#bfdbe7
+9575,"vy lt terra cotta · ≈ DMC 758",#eda394

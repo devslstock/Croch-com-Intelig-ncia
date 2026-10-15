@@ -1,0 +1,611 @@
+Anchor	DMC	Color* Nome
+1	White	#fafafa white
+1	B5200	#fafafa snow white
+2	White	#fafafa white
+2	3865	#f9f7f1 winter white
+6	353	#f2a898 peach
+8	3824	#ffb496 lt apricot
+9	352	#ea8079 lt coral
+10	351	#de605e coral
+11	350	#d64542 md coral
+13	349	#c72e33 dk coral
+13	817	#bf1a23 vy dk coral red
+19	321	#c32a3c red
+20	816	#940b24 garnet
+22	815	#840720 md garnet
+22	902	#6d1a2b vy dk garnet
+23	151	#f3c1cd vy lt dustry rose
+23	963	#ffced7 ul vy lt dusty rose
+24	776	#f3949f md pink
+25	3716	#f6a7b4 vy lt dusty rose
+26	894	#ff9bb2 vy lt carnation
+27	893	#fb7493 lt carnation
+28	956	#fb5c84 geranium
+29	891	#f32d3e dk carnation
+31	3708	#ffa2b0 lt melon
+33	3706	#ff7f8c md melon
+33	892	#f75172 md carnation
+35	3705	#f75156 dk melon
+35	891	#f32d3e dk carnation
+36	3326	#f3949f lt rose
+38	956	#fb5c84 geranium
+39	3832	#e0577e md raspberry
+40	956	#fb5c84 geranium
+41	893	#fb7493 lt carnation
+42	309	#c9344d dk rose
+42	3831	#b22b54 dk raspberry
+43	815	#840720 md garnet
+44	815	#840720 md garnet
+45	814	#79001c dk garnet
+46	666	#d90028 bright red
+47	321	#c32a3c red
+48	963	#ffced7 ul vy lt dusty rose
+49	3689	#fdbace lt mauve
+50	957	#ff9bba pale geranium
+52	899	#e2697b md rose
+54	956	#fb5c84 geranium
+55	603	#ee6195 cranberry
+55	604	#f784aa lt cranberry
+57	601	#de2271 dk cranberry
+57	602	#e64281 md cranberry
+59	150	#a8024a ul vy dk dustry rose
+59	150	#a8024b ul vy dk dustry rose
+59	326	#af3a4a vy dk rose
+59	3350	#b84263 ul dk dusty rose
+59	3831	#b22b54 dk raspberry
+59	600	#d30b61 vy dk cranberry
+60	3688	#e890ac md mauve
+62	3805	#f34188 cyclamen pink
+62	3806	#fd75a9 lt cyclamen pink
+62	603	#ee6195 cranberry
+63	3804	#e6367c dk cyclamen pink
+63	602	#e64281 md cranberry
+65	3350	#b84263 ul dk dusty rose
+65	777	#810b28 vy dk Raspberry
+66	3688	#e890ac md mauve
+68	3687	#c65375 mauve
+69	3803	#a83255 dk mauve
+70	3685	#851531 vy dk mauve
+72	902	#6d1a2b vy dk garnet
+73	818	#ffcece baby pink
+73	963	#ffced7 ul vy lt dusty rose
+74	3354	#eea1b2 lt dusty rose
+74	605	#ffaac5 vy lt cranberry
+75	3733	#e78197 dusty rose
+75	962	#dd818f md dusty rose
+76	3731	#d96280 vy dk dusty rose
+76	3833	#eb6d84 lt raspberry
+76	961	#da627c dk dusty rose
+77	3687	#c65375 mauve
+78	917	#a4175d md plum
+79	3687	#c65375 mauve
+85	3609	#ffaacf ul lt plum
+86	3608	#e67dac vy lt plum
+87	3607	#d25292 lt plum
+88	718	#b73275 plum
+89	917	#a4175d md plum
+90	3836	#b78da7 lt grape
+92	553	#a16089 violet
+94	917	#a4175d md plum
+95	153	#e3c6d5 vy lt violet
+96	554	#d8aec7 lt violet
+97	554	#d8aec7 lt violet
+98	3835	#915e81 md grape
+98	553	#a16089 violet
+99	552	#793666 md violet
+100	327	#551346 dk violet
+100	3834	#70365b dk grape
+100	3837	#69396c ul dk lavender
+101	550	#4a133f vy dk violet
+102	550	#4a133f vy dk violet
+103	153	#e3c6d5 vy lt violet
+108	210	#c09bc0 md lavender
+109	209	#a078a5 dk lavender
+110	333	#604e87 vy dk blue violet
+111	208	#805988 vy dk lavender
+112	3837	#69396c ul dk lavender
+117	341	#b8bfdc lt blue violet
+117	3840	#a7b2c5 lt lavender blue
+118	156	#a5b0d1 md lt blue violet
+118	340	#a4a4c4 md blue violet
+119	333	#604e87 vy dk blue violet
+120	157	#b7c4e4 vy lt cornflower blue
+120	159	#c1c9d9 lt gray blue
+120	3747	#cdd2ea vy lt blue violet
+121	794	#8e9dc6 lt cornflower blue
+121	809	#82a8c9 delft blue
+122	3807	#5b648f cornflower blue
+123	158	#403d6d md vy dk cornflower blue
+123	791	#363562 vy dk cornflower blue
+127	823	#071f3a dk navy blue
+128	775	#d7ebf2 vy lt baby blue
+129	3325	#a6c3d9 lt baby blue
+130	809	#82a8c9 delft blue
+131	798	#3e5ea0 dk delft blue
+132	797	#223f88 royal blue
+133	796	#0f2075 dk royal blue
+134	820	#000861 vy dk royal blue
+136	799	#5b81b5 md delft blue
+137	3838	#5d6f9d dk lavender blue
+137	798	#3e5ea0 dk delft blue
+139	797	#223f88 royal blue
+140	3755	#83a4c1 baby blue
+142	798	#3e5ea0 dk delft blue
+143	797	#223f88 royal blue
+144	800	#adcbe1 pale delft blue
+145	799	#5b81b5 md delft blue
+146	798	#3e5ea0 dk delft blue
+147	797	#223f88 royal blue
+148	311	#064055 md navy blue
+149	803	#1e4669 ul vy dk baby blue
+150	336	#0f3251 navy blue
+152	823	#071f3a dk navy blue
+152	939	#001326 vy dk navy blue
+158	747	#d3fff9 vy lt sky blue
+159	162	#c7e2ef ul vy lt blue
+160	827	#acd4e9 vy lt blue
+161	813	#7eacc9 lt blue
+161	826	#5785ad md blue
+162	517	#2e7288 dk wedgewood
+162	825	#3a628c dk blue
+164	3842	#17566d dk wedgwood
+164	824	#224271 vy dk blue
+167	3766	#9acdcd lt peacock blue
+168	807	#5f9ea5 peacock blue
+169	3760	#3d839f md wedgewood
+169	806	#3d839f dk peacock blue
+170	3765	#17616d vy dk peacock blue
+175	160	#8293b3 md gray blue
+175	794	#8e9dc6 lt cornflower blue
+176	161	#5c6694 gray blue
+176	3839	#798fb3 md lavender blue
+176	793	#7784af md cornflower blue
+177	792	#4b497d dk cornflower blue
+178	158	#403d6d md vy dk cornflower blue
+178	791	#363562 vy dk cornflower blue
+185	959	#85d5b6 md seagreen
+185	993	#7ecdaf vy lt aquamarine
+186	959	#85d5b6 md seagreen
+187	3851	#66bf9d lt bright green
+187	958	#5bc39d dk seagreen
+188	3812	#1c925f vy dk seagreen
+188	943	#39ac78 md aquamarine
+189	3850	#0f9161 dk bright green
+203	954	#99e5a6 nile green
+204	913	#76d185 md nile green
+205	911	#36a459 md emerald green
+206	564	#b5e1be vy lt jade
+206	955	#c6ffca lt nile green
+206	966	#a2d5ae md baby green
+208	563	#8cd2a8 lt jade
+209	912	#53bd6a lt emerald green
+210	505	#328060 jade green
+210	562	#519468 md jade
+211	700	#07711a bright green
+212	561	#2b6843 vy dk jade
+213	504	#b2d4bd vy lt blue green
+214	368	#aad99f lt pistachio green
+215	320	#75bb71 md pistachio green
+216	562	#519468 md jade
+217	367	#4b924b dk pistachio green
+218	319	#236831 vy dkpistachio green
+218	890	#144b26 ul dk pistachio green
+219	3813	#b2d4bd lt blue green
+221	502	#598d6e blue green
+224	3818	#00692d ul vy dk emerald greene
+225	702	#46a42e kelly green
+226	702	#46a42e kelly green
+227	701	#1c8817 lt green
+228	700	#07711a bright green
+229	910	#1e9044 dk emerald green
+230	909	#0b7c38 vy dk emerald green
+231	453	#d1c3cf lt shell gray
+232	452	#ae9aa4 md shell gray
+233	451	#7c696d dk shell gray
+234	762	#e2e2e7 vy lt pearl gray
+235	414	#7c7c84 dk steel gray
+236	3799	#2b2c2f vy dk pewter gray
+236	413	#3e4144 dk pewter gray
+237	704	#aeda62 bright chartreuse
+238	703	#7ab146 chartreuse
+239	702	#46a42e kelly green
+240	164	#b6d4a3 lt forest green
+241	989	#92bf68 forest green
+242	989	#92bf68 forest green
+243	988	#68a046 md forest green
+244	987	#408128 dk forest green
+245	987	#408128 dk forest green
+246	986	#2b671f vy dk forest green
+253	14	#d0fbb2 apple green pale
+253	472	#d5e191 ul lt avocado green
+254	472	#d5e191 ul lt avocado green
+255	907	#c6e560 lt parrot green
+256	704	#aeda62 bright chartreuse
+256	906	#89c53a md parrot green
+257	905	#568f2e dk parrot green
+258	904	#2f6800 vy dk parrot green
+259	772	#e4feb0 vy lt yellow green
+260	3364	#9db275 pine green
+261	3053	#a4b583 green gray
+262	3051	#516132 dk green gray
+262	3363	#6e8d58 md pine green
+263	3362	#4a6332 dk pine green
+264	3348	#ceeb90 lt yellow green
+264	772	#e4feb0 vy lt yellow green
+265	471	#b9c572 vy lt avocado green
+266	3347	#76a451 md yellow green
+266	471	#b9c572 vy lt avocado green
+267	3346	#4b8835 hunter green
+267	469	#819442 avocado green
+267	470	#9ead57 lt avocado green
+268	3345	#2f6913 dk hunter green
+268	3346	#4b8835 hunter green
+268	937	#697c2e md avocado green
+269	936	#52651a vy dk avocado green
+271	819	#ffe1e1 lt baby pink
+273	3787	#656040 dk brown gray
+273	645	#515542 vy dk beaver gray
+274	3752	#9ab3cd vy lt antique blue
+274	928	#c2d4d4 vy lt gray green
+275	746	#ffffe1 off white
+276	543	#eaded3 ul vy lt beige brown
+276	739	#f2d3a8 ul vy lt tan
+277	830	#766400 dk golden olive
+277	831	#928030 md golden olive
+278	165	#eff39d vy lt moss green
+278	3819	#e0e762 lt moss green
+279	734	#d4ce75 lt olive green
+280	166	#ced129 md lt moss green
+280	581	#8ba136 moss green
+280	733	#c0ba61 md olive green
+281	580	#667913 dk moss green
+281	732	#989239 olive green
+288	445	#fff983 lt lemon
+289	307	#fee73d lemon
+290	444	#fac800 dk lemon
+291	444	#fac800 dk lemon
+292	3078	#faf6b7 vy lt golden yellow
+293	727	#f6e990 vy lt topaz
+295	3822	#f2df70 lt straw
+295	726	#f7dd68 lt topaz
+297	973	#fadd00 bright canary
+298	972	#f7be12 deep canary
+300	745	#fff1b2 lt pale yellow
+301	743	#ffe48b pale yellow
+301	744	#ffe48b pale yellow
+302	743	#ffdd64 md yellow
+303	742	#ffbc50 lt tangerine
+304	741	#ff9d25 md tangerine
+305	3821	#f2cd49 straw
+305	725	#f7cc41 md lt topaz
+305	728	#efc11a topaz
+306	3820	#e2b735 dk straw
+306	3852	#d2a021 vy dk straw
+306	783	#da9605 md topaz
+307	782	#c77e00 dk topaz
+308	781	#c77e00 vy dk topaz
+309	780	#af5e00 ul vy dk topaz
+310	434	#8c602a lt brown
+311	3827	#f7b670 pale golden brown
+311	3855	#f9da8c lt autumn gold
+313	3854	#f9b460 md autumn gold
+314	741	#ff9d25 md tangerine
+316	740	#fa8500 tangerine
+316	970	#f7860e lt pumpkin
+316	971	#fa8500 pumpkin
+323	3825	#fdb78e pale pumpkin
+323	722	#f79168 lt orange spice
+324	721	#f37c51 md orange spice
+326	720	#ef6a41 dk orange spice
+328	3341	#ff9774 apricot
+329	3340	#fa8155 md apricot
+330	947	#e66007 burnt orange
+332	608	#fd552f bright orange
+332	946	#de4600 md burnt orange
+333	900	#db3700 dk burnt orange
+334	606	#fd340c bright orange-red
+335	606	#fd340c bright orange-red
+336	3771	#f3b5a2 ul vy lt terra cotta
+337	3778	#da8e7f lt terra cotta
+338	3778	#da8e7f lt terra cotta
+339	920	#cf501e md copper
+340	919	#bb3a0f red copper
+341	918	#a02500 dk red copper
+342	211	#e0c5e0 lt lavender
+343	3752	#9ab3cd vy lt antique blue
+347	3064	#ca9073 desert sand
+349	3826	#b66e2a golden brown
+351	400	#8c410f dk mahogany
+352	300	#6d2d00 vy dk mahogany
+354	611	#847a57 drab brown
+355	975	#8e4c12 dk golden brown
+357	433	#79511a md brown
+358	3862	#8c6f4e dk mocha beige
+358	433	#79511a md brown
+359	801	#653d0f dk coffee brown
+360	898	#512d07 vy dk coffee brown
+361	738	#ddb689 vy lt tan
+362	437	#c99f6a lt tan
+363	977	#db9851 lt golden brown
+365	435	#a0743e vy lt brown
+366	738	#ddb689 vy lt tan
+366	945	#ffc9ae tawny
+367	738	#ddb689 vy lt tan
+368	437	#c99f6a lt tan
+369	435	#a0743e vy lt brown
+370	780	#af5e00 ul vy dk topaz
+371	975	#8e4c12 dk golden brown
+372	422	#d5b067 lt hazelnut brown
+373	3828	#b2913c hazelnut brown
+374	420	#9a7b33 dk hazelnut brown
+375	869	#745e27 vy dk hazelnut brown
+376	3864	#cbb69c lt mocha beige
+376	842	#d9c2a8 vy lt beige brown
+378	3861	#a4857e lt cocoa
+379	3860	#8f6d65 cocoa
+379	3863	#a88764 md mocha beige
+380	779	#604944 dk cocoa
+381	838	#523516 vy dk beige brown
+381	938	#3e2200 ul dk coffee brown
+382	3371	#3a2723 black brown
+386	3823	#fefbce ul pale yellow
+387	Ecru	#f5f0ec ecru
+387	739	#f2d3a8 ul vy lt tan
+388	842	#d9c2a8 vy lt beige brown
+390	822	#f3ecdc lt beige gray
+391	3033	#e0d4c3 vy lt mocha brown
+392	642	#b8ad92 dk beige gray
+393	3790	#776847 ul dk beige gray
+397	3024	#d7d7c3 vy lt brown gray
+398	168	#c7cdce vy lt pewter
+398	415	#bfbfc3 pearl gray
+399	318	#9c9ca4 lt steel gray
+400	317	#575d61 pewter gray
+401	535	#555545 vy lt ash gray
+403	310	#000000 black
+410	3844	#099d89 dk bright turquoise
+410	995	#016ea5 dk electric blue
+433	996	#13bcde md electric blue
+675	3808	#0b525d ul vy dk turquoise
+676	452	#ae9aa4 md shell gray
+677	3863	#a88764 md mocha beige
+678	611	#847a57 drab brown
+679	3772	#aa7959 vy dk desert sand
+681	3051	#516132 dk green gray
+683	500	#055538 vy dk blue green
+772	3772	#aa7959 vy dk desert sand
+778	3774	#f1dbd0 vy lt desert sand
+779	3768	#528779 dk gray green
+781	931	#46728c md antique blue
+799	498	#a4132b dk red
+802	445	#fff983 lt lemon
+803	976	#cb8234 md golden brown
+815	414	#7c7c84 dk steel gray
+816	924	#166059 vy dk gray green
+817	580	#667913 dk moss green
+820	729	#e3b344 md old gold
+830	644	#ddd3bc md beige gray
+831	613	#d4c7a8 vy lt drab brown
+832	612	#a29670 lt drab brown
+837	927	#a0bebe lt gray green
+840	930	#316274 dk antique blue
+842	3013	#b7b77e lt khaki green
+842	3348	#ceeb90 lt yellow green
+843	3012	#939857 md khaki green
+844	3012	#939857 md khaki green
+845	730	#706c21 vy dk olive green
+846	3011	#6e783b dk khaki green
+847	3072	#e3e7d9 vy lt beaver gray
+848	927	#a0bebe lt gray green
+849	169	#7f8887 lt pewter
+850	926	#79a296 md gray green
+851	924	#166059 vy dk gray green
+852	3047	#e7e1b8 lt yellow beige
+853	372	#c1ba7e lt mustard
+854	371	#b7a765 mustard
+855	370	#ae9b54 md mustard
+856	3052	#798855 md green gray
+858	524	#c1caa7 vy lt fern green
+859	523	#b3be95 lt fern green
+860	522	#819569 fern green
+861	935	#3b4d0f dk avocado green
+862	520	#42612b dk fern green
+862	934	#314615 black avocado green
+868	758	#eda394 vy lt terra cotta
+869	3743	#d3c6cf vy lt antique violet
+870	3042	#b499a4 lt antique violet
+871	3041	#937580 md antique violet
+872	3740	#765561 dk antique violet
+873	154	#552332 vy dk grape
+873	3740	#765561 dk antique violet
+874	834	#d5c77f vy lt golden olive
+875	3813	#b2d4bd lt blue green
+875	3817	#aad9ba lt celadon green
+876	3816	#78b48a celadon green
+876	503	#8ab5a0 md blue green
+877	163	#559a6e md celadon green
+877	3815	#397a59 dk celadon green
+877	502	#598d6e blue green
+878	501	#3d7654 dk blue green
+879	500	#055538 vy dk blue green
+880	951	#ffddc6 lt tawny
+881	945	#ffc9ae tawny
+882	758	#eda394 vy lt terra cotta
+883	3064	#ca9073 desert sand
+884	355	#a5463c dk terra cotta
+884	920	#cf501e md copper
+885	739	#f2d3a8 ul vy lt tan
+886	677	#f4e7b4 vy lt old gold
+887	3046	#d9cda3 md yellow beige
+888	3045	#c5ad66 dk yellow beige
+889	610	#6f6641 dk drab brown
+890	729	#e3b344 md old gold
+891	3825	#fdb78e pale pumpkin
+891	676	#eeca70 lt old gold
+892	225	#ffd7ce ul vy lt shell pink
+893	224	#e9b1a8 vy lt shell pink
+895	223	#d58582 lt shell pink
+896	3721	#ac4a52 dk shell pink
+897	221	#9a3d43 vy dk shell pink
+897	902	#6d1a2b vy dk garnet
+898	167	#ac8d3e vy dk yellow beige
+898	611	#847a57 drab brown
+899	3782	#cabca3 lt mocha brown
+900	648	#bcc0a8 lt beaver gray
+901	3829	#a67d04 vy dk old gold
+901	680	#c8a027 dk old gold
+903	3032	#ae9d78 md mocha brown
+903	640	#918463 vy dk beige gray
+904	3781	#574d2a dk mocha brown
+905	3021	#44452a vy dk brown gray
+905	3031	#473727 vy dk mocha brown
+906	829	#694f00 vy dk golden olive
+907	832	#a89234 golden olive
+907	833	#ccba60 lt golden olive
+914	3859	#b88778 lt rosewood
+914	407	#bb8871 dk desert sand
+920	932	#80a3ba lt antique blue
+921	931	#46728c md antique blue
+922	930	#316274 dk antique blue
+923	3818	#00692d ul vy dk emerald greene
+923	699	#005922 green
+923	909	#0b7c38 vy dk emerald green
+924	731	#989239 dk olive green
+925	721	#f37c51 md orange spice
+926	3866	#f8f2e9 ul vy lt mocha brown
+926	712	#fff8e5 cream
+928	3761	#9dd5dd lt sky blue
+933	543	#eaded3 ul vy lt beige brown
+936	632	#936148 ul vy dk desert sand
+939	3755	#83a4c1 baby blue
+940	824	#224271 vy dk blue
+941	792	#4b497d dk cornflower blue
+942	738	#ddb689 vy lt tan
+943	422	#d5b067 lt hazelnut brown
+944	869	#745e27 vy dk hazelnut brown
+945	834	#d5c77f vy lt golden olive
+956	613	#d4c7a8 vy lt drab brown
+968	778	#ddadb6 vy lt antique mauve
+969	152	#e09a93 md lt shell pink
+970	3687	#c65375 mauve
+972	3803	#a83255 dk mauve
+975	828	#b9e1e9 ul vy very lt blue
+976	3752	#9ab3cd vy lt antique blue
+977	334	#5f8da9 md baby blue
+978	322	#467194 dk dark baby blue
+979	312	#2e597c vy dk baby blue
+1001	976	#cb8234 md golden brown
+1002	977	#db9851 lt golden brown
+1003	3853	#e58632 dk autumn gold
+1003	921	#e26132 copper
+1003	922	#ec9163 lt copper
+1004	920	#cf501e md copper
+1005	498	#a4132b dk red
+1005	816	#940b24 garnet
+1006	304	#b31e32 md red
+1007	3772	#aa7959 vy dk desert sand
+1007	3858	#93483e md rosewood
+1008	3773	#bb8871 md desert sand
+1009	3770	#fff3e1 vy lt tawny
+1009	3773	#bb8871 md desert sand
+1010	3856	#f5c3a9 ul vy lt mahogany
+1010	951	#ffddc6 lt tawny
+1011	948	#fddcc5 vy lt peach
+1012	3779	#efbdba ul vy lt terra cotta
+1012	754	#f6c4b7 lt peach
+1012	967	#ffc9b4 vy lt apricot
+1013	3778	#da8e7f lt terra cotta
+1014	335	#d64a5f rose
+1014	355	#a5463c dk terra cotta
+1015	3777	#8e3230 vy dk terra cotta
+1016	3727	#c98c97 lt antique mauve
+1017	316	#b56f7c md antique mauve
+1018	3726	#a45561 dk antique mauve
+1019	315	#903e4e md dk antique mauve
+1019	3802	#7c2a40 vy dk antique mauve
+1020	3713	#ffd5d5 vy lt salmon
+1021	761	#f2acac lt salmon
+1022	760	#e6858f salmon
+1023	3712	#da6270 md salmon
+1024	3328	#ce3f54 dk salmon
+1025	347	#bf2642 vy dk salmon
+1026	225	#ffd5d5 ul vy lt shell pink
+1027	3722	#c16363 md shell pink
+1028	3685	#851531 vy dk mauve
+1029	915	#90004f dk plum
+1030	155	#948db3 md dk blue violet
+1030	3746	#746896 dk blue violet
+1031	3753	#cddbe8 ul vy lt antique blue
+1032	3752	#9ab3cd vy lt antique blue
+1033	932	#80a3ba lt antique blue
+1034	931	#46728c md antique blue
+1035	930	#316274 dk antique blue
+1036	3750	#1b3e49 vy dk antique blue
+1037	3756	#e7f9f9 ul vy lt baby blue
+1038	519	#6fb1c1 sky blue
+1039	518	#4d91a4 lt wedgewood
+1040	3023	#aeab8a lt brown gray
+1040	647	#959884 md beaver gray
+1041	844	#31372d ul dk beaver gray
+1042	504	#b2d4bd vy lt blue green
+1043	14	#d0fbb2 apple green pale
+1043	369	#d2ebc5 vy lt pistachio green
+1044	895	#1b5100 vy dk hunter green
+1045	436	#b58c53 tan
+1046	435	#a0743e vy lt brown
+1047	402	#f7a170 vy lt mahogany
+1048	3776	#ce7535 lt mahogany
+1049	301	#af5b2a md mahogany
+1049	3826	#b66e2a golden brown
+1050	3781	#574d2a dk mocha brown
+1060	3811	#b4e0e9 vy lt turquoise
+1062	598	#82c1cd lt turquoise
+1064	597	#57a2b1 turquoise
+1066	3809	#1e6a79 vy dk turquoise
+1066	3810	#3a8594 dk turquoise
+1068	3808	#0b525d ul vy dk turquoise
+1070	992	#7ecdaf vy lt aquamarine
+1072	992	#4aac88 lt aquamarine
+1072	992	#4aac88 vy lt aquamarine
+1074	3814	#228c69 aquamarine
+1074	3848	#3c8b6e md teal green
+1076	3847	#2b6f51 dk teal green
+1076	991	#0b6d4c dk aquamarine
+1080	842	#d9c2a8 vy lt beige brown
+1082	841	#b39a7d lt beige brown
+1084	840	#967954 md beige brown
+1086	839	#6a4726 dk beige brown
+1088	938	#3e2200 ul dk coffee brown
+1089	3843	#0493be electric blue
+1089	3845	#04baae md bright turquoise
+1090	3846	#44dec7 lt bright turquoise
+1092	964	#b4f2df lt seagreen
+1094	605	#ffaac5 vy lt cranberry
+1096	3753	#cddbe8 ul vy lt antique blue
+1098	3801	#f03646 vy dk melon
+1203	105	#a5765a variegated tan/brown
+1203	107	#d6527a variegated carnation
+1203	57	#e54a5a variegated red
+1204	107	#d6527a variegated carnation
+1206	115	#82192a variegated garnet
+1209	52	#8c7ab6 variegated violet
+1209	94	#b5c385 variegated khaki green
+1210	121	#7bb4d6 variegated delft blue
+1213	125	#63b47c variegated seafoam green
+1213	99	#bd6c7b variegated mauve
+1215	92	#c5ce95 variegated avocado
+1217	103	#426da2 variegated royal blue
+1217	90	#e6bf4a variegated yellow
+1218	106	#f65b3c variegated coral
+1218	111	#bd8e22 variegated mustard
+1218	69	#c48c73 variegated terra cotta
+1220	51	#cf5232 variegated burnt orange
+4146	950	#ebc8b3 lt desert sand
+5975	356	#d37863 md terra cotta
+5975	3830	#c35a4c terra cotta
+8581	3022	#84835c md brown gray
+8581	646	#707864 dk beaver gray
+9046	321	#c32a3c red
+9159	3841	#bfdbe7 pale baby blue
+9159	828	#b9e1e9 ul vy very lt blue
+9575	758	#eda394 vy lt terra cotta

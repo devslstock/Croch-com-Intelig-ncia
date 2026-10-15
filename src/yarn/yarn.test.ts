@@ -1,3 +1,4 @@
+import anchorCsv from './data/ponto-cruz/Anchor__Mouline.csv?raw'
 import dmcCsv from './data/ponto-cruz/DMC__Mouline.csv?raw'
 import { describe, expect, it } from 'vitest'
 import type { ChartResult } from '../engine/types'
@@ -75,5 +76,15 @@ describe('fios', () => {
   it('CIEDE2000 bate com o par de referência de Sharma et al.', () => {
     expect(deltaE2000([50, 2.6772, -79.7751], [50, 0, -82.7485])).toBeCloseTo(2.0425, 3)
     expect(deltaE2000([50, 2.5, 0], [73, 25, -18])).toBeCloseTo(27.1492, 3)
+  })
+
+  it('carrega a tabela Anchor com equivalentes DMC no nome', () => {
+    const anchor = parseYarnCsv('Anchor__Mouline', 'Anchor', 'Mouline', anchorCsv)
+    expect(anchor.colors.length).toBe(475)
+    expect(new Set(anchor.colors.map((c) => c.code)).size).toBe(475)
+    const preto = anchor.colors.find((c) => c.code === '403')!
+    expect(preto.hex).toBe('#000000')
+    expect(preto.name).toContain('DMC 310')
+    expect(anchor.colors.find((c) => c.code === '59')!.name).toContain('DMC 150, 326, 3350, 3831, 600')
   })
 })
