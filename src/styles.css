@@ -53,3 +53,16 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .legend li { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
 .legend li span:last-child { color: var(--muted); margin-left: auto; }
 .swatch { width: 22px; height: 22px; border-radius: 5px; border: 1px solid rgba(0, 0, 0, 0.4); flex: none; }
+.swatch--lg { width: 40px; height: 40px; border-radius: 8px; margin-top: 4px; }
+.yarn-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.yarn-legend li { display: flex; gap: 12px; align-items: flex-start; }
+.yarn-legend__body { flex: 1; min-width: 0; }
+.yarn-legend__head { display: flex; align-items: center; gap: 10px; }
+.yarn-input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); font-size: 1rem; font-weight: 600; }
+.yarn-legend__count { color: var(--muted); font-size: 0.9rem; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.chips__label { color: var(--muted); font-size: 0.85rem; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.chip__dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.3); vertical-align: -2px; }
+.shop { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.shop th, .shop td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }

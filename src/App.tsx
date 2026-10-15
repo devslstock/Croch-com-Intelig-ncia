@@ -4,6 +4,9 @@ import { ChartCanvas } from './components/ChartCanvas'
 import { CropPicker, FULL_CROP, type Crop } from './components/CropPicker'
 import { generateChart } from './engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from './engine/pipeline'
+import { YarnLegend } from './components/YarnLegend'
+import { YARN_PALETTES } from './yarn/library'
+import { matchPalette, shoppingList } from './yarn/yarn'
 import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide } from './engine/types'
 
 const MAX_SIDE = 1600
@@ -42,6 +45,8 @@ export function App() {
   const [chart, setChart] = useState<ChartResult | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [yarnId, setYarnId] = useState('')
+  const [picked, setPicked] = useState<Record<string, string>>({})
   const run = useRef(0)
 
   useEffect(() => {
@@ -61,6 +66,7 @@ export function App() {
         const result = await generateChart(raw, params)
         if (id === run.current) {
           setChart(result)
+          setPicked({})
           setError(null)
         }
       } catch (e) {
@@ -84,6 +90,10 @@ export function App() {
     }
   }
 
+  const yarn = YARN_PALETTES.find((y) => y.id === yarnId)
+  const matches = useMemo(() => (chart && yarn ? matchPalette(chart, yarn, picked) : []), [chart, yarn, picked])
+  const shopping = useMemo(() => shoppingList(matches), [matches])
+  const legendLabels = useMemo(() => Object.fromEntries(matches.map((m) => [m.letter, `${m.best.yarn.code} ${m.best.yarn.name}`.trim()])), [matches])
   const options: RenderOptions = useMemo(() => ({ cell: zoom, symbols, startSide, legend: false }), [zoom, symbols, startSide])
   const set = <K extends keyof EngineParams>(k: K, v: EngineParams[K]) => setParams((p) => ({ ...p, [k]: v }))
 
@@ -101,7 +111,7 @@ export function App() {
 
   const download = async () => {
     if (!chart) return
-    const blob = await chartToPngBlob(chart, { cell: 20, symbols: true, startSide })
+    const blob = await chartToPngBlob(chart, { cell: 20, symbols: true, startSide, legendLabels })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `${loaded?.name || 'grafico'}-tramado.png`
@@ -163,6 +173,15 @@ export function App() {
                 </select>
               </label>
             </div>
+            <label className="field">
+              <span>Fio</span>
+              <select value={yarnId} onChange={(e) => { setYarnId(e.target.value); setPicked({}) }}>
+                <option value="">Cores livres</option>
+                {YARN_PALETTES.map((y) => (
+                  <option key={y.id} value={y.id}>{y.brand} {y.line}</option>
+                ))}
+              </select>
+            </label>
             <label className="check">
               <input type="checkbox" checked={params.cleanSpeckles} onChange={(e) => set('cleanSpeckles', e.target.checked)} />
               Limpar pontos soltos
@@ -192,7 +211,10 @@ export function App() {
               <ChartCanvas chart={chart} options={options} />
             </div>
 
-            <h3>Cores</h3>
+            <h3>Cores{yarn ? ` · ${yarn.brand} ${yarn.line}` : ''}</h3>
+            {yarn ? (
+              <YarnLegend chart={chart} yarn={yarn} matches={matches} onChoose={(letter, code) => setPicked((p) => ({ ...p, [letter]: code }))} />
+            ) : (
             <ul className="legend">
               {chart.palette.map((p) => (
                 <li key={p.letter}>
@@ -201,6 +223,24 @@ export function App() {
                 </li>
               ))}
             </ul>
+            )}
+            {yarn && (
+              <>
+                <h3>Lista de compras</h3>
+                <table className="shop">
+                  <thead><tr><th>Fio</th><th>Cores</th><th>Pontos</th></tr></thead>
+                  <tbody>
+                    {shopping.map((i) => (
+                      <tr key={i.yarn.code}>
+                        <td><span className="chip__dot" style={{ background: i.yarn.hex }} /> <b>{i.yarn.code}</b> {i.yarn.name}</td>
+                        <td>{i.letters.join(', ')}</td>
+                        <td>{i.stitches.toLocaleString('pt-BR')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
             <button className="btn btn--primary" onClick={download}>Baixar imagem (PNG)</button>
           </section>
         )}

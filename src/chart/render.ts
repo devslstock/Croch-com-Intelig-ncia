@@ -6,6 +6,8 @@ export interface RenderOptions {
   startSide: StartSide
   /** Desenha a legenda (letra, cor e quantidade de pontos) abaixo do gráfico. */
   legend: boolean
+  /** Fio escolhido por letra ("8176 Off-White"), mostrado na legenda. */
+  legendLabels?: Record<string, string>
 }
 
 const MARGIN = 30
@@ -133,7 +135,7 @@ export function drawChart(ctx: CanvasRenderingContext2D, chart: ChartResult, o: 
       ctx.lineWidth = 1
       ctx.strokeRect(lx + 0.5, ly - 8.5, 20, 18)
       ctx.fillStyle = '#222222'
-      ctx.fillText(`${p.letter} ${p.symbol}  ${p.count} pontos`, lx + 28, ly)
+      ctx.fillText(`${p.letter} ${p.symbol}  ${o.legendLabels?.[p.letter] ? o.legendLabels[p.letter] + ' · ' : ''}${p.count} pontos`, lx + 28, ly)
     })
   }
 }
