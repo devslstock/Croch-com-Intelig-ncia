@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { chartToPngBlob, type RenderOptions } from '../chart/render'
-import { ChartCanvas } from '../components/ChartCanvas'
+import { shoppingSheetToPng } from '../chart/shoppingPng'
+import { AppBar } from '../components/AppBar'
+import { ChartCanvas, type ViewMode } from '../components/ChartCanvas'
+import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
+import { YarnLegend } from '../components/YarnLegend'
 import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
-import { shoppingSheetToPng } from '../chart/shoppingPng'
-import { YarnLegend } from '../components/YarnLegend'
-import { KIND_LABEL, YARN_PALETTES } from '../yarn/library'
-import { matchPalette, shoppingList } from '../yarn/yarn'
+import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide, type Style } from '../engine/types'
 import type { SavedChart, SavedChartInput } from '../storage/charts'
 import { toChartResult } from '../storage/charts'
-import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide } from '../engine/types'
+import { KIND_LABEL, YARN_PALETTES } from '../yarn/library'
+import { matchPalette, shoppingList } from '../yarn/yarn'
 
 const MAX_SIDE = 1600
+const PREVIEW = { width: 28, colors: 8 }
 
 interface Loaded {
   bitmap: ImageBitmap
@@ -38,17 +41,25 @@ function cropToRaw(bitmap: ImageBitmap, crop: Crop): RawImage {
   return { data, width, height }
 }
 
+const pad = (n: number) => String(n).padStart(2, '0')
+const today = () => {
+  const d = new Date()
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
+}
+
+function download(blob: Blob, filename: string) {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+}
+
 export interface ConverterProps {
   /** Gráfico salvo para abrir sem foto (modo visualização). */
   initial?: SavedChart
   onBack: () => void
   onSave: (input: SavedChartInput) => Promise<SavedChart>
-}
-
-const pad = (n: number) => String(n).padStart(2, '0')
-const today = () => {
-  const d = new Date()
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
 }
 
 export function Converter({ initial, onBack, onSave }: ConverterProps) {
@@ -58,7 +69,9 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
   const [startSide, setStartSide] = useState<StartSide>(() => initial?.startSide ?? ((localStorage.getItem('tramado:side') as StartSide) || 'right'))
   const [symbols, setSymbols] = useState(false)
   const [zoom, setZoom] = useState(14)
+  const [tab, setTab] = useState<ViewMode>('grafico')
   const [chart, setChart] = useState<ChartResult | null>(() => (initial ? toChartResult(initial) : null))
+  const [previews, setPreviews] = useState<Partial<Record<Style, ChartResult>>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Abre já com um fio escolhido, para a legenda e as imagens sempre trazerem o número das linhas.
@@ -71,10 +84,11 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
   })
   const [picked, setPicked] = useState<Record<string, string>>(() => initial?.picked ?? {})
   const [savedId, setSavedId] = useState<string | undefined>(initial?.id)
-  const [saveName, setSaveName] = useState(initial?.name ?? '')
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
-  const baseName = loaded?.name ?? initial?.name ?? 'grafico'
+  const [name, setName] = useState(initial?.name ?? `Meu gráfico · ${today()}`)
+  const [nameTouched, setNameTouched] = useState(Boolean(initial))
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const run = useRef(0)
+  const previewRun = useRef(0)
 
   useEffect(() => {
     if (!initial) localStorage.setItem('tramado:side', startSide)
@@ -110,6 +124,25 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
     return () => clearTimeout(t)
   }, [loaded, crop, params])
 
+  // Miniaturas dos estilos (pequenas e rápidas): só mudam com a foto e o recorte.
+  useEffect(() => {
+    if (!loaded) return
+    const id = ++previewRun.current
+    const t = setTimeout(async () => {
+      try {
+        const raw = cropToRaw(loaded.bitmap, crop)
+        const [realista, pb] = await Promise.all([
+          generateChart(raw, { ...DEFAULT_PARAMS, ...PREVIEW, style: 'realista' }),
+          generateChart(raw, { ...DEFAULT_PARAMS, ...PREVIEW, style: 'pb' }),
+        ])
+        if (id === previewRun.current) setPreviews({ realista, pb })
+      } catch {
+        /* miniaturas são enfeite: sem elas a tela continua funcionando */
+      }
+    }, 400)
+    return () => clearTimeout(t)
+  }, [loaded, crop])
+
   const onFile = async (file: File | undefined) => {
     if (!file) return
     try {
@@ -117,6 +150,11 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
       setLoaded({ bitmap, url: URL.createObjectURL(file), name: file.name.replace(/\.[^.]+$/, '') })
       setCrop(FULL_CROP)
       setChart(null)
+      setPreviews({})
+      setError(null)
+      setSavedId(undefined)
+      setSaveMsg(null)
+      if (!nameTouched) setName(`Meu gráfico · ${today()}`)
     } catch {
       setError('Não consegui abrir essa foto. Tente um JPG ou PNG.')
     }
@@ -141,14 +179,11 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
     return { x: 0, y: (1 - h) / 2, w: 1, h }
   }
 
-  const download = async () => {
+  const baseName = name.trim() || loaded?.name || 'grafico'
+
+  const downloadChart = async () => {
     if (!chart) return
-    const blob = await chartToPngBlob(chart, { cell: 20, symbols: true, startSide, legendLabels })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${baseName}-tramado.png`
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    download(await chartToPngBlob(chart, { cell: 20, symbols: true, startSide, legendLabels }), `${baseName}-tramado.png`)
   }
 
   const downloadShopping = async () => {
@@ -160,176 +195,219 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
       height: chart.height,
       items: shopping,
     })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${baseName}-lista-de-compras.png`
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    download(blob, `${baseName}-lista-de-compras.png`)
   }
 
   const save = async () => {
     if (!chart) return
-    const name = saveName.trim() || `${baseName} · ${today()}`
     try {
-      const saved = await onSave({ id: savedId, name, chart, yarnId, picked, startSide })
+      const saved = await onSave({ id: savedId, name: name.trim() || `Meu gráfico · ${today()}`, chart, yarnId, picked, startSide })
       setSavedId(saved.id)
-      setSaveName(saved.name)
-      setSaveMsg('Salvo em “Meus gráficos”.')
+      setName(saved.name)
+      setSaveMsg({ ok: true, text: 'Salvo em “Meus gráficos”.' })
     } catch (e) {
-      setSaveMsg(e instanceof Error ? e.message : 'Não foi possível salvar.')
+      setSaveMsg({ ok: false, text: e instanceof Error ? e.message : 'Não foi possível salvar.' })
     }
   }
 
-  return (
-    <div className="app">
-      <header className="top top--bar">
-        <button className="btn btn--ghost" onClick={onBack}>← Início</button>
-        <h1>{initial ? initial.name : 'Foto em gráfico'}</h1>
-      </header>
+  const styleTiles: Array<{ id: Style; label: string }> = [
+    { id: 'realista', label: 'Realista' },
+    { id: 'pb', label: 'Preto e branco' },
+  ]
 
-      <main>
-        {!initial && (
-        <section className="card">
-          <label className="btn btn--primary">
-            {loaded ? 'Trocar foto' : 'Escolher foto'}
-            <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+  return (
+    <div className="studio-page">
+      <AppBar title={initial ? initial.name : 'Foto em gráfico'} onBack={onBack} />
+
+      <div className="studio">
+        <aside className="studio__side" aria-label="Opções do gráfico">
+          <label className="field">
+            <span className="side-label">Nome do gráfico</span>
+            <input className="input" value={name} onChange={(e) => { setName(e.target.value); setNameTouched(true); setSaveMsg(null) }} />
           </label>
-          <p className="hint">A foto fica no seu celular: ela não é enviada nem guardada.</p>
+
+          {!initial && (
+            <div>
+              <span className="side-label">Estilo</span>
+              <div className="styles" role="radiogroup" aria-label="Estilo do gráfico">
+                {styleTiles.map((s) => (
+                  <button
+                    key={s.id}
+                    role="radio"
+                    aria-checked={params.style === s.id}
+                    className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
+                    onClick={() => set('style', s.id)}
+                    disabled={!loaded}
+                  >
+                    <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
+                    <span>{s.label}</span>
+                  </button>
+                ))}
+                <div className="style-tile style-tile--soon" aria-disabled="true">
+                  <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🧸</span></span>
+                  <span>Fofinho</span>
+                  <em className="badge badge--tiny">Em breve</em>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <label className="field">
+            <span className="side-label">Fio</span>
+            <select value={yarnId} onChange={(e) => { setYarnId(e.target.value); setPicked({}) }}>
+              <option value="">Cores livres (sem fio)</option>
+              {(['croche', 'ponto-cruz'] as const).map((kind) => {
+                const list = YARN_PALETTES.filter((y) => y.kind === kind)
+                if (list.length === 0) {
+                  return kind === 'croche' ? <option key={kind} disabled>Crochê: tabela de cores ainda não incluída</option> : null
+                }
+                return (
+                  <optgroup key={kind} label={KIND_LABEL[kind]}>
+                    {list.map((y) => (
+                      <option key={y.id} value={y.id}>{y.brand} {y.line}</option>
+                    ))}
+                  </optgroup>
+                )
+              })}
+            </select>
+          </label>
 
           {loaded && (
-            <>
-              <CropPicker src={loaded.url} aspect={aspect} crop={crop} onChange={setCrop} />
-              <div className="row">
-                <button className="btn" onClick={() => setCrop(FULL_CROP)}>Foto inteira</button>
-                <button className="btn" onClick={() => setCrop(centered34())}>Recorte 3:4</button>
+            <details className="fold">
+              <summary>Recortar a foto</summary>
+              <div className="fold__body">
+                <CropPicker src={loaded.url} aspect={aspect} crop={crop} onChange={setCrop} />
+                <div className="row">
+                  <button className="btn btn--sm" onClick={() => setCrop(FULL_CROP)}>Foto inteira</button>
+                  <button className="btn btn--sm" onClick={() => setCrop(centered34())}>Recorte 3:4</button>
+                </div>
+                <p className="hint">Arraste sobre a foto para escolher a área.</p>
               </div>
-              <p className="hint">Arraste sobre a foto para escolher a área.</p>
+            </details>
+          )}
+
+          {loaded && (
+            <details className="fold">
+              <summary>Ajustes</summary>
+              <div className="fold__body">
+                <label className="field">
+                  <span>Largura: {params.width} pontos</span>
+                  <input type="range" min={MIN_WIDTH} max={MAX_WIDTH} value={params.width} onChange={(e) => set('width', Number(e.target.value))} />
+                </label>
+                <label className="field">
+                  <span>Cores: {params.colors}</span>
+                  <input type="range" min={MIN_COLORS} max={MAX_COLORS} value={params.colors} onChange={(e) => set('colors', Number(e.target.value))} />
+                </label>
+                <label className="field">
+                  <span>Carreira 1 começa pela</span>
+                  <select value={startSide} onChange={(e) => setStartSide(e.target.value as StartSide)}>
+                    <option value="right">Direita</option>
+                    <option value="left">Esquerda</option>
+                  </select>
+                </label>
+                <label className="check">
+                  <input type="checkbox" checked={params.cleanSpeckles} onChange={(e) => set('cleanSpeckles', e.target.checked)} />
+                  Limpar pontos soltos
+                </label>
+              </div>
+            </details>
+          )}
+        </aside>
+
+        <main className="studio__main">
+          <div className="toolbar">
+            {!initial ? (
+              <label className="btn">
+                {loaded ? 'Trocar foto' : 'Escolher foto'}
+                <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+              </label>
+            ) : <span />}
+            <button className="btn btn--primary" onClick={save} disabled={!chart}>{savedId ? 'Atualizar gráfico' : 'Salvar gráfico'}</button>
+          </div>
+          {saveMsg && <p className={saveMsg.ok ? 'ok' : 'error'} role="status">{saveMsg.text}</p>}
+          {error && <p className="error" role="alert">{error}</p>}
+
+          {!initial && !loaded && (
+            <div className="card dropzone">
+              <p><b>Escolha uma foto</b> para ver o gráfico aparecer.</p>
+              <label className="btn btn--primary">
+                Escolher foto
+                <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+              </label>
+              <p className="hint">A foto fica no seu aparelho: ela não é enviada nem guardada.</p>
+            </div>
+          )}
+
+          {chart && (
+            <>
+              <div className="viewtabs" role="tablist">
+                <button role="tab" aria-selected={tab === 'grafico'} className={tab === 'grafico' ? 'viewtab viewtab--on' : 'viewtab'} onClick={() => setTab('grafico')}>Gráfico</button>
+                <button role="tab" aria-selected={tab === 'croche'} className={tab === 'croche' ? 'viewtab viewtab--on' : 'viewtab'} onClick={() => setTab('croche')}>Em crochê</button>
+              </div>
+
+              <section className="card chartcard">
+                <div className="chartcard__bar">
+                  <span className="chartcard__info">
+                    {chart.width} × {chart.height} pontos <small>({(chart.width * chart.height).toLocaleString('pt-BR')})</small>
+                    {busy && <span className="busy"> · atualizando…</span>}
+                  </span>
+                  {tab === 'grafico' && (
+                    <label className="check check--inline">
+                      <input type="checkbox" checked={symbols} onChange={(e) => setSymbols(e.target.checked)} />
+                      Símbolos
+                    </label>
+                  )}
+                  <label className="field field--inline">
+                    <span>Zoom</span>
+                    <input type="range" min={4} max={28} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+                  </label>
+                </div>
+                <div className="chart-scroll">
+                  <ChartCanvas chart={chart} options={options} mode={tab} />
+                </div>
+              </section>
+
+              <section className="card">
+                <h2>Cores{yarn ? ` · ${yarn.brand} ${yarn.line}` : ''}</h2>
+                {yarn ? (
+                  <YarnLegend chart={chart} yarn={yarn} matches={matches} onChoose={(letter, code) => setPicked((p) => ({ ...p, [letter]: code }))} />
+                ) : (
+                  <ul className="legend">
+                    {chart.palette.map((p) => (
+                      <li key={p.letter}>
+                        <span className="swatch" style={{ background: p.hex }} />
+                        <b>{p.letter}</b> {p.symbol} <span>{p.count.toLocaleString('pt-BR')} pontos</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!yarn && <p className="hint">Sem número de fio. Escolha um fio em “Fio” para ver o número das linhas.</p>}
+              </section>
+
+              {yarn && (
+                <section className="card">
+                  <h2>Lista de compras</h2>
+                  <table className="shop">
+                    <thead><tr><th>Fio</th><th>Cores</th><th>Pontos</th></tr></thead>
+                    <tbody>
+                      {shopping.map((i) => (
+                        <tr key={i.yarn.code}>
+                          <td><span className="chip__dot" style={{ background: i.yarn.hex }} /> <b>{i.yarn.code}</b> {i.yarn.name}</td>
+                          <td>{i.letters.join(', ')}</td>
+                          <td>{i.stitches.toLocaleString('pt-BR')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <button className="btn" onClick={downloadShopping}>Baixar lista de compras (PNG)</button>
+                </section>
+              )}
+
+              <button className="btn btn--primary" onClick={downloadChart}>Baixar gráfico (PNG)</button>
             </>
           )}
-        </section>
-        )}
-
-        {loaded && (
-          <section className="card">
-            <h2>Ajustes</h2>
-            <label className="field">
-              <span>Largura: {params.width} pontos</span>
-              <input type="range" min={MIN_WIDTH} max={MAX_WIDTH} value={params.width} onChange={(e) => set('width', Number(e.target.value))} />
-            </label>
-            <label className="field">
-              <span>Cores: {params.colors}</span>
-              <input type="range" min={MIN_COLORS} max={MAX_COLORS} value={params.colors} onChange={(e) => set('colors', Number(e.target.value))} />
-            </label>
-            <div className="row">
-              <label className="field">
-                <span>Estilo</span>
-                <select value={params.style} onChange={(e) => set('style', e.target.value as EngineParams['style'])}>
-                  <option value="realista">Realista</option>
-                  <option value="pb">Preto e branco</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Carreira 1 começa pela</span>
-                <select value={startSide} onChange={(e) => setStartSide(e.target.value as StartSide)}>
-                  <option value="right">Direita</option>
-                  <option value="left">Esquerda</option>
-                </select>
-              </label>
-            </div>
-            <label className="field">
-              <span>Fio</span>
-              <select value={yarnId} onChange={(e) => { setYarnId(e.target.value); setPicked({}) }}>
-                <option value="">Cores livres (sem fio)</option>
-                {(['croche', 'ponto-cruz'] as const).map((kind) => {
-                  const list = YARN_PALETTES.filter((y) => y.kind === kind)
-                  if (list.length === 0) {
-                    return kind === 'croche' ? <option key={kind} disabled>Crochê: tabela de cores ainda não incluída</option> : null
-                  }
-                  return (
-                    <optgroup key={kind} label={KIND_LABEL[kind]}>
-                      {list.map((y) => (
-                        <option key={y.id} value={y.id}>{y.brand} {y.line}</option>
-                      ))}
-                    </optgroup>
-                  )
-                })}
-              </select>
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={params.cleanSpeckles} onChange={(e) => set('cleanSpeckles', e.target.checked)} />
-              Limpar pontos soltos
-            </label>
-          </section>
-        )}
-
-        {error && <p className="error" role="alert">{error}</p>}
-
-        {chart && (
-          <section className="card">
-            <h2>
-              Gráfico {chart.width} × {chart.height} <small>({(chart.width * chart.height).toLocaleString('pt-BR')} pontos)</small>
-              {busy && <span className="busy"> · atualizando…</span>}
-            </h2>
-            <div className="row">
-              <label className="check">
-                <input type="checkbox" checked={symbols} onChange={(e) => setSymbols(e.target.checked)} />
-                Símbolos nos pontos
-              </label>
-              <label className="field field--inline">
-                <span>Zoom</span>
-                <input type="range" min={4} max={28} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
-              </label>
-            </div>
-            <div className="chart-scroll">
-              <ChartCanvas chart={chart} options={options} />
-            </div>
-
-            <h3>Cores{yarn ? ` · ${yarn.brand} ${yarn.line}` : ''}</h3>
-            {yarn ? (
-              <YarnLegend chart={chart} yarn={yarn} matches={matches} onChoose={(letter, code) => setPicked((p) => ({ ...p, [letter]: code }))} />
-            ) : (
-            <ul className="legend">
-              {chart.palette.map((p) => (
-                <li key={p.letter}>
-                  <span className="swatch" style={{ background: p.hex }} />
-                  <b>{p.letter}</b> {p.symbol} <span>{p.count.toLocaleString('pt-BR')} pontos</span>
-                </li>
-              ))}
-            </ul>
-            )}
-            {!yarn && <p className="hint">Sem número de fio. Escolha um fio em “Fio” (em Ajustes) para ver o número das linhas.</p>}
-            {yarn && (
-              <>
-                <h3>Lista de compras</h3>
-                <table className="shop">
-                  <thead><tr><th>Fio</th><th>Cores</th><th>Pontos</th></tr></thead>
-                  <tbody>
-                    {shopping.map((i) => (
-                      <tr key={i.yarn.code}>
-                        <td><span className="chip__dot" style={{ background: i.yarn.hex }} /> <b>{i.yarn.code}</b> {i.yarn.name}</td>
-                        <td>{i.letters.join(', ')}</td>
-                        <td>{i.stitches.toLocaleString('pt-BR')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <button className="btn" onClick={downloadShopping}>Baixar lista de compras (PNG)</button>
-              </>
-            )}
-            <button className="btn btn--primary" onClick={download}>Baixar imagem (PNG)</button>
-
-            <h3>Salvar</h3>
-            <label className="field">
-              <span>Nome do gráfico</span>
-              <input className="input" value={saveName} placeholder={`${baseName} · ${today()}`} onChange={(e) => { setSaveName(e.target.value); setSaveMsg(null) }} />
-            </label>
-            <button className="btn" onClick={save}>{savedId ? 'Atualizar em Meus gráficos' : 'Salvar em Meus gráficos'}</button>
-            {saveMsg && <p className="hint" role="status">{saveMsg}</p>}
-          </section>
-        )}
-
-        {!loaded && !chart && <p className="empty">Escolha uma foto para ver o gráfico aparecer.</p>}
-      </main>
+        </main>
+      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { AppBar } from '../components/AppBar'
 import { ChartThumb } from '../components/ChartThumb'
 import { toChartResult, type ChartStore, type SavedChart } from '../storage/charts'
 import { YARN_PALETTES } from '../yarn/library'
@@ -20,7 +21,7 @@ const TOOLS: Tool[] = [
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
 export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () => void; onOpen: (c: SavedChart) => void }) {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -50,13 +51,12 @@ export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () =>
   }
 
   return (
-    <div className="app">
-      <header className="top top--bar top--between">
-        <div>
-          <h1>Olá, {first}!</h1>
-          <p>O que vamos criar hoje?</p>
-        </div>
-        <button className="btn btn--ghost" onClick={signOut}>Sair</button>
+    <div className="studio-page">
+      <AppBar />
+      <div className="app">
+      <header className="top">
+        <h1>Olá, {first}!</h1>
+        <p>O que vamos criar hoje?</p>
       </header>
 
       <main>
@@ -125,6 +125,7 @@ export function Home({ store, onNew, onOpen }: { store: ChartStore; onNew: () =>
           })}
         </section>
       </main>
+      </div>
     </div>
   )
 }
