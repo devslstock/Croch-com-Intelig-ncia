@@ -5,6 +5,7 @@ import { AppBar } from '../components/AppBar'
 import { ChartCanvas, type ViewMode } from '../components/ChartCanvas'
 import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
+import { Stepper } from '../components/Stepper'
 import { YarnLegend } from '../components/YarnLegend'
 import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
@@ -230,24 +231,27 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
             <div>
               <span className="side-label">Estilo</span>
               <div className="styles" role="radiogroup" aria-label="Estilo do gráfico">
-                {styleTiles.map((s) => (
-                  <button
-                    key={s.id}
-                    role="radio"
-                    aria-checked={params.style === s.id}
-                    className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
-                    onClick={() => set('style', s.id)}
-                    disabled={!loaded}
-                  >
-                    <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
-                    <span>{s.label}</span>
-                  </button>
-                ))}
-                <div className="style-tile style-tile--soon" aria-disabled="true">
-                  <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🧸</span></span>
-                  <span>Fofinho</span>
-                  <em className="badge badge--tiny">Em breve</em>
-                </div>
+                {[styleTiles[0], null, styleTiles[1]].map((s) =>
+                  s ? (
+                    <button
+                      key={s.id}
+                      role="radio"
+                      aria-checked={params.style === s.id}
+                      className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
+                      onClick={() => set('style', s.id)}
+                      disabled={!loaded}
+                    >
+                      <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
+                      <span>{s.label}</span>
+                    </button>
+                  ) : (
+                    <div key="fofinho" className="style-tile style-tile--soon" aria-disabled="true">
+                      <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🧸</span></span>
+                      <span>Fofinho</span>
+                      <em className="badge badge--tiny">Em breve</em>
+                    </div>
+                  ),
+                )}
               </div>
             </div>
           )}
@@ -264,7 +268,7 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
                 return (
                   <optgroup key={kind} label={KIND_LABEL[kind]}>
                     {list.map((y) => (
-                      <option key={y.id} value={y.id}>{y.brand} {y.line}</option>
+                      <option key={y.id} value={y.id}>{y.brand} {y.line} · {y.colors.length} cores</option>
                     ))}
                   </optgroup>
                 )
@@ -273,42 +277,38 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
           </label>
 
           {loaded && (
-            <details className="fold">
-              <summary>Recortar a foto</summary>
-              <div className="fold__body">
-                <CropPicker src={loaded.url} aspect={aspect} crop={crop} onChange={setCrop} />
-                <div className="row">
-                  <button className="btn btn--sm" onClick={() => setCrop(FULL_CROP)}>Foto inteira</button>
-                  <button className="btn btn--sm" onClick={() => setCrop(centered34())}>Recorte 3:4</button>
-                </div>
-                <p className="hint">Arraste sobre a foto para escolher a área.</p>
-              </div>
-            </details>
-          )}
-
-          {loaded && (
-            <details className="fold">
+            <details className="fold" open>
               <summary>Ajustes</summary>
               <div className="fold__body">
-                <label className="field">
-                  <span>Largura: {params.width} pontos</span>
-                  <input type="range" min={MIN_WIDTH} max={MAX_WIDTH} value={params.width} onChange={(e) => set('width', Number(e.target.value))} />
-                </label>
-                <label className="field">
-                  <span>Cores: {params.colors}</span>
-                  <input type="range" min={MIN_COLORS} max={MAX_COLORS} value={params.colors} onChange={(e) => set('colors', Number(e.target.value))} />
-                </label>
-                <label className="field">
-                  <span>Carreira 1 começa pela</span>
-                  <select value={startSide} onChange={(e) => setStartSide(e.target.value as StartSide)}>
-                    <option value="right">Direita</option>
-                    <option value="left">Esquerda</option>
-                  </select>
-                </label>
+                <Stepper label="Tamanho" unit="pontos" value={params.width} min={MIN_WIDTH} max={MAX_WIDTH} onChange={(v) => set('width', v)} />
+                <Stepper label="Cores" unit="cores" value={params.colors} min={MIN_COLORS} max={MAX_COLORS} onChange={(v) => set('colors', v)} />
+
+                <div>
+                  <span className="side-label">Recortar</span>
+                  <CropPicker src={loaded.url} aspect={aspect} crop={crop} onChange={setCrop} />
+                  <div className="row row--gap">
+                    <button className="btn btn--sm" onClick={() => setCrop(FULL_CROP)}>Foto inteira</button>
+                    <button className="btn btn--sm" onClick={() => setCrop(centered34())}>Recorte 3:4</button>
+                  </div>
+                  <p className="hint">Arraste sobre a foto para escolher a área.</p>
+                </div>
+
+                <div>
+                  <span className="side-label">Começar a carreira 1 pela</span>
+                  <div className="seg" role="radiogroup" aria-label="Lado em que a carreira 1 começa">
+                    <button role="radio" aria-checked={startSide === 'right'} className={startSide === 'right' ? 'seg__btn seg__btn--on' : 'seg__btn'} onClick={() => setStartSide('right')}>Direita</button>
+                    <button role="radio" aria-checked={startSide === 'left'} className={startSide === 'left' ? 'seg__btn seg__btn--on' : 'seg__btn'} onClick={() => setStartSide('left')}>Esquerda</button>
+                  </div>
+                </div>
+
                 <label className="check">
                   <input type="checkbox" checked={params.cleanSpeckles} onChange={(e) => set('cleanSpeckles', e.target.checked)} />
                   Limpar pontos soltos
                 </label>
+
+                <button className="btn btn--outline" disabled title="Em breve">
+                  Pintar pontos à mão <em className="badge badge--tiny">Em breve</em>
+                </button>
               </div>
             </details>
           )}

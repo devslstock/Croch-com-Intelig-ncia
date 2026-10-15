@@ -160,3 +160,15 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .check--inline { min-height: 36px; }
 .studio .chart-scroll { max-height: 70vh; }
 .studio .chart-canvas { margin: 0 auto; }
+
+/* Opções da lateral: contadores e botões lado a lado */
+.stepper__row { display: flex; align-items: center; gap: 8px; }
+.stepper__btn { width: 44px; height: 44px; flex: none; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--brand); font-size: 1.4rem; font-weight: 700; cursor: pointer; }
+.stepper__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.stepper__input { width: 72px; min-height: 44px; text-align: center; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1.05rem; font-weight: 600; }
+.stepper__unit { flex: 1; font-weight: 600; font-size: 0.95rem; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg__btn { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1rem; font-weight: 600; cursor: pointer; }
+.seg__btn--on { border: 2px solid var(--brand); background: rgba(122, 59, 94, 0.08); color: var(--brand); }
+.btn--outline { width: 100%; border-color: var(--brand); color: var(--brand); font-weight: 700; gap: 6px; }
+.row--gap { margin-top: 8px; }
