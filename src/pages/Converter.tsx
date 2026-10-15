@@ -194,27 +194,19 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
           <div>
             <span className="side-label">Estilo</span>
             <div className="styles" role="radiogroup" aria-label="Estilo do gráfico">
-              {[styleTiles[0], null, styleTiles[1]].map((s) =>
-                s ? (
-                  <button
-                    key={s.id}
-                    role="radio"
-                    aria-checked={params.style === s.id}
-                    className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
-                    onClick={() => set('style', s.id)}
-                    disabled={!loaded}
-                  >
-                    <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
-                    <span>{s.label}</span>
-                  </button>
-                ) : (
-                  <div key="fofinho" className="style-tile style-tile--soon" aria-disabled="true">
-                    <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🧸</span></span>
-                    <span>Fofinho</span>
-                    <em className="badge badge--tiny">Em breve</em>
-                  </div>
-                ),
-              )}
+              {styleTiles.map((s) => (
+                <button
+                  key={s.id}
+                  role="radio"
+                  aria-checked={params.style === s.id}
+                  className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
+                  onClick={() => set('style', s.id)}
+                  disabled={!loaded}
+                >
+                  <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
+                  <span>{s.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
