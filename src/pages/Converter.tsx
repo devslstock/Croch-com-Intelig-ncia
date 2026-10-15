@@ -5,6 +5,7 @@ import { AppBar } from '../components/AppBar'
 import { ChartCanvas, type ViewMode } from '../components/ChartCanvas'
 import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
+import { PlainLegend } from '../components/PlainLegend'
 import { Stepper } from '../components/Stepper'
 import { YarnLegend } from '../components/YarnLegend'
 import { generateChart } from '../engine/client'
@@ -199,6 +200,17 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
     download(blob, `${baseName}-lista-de-compras.png`)
   }
 
+  /** Ajuste manual: muda a cor no gráfico e o fio sugerido acompanha (a escolha manual de fio dessa cor é descartada). */
+  const changeColor = (letter: string, hex: string) => {
+    setChart((c) => (c ? { ...c, palette: c.palette.map((p) => (p.letter === letter ? { ...p, hex } : p)) } : c))
+    setPicked((p) => {
+      if (!(letter in p)) return p
+      const { [letter]: _drop, ...rest } = p
+      return rest
+    })
+    setSaveMsg(null)
+  }
+
   const save = async () => {
     if (!chart) return
     try {
@@ -370,16 +382,9 @@ export function Converter({ initial, onBack, onSave }: ConverterProps) {
               <section className="card">
                 <h2>Cores{yarn ? ` · ${yarn.brand} ${yarn.line}` : ''}</h2>
                 {yarn ? (
-                  <YarnLegend chart={chart} yarn={yarn} matches={matches} onChoose={(letter, code) => setPicked((p) => ({ ...p, [letter]: code }))} />
+                  <YarnLegend chart={chart} yarn={yarn} matches={matches} onChoose={(letter, code) => setPicked((p) => ({ ...p, [letter]: code }))} onColorChange={changeColor} />
                 ) : (
-                  <ul className="legend">
-                    {chart.palette.map((p) => (
-                      <li key={p.letter}>
-                        <span className="swatch" style={{ background: p.hex }} />
-                        <b>{p.letter}</b> {p.symbol} <span>{p.count.toLocaleString('pt-BR')} pontos</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <PlainLegend chart={chart} onColorChange={changeColor} />
                 )}
                 {!yarn && <p className="hint">Sem número de fio. Escolha um fio em “Fio” para ver o número das linhas.</p>}
               </section>

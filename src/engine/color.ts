@@ -106,3 +106,32 @@ export function deltaE2000(c1: Lab, c2: Lab): number {
   const Rt = -Math.sin(2 * dTheta * rad) * Rc
   return Math.sqrt((dLp / Sl) ** 2 + (dCp / Sc) ** 2 + (dHp / Sh) ** 2 + Rt * (dCp / Sc) * (dHp / Sh))
 }
+
+export function hexToRgb(hex: string): [number, number, number] {
+  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number]
+}
+
+/** RGB (0–255) → HSV (h 0–360, s e v 0–1). Em tons de cinza o matiz não existe: mantém `prevH`. */
+export function rgbToHsv(r: number, g: number, b: number, prevH = 0): { h: number; s: number; v: number } {
+  const R = r / 255
+  const G = g / 255
+  const B = b / 255
+  const max = Math.max(R, G, B)
+  const d = max - Math.min(R, G, B)
+  let h = prevH
+  if (d > 0) {
+    if (max === R) h = ((G - B) / d) % 6
+    else if (max === G) h = (B - R) / d + 2
+    else h = (R - G) / d + 4
+    h = (h * 60 + 360) % 360
+  }
+  return { h, s: max === 0 ? 0 : d / max, v: max }
+}
+
+export function hsvToRgb(h: number, s: number, v: number): [number, number, number] {
+  const f = (n: number) => {
+    const k = (n + h / 60) % 6
+    return v - v * s * Math.max(0, Math.min(k, 4 - k, 1))
+  }
+  return [f(5), f(3), f(1)].map((x) => Math.round(x * 255)) as [number, number, number]
+}

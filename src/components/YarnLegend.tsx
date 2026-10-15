@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import type { ChartResult } from '../engine/types'
+import { ColorPicker } from './ColorPicker'
 import type { ColorMatch, YarnColor, YarnPalette } from '../yarn/yarn'
 
 const label = (y: YarnColor) => `${y.code} ${y.name}`.trim()
@@ -8,12 +10,16 @@ export function YarnLegend({
   yarn,
   matches,
   onChoose,
+  onColorChange,
 }: {
   chart: ChartResult
   yarn: YarnPalette
   matches: ColorMatch[]
   onChoose: (letter: string, code: string) => void
+  /** Ajuste manual da cor (toque na amostra). O fio sugerido acompanha a nova cor. */
+  onColorChange?: (letter: string, hex: string) => void
 }) {
+  const [editing, setEditing] = useState<string | null>(null)
   const listId = `yarn-list-${yarn.id}`
   return (
     <>
@@ -28,7 +34,11 @@ export function YarnLegend({
         const entry = chart.palette.find((p) => p.letter === m.letter)!
         return (
           <li key={m.letter}>
-            <span className="swatch swatch--lg" style={{ background: entry.hex }} title="Cor no gráfico" />
+            {onColorChange ? (
+              <button className="swatch swatch--lg swatch--btn" style={{ background: entry.hex }} title="Ajustar a cor" aria-label={`Ajustar a cor ${m.letter}`} onClick={() => setEditing(editing === m.letter ? null : m.letter)} />
+            ) : (
+              <span className="swatch swatch--lg" style={{ background: entry.hex }} title="Cor no gráfico" />
+            )}
             <div className="yarn-legend__body">
               <div className="yarn-legend__head">
                 <b>{m.letter}</b>
@@ -53,6 +63,9 @@ export function YarnLegend({
                   </button>
                 ))}
               </div>
+              {editing === m.letter && onColorChange && (
+                <ColorPicker hex={entry.hex} onChange={(h) => onColorChange(m.letter, h)} onClose={() => setEditing(null)} />
+              )}
             </div>
           </li>
         )

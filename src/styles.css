@@ -172,3 +172,22 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .seg__btn--on { border: 2px solid var(--brand); background: rgba(122, 59, 94, 0.08); color: var(--brand); }
 .btn--outline { width: 100%; border-color: var(--brand); color: var(--brand); font-weight: 700; gap: 6px; }
 .row--gap { margin-top: 8px; }
+
+/* Ajuste manual de cor */
+.swatch--btn { cursor: pointer; padding: 0; }
+.swatch--btn:hover, .swatch--btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.legend__item--open { grid-column: 1 / -1; flex-wrap: wrap; }
+.legend__picker { width: 100%; }
+.cpicker { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); max-width: 320px; }
+.cpicker__area { position: relative; height: 150px; border-radius: 8px; cursor: crosshair; touch-action: none; background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent); }
+.cpicker__dot { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6); pointer-events: none; }
+.cpicker__row { display: flex; align-items: center; gap: 10px; }
+.cpicker__eye { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+.cpicker__preview { width: 32px; height: 32px; flex: none; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.3); }
+.cpicker__hue { flex: 1; height: 12px; border-radius: 6px; -webkit-appearance: none; appearance: none; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+.cpicker__hue::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--brand); }
+.cpicker__hue::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--brand); }
+.cpicker__rgb { display: flex; gap: 6px; }
+.cpicker__rgb label { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.75rem; color: var(--muted); flex: 1; min-width: 0; }
+.cpicker__rgb input { width: 100%; min-height: 40px; text-align: center; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font-size: 0.95rem; }
+.cpicker__hex { flex: 1.6 !important; }
