@@ -46,13 +46,23 @@ export function App() {
   const [chart, setChart] = useState<ChartResult | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [yarnId, setYarnId] = useState('')
+  // Abre já com um fio escolhido, para a legenda e as imagens sempre trazerem o número das linhas.
+  const [yarnId, setYarnId] = useState(() => {
+    let saved: string | null = null
+    try { saved = localStorage.getItem('tramado:yarn') } catch { /* sem armazenamento */ }
+    if (saved === '') return ''
+    return YARN_PALETTES.find((y) => y.id === saved)?.id ?? YARN_PALETTES[0]?.id ?? ''
+  })
   const [picked, setPicked] = useState<Record<string, string>>({})
   const run = useRef(0)
 
   useEffect(() => {
     localStorage.setItem('tramado:side', startSide)
   }, [startSide])
+
+  useEffect(() => {
+    try { localStorage.setItem('tramado:yarn', yarnId) } catch { /* sem armazenamento */ }
+  }, [yarnId])
 
   useEffect(() => () => { if (loaded) URL.revokeObjectURL(loaded.url) }, [loaded])
 
@@ -253,6 +263,7 @@ export function App() {
               ))}
             </ul>
             )}
+            {!yarn && <p className="hint">Sem número de fio. Escolha um fio em “Fio” (em Ajustes) para ver o número das linhas.</p>}
             {yarn && (
               <>
                 <h3>Lista de compras</h3>

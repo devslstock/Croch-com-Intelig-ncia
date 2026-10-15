@@ -1,6 +1,7 @@
 import dmcCsv from './data/ponto-cruz/DMC__Mouline.csv?raw'
 import { describe, expect, it } from 'vitest'
 import type { ChartResult } from '../engine/types'
+import { deltaE2000 } from '../engine/color'
 import { matchPalette, parseYarnCsv, shoppingList } from './yarn'
 
 const csv = `codigo,nome,hex
@@ -69,5 +70,10 @@ describe('fios', () => {
     expect(new Set(dmc.colors.map((c) => c.code)).size).toBe(489)
     expect(dmc.colors.find((c) => c.code === '310')?.name).toBe('Black')
     expect(dmc.colors.find((c) => c.code === 'B5200')?.hex).toBe('#fafaff')
+  })
+
+  it('CIEDE2000 bate com o par de referência de Sharma et al.', () => {
+    expect(deltaE2000([50, 2.6772, -79.7751], [50, 0, -82.7485])).toBeCloseTo(2.0425, 3)
+    expect(deltaE2000([50, 2.5, 0], [73, 25, -18])).toBeCloseTo(27.1492, 3)
   })
 })

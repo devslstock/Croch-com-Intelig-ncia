@@ -1,4 +1,4 @@
-import { deltaE, rgbToLab, type Lab } from '../engine/color'
+import { deltaE2000, rgbToLab, type Lab } from '../engine/color'
 import type { ChartResult } from '../engine/types'
 
 export interface YarnColor {
@@ -22,7 +22,7 @@ export interface YarnPalette {
 
 export interface YarnChoice {
   yarn: YarnColor
-  /** Distância de cor (ΔE76) entre a cor do gráfico e o fio. Abaixo de ~6 é difícil de notar. */
+  /** Distância de cor (CIEDE2000) entre a cor do gráfico e o fio. Abaixo de ~6 é difícil de notar. */
   deltaE: number
 }
 
@@ -104,7 +104,7 @@ export function parseYarnCsv(id: string, brand: string, line: string, csv: strin
 function ranked(hex: string, yarn: YarnPalette): YarnChoice[] {
   const lab = hexToLab(hex)
   return yarn.colors
-    .map((y) => ({ yarn: y, deltaE: deltaE(lab, y.lab) }))
+    .map((y) => ({ yarn: y, deltaE: deltaE2000(lab, y.lab) }))
     .sort((a, b) => a.deltaE - b.deltaE || a.yarn.code.localeCompare(b.yarn.code))
 }
 
