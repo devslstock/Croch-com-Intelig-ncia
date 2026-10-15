@@ -14,11 +14,18 @@ export function YarnLegend({
   matches: ColorMatch[]
   onChoose: (letter: string, code: string) => void
 }) {
+  const listId = `yarn-list-${yarn.id}`
   return (
+    <>
+    {/* Uma única lista de sugestões para todas as cores (488 opções não precisam se repetir em cada linha). */}
+    <datalist id={listId}>
+      {yarn.colors.map((c) => (
+        <option key={c.code} value={label(c)} />
+      ))}
+    </datalist>
     <ul className="yarn-legend">
       {matches.map((m) => {
         const entry = chart.palette.find((p) => p.letter === m.letter)!
-        const listId = `yarn-${yarn.id}-${m.letter}`
         return (
           <li key={m.letter}>
             <span className="swatch swatch--lg" style={{ background: entry.hex }} title="Cor no gráfico" />
@@ -35,11 +42,6 @@ export function YarnLegend({
                     if (hit) onChoose(m.letter, hit.code)
                   }}
                 />
-                <datalist id={listId}>
-                  {yarn.colors.map((c) => (
-                    <option key={c.code} value={label(c)} />
-                  ))}
-                </datalist>
                 <span className="yarn-legend__count">{m.count.toLocaleString('pt-BR')}</span>
               </div>
               <div className="chips">
@@ -56,5 +58,6 @@ export function YarnLegend({
         )
       })}
     </ul>
+    </>
   )
 }

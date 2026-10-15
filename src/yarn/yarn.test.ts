@@ -1,3 +1,4 @@
+import dmcCsv from './data/DMC__Mouline.csv?raw'
 import { describe, expect, it } from 'vitest'
 import type { ChartResult } from '../engine/types'
 import { matchPalette, parseYarnCsv, shoppingList } from './yarn'
@@ -60,5 +61,13 @@ describe('fios', () => {
       ['B5200', 'Snow White, bright', '#fafaff'],
       ['01', 'White Tin', '#c5c5c5'],
     ])
+  })
+
+  it('carrega a tabela DMC completa com códigos únicos', () => {
+    const dmc = parseYarnCsv('DMC__Mouline', 'DMC', 'Mouline', dmcCsv)
+    expect(dmc.colors.length).toBe(489)
+    expect(new Set(dmc.colors.map((c) => c.code)).size).toBe(489)
+    expect(dmc.colors.find((c) => c.code === '310')?.name).toBe('Black')
+    expect(dmc.colors.find((c) => c.code === 'B5200')?.hex).toBe('#fafaff')
   })
 })

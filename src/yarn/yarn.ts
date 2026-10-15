@@ -64,8 +64,8 @@ function splitCsvLine(line: string): string[] {
 }
 
 const HEADERS = {
-  code: ['codigo', 'código', 'number', 'numero', 'número', 'code', 'no', 'n'],
-  name: ['nome', 'name'],
+  code: ['codigo', 'código', 'dmc code', 'number', 'numero', 'número', 'code', 'no', 'n'],
+  name: ['nome', 'name', 'color name'],
   hex: ['hex', 'hexcode', 'hex code', 'cor'],
 }
 
