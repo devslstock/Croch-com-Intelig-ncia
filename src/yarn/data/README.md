@@ -17,7 +17,7 @@ codigo,nome,hex
 ## Tabelas incluídas
 
 - `ponto-cruz/DMC__Mouline.csv`: 489 cores de fio DMC Mouliné (bordado), com código, nome, HEX, RGB e CMYK,
-  baixada pelo dono do projeto em stitchmate.app. **Antes de publicar o Crochê Inteligente para o público,
+  baixada pelo dono do projeto em stitchmate.app. **Antes de publicar o Tramado para o público,
   confirme nos Termos de uso do Stitchmate (ou com eles) se a redistribuição é permitida**
   e, para crochê, troque/some a tabela da linha de crochê usada pelas artesãs.
 - `ponto-cruz/Anchor__Mouline.csv`: 475 números Anchor, **gerada** por `node scripts/gerar-anchor.mjs`

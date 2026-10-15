@@ -1,21 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { APP_SLUG } from '../brand'
-import { chartToPngBlob, type RenderOptions } from '../chart/render'
-import { shoppingSheetToPng } from '../chart/shoppingPng'
+import type { RenderOptions } from '../chart/render'
 import { AppBar } from '../components/AppBar'
 import { ChartCanvas, type ViewMode } from '../components/ChartCanvas'
 import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
-import { PlainLegend } from '../components/PlainLegend'
 import { Stepper } from '../components/Stepper'
 import { fitCell, useViewport } from '../hooks/useViewport'
-import { YarnLegend } from '../components/YarnLegend'
 import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
 import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide, type Style } from '../engine/types'
 import type { SavedChart, SavedChartInput } from '../storage/charts'
 import { KIND_LABEL, YARN_PALETTES, defaultYarnId } from '../yarn/library'
-import { matchPalette, shoppingList } from '../yarn/yarn'
 
 const MAX_SIDE = 1600
 const PREVIEW = { width: 28, colors: 8 }
@@ -50,14 +45,6 @@ const today = () => {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
 }
 
-function download(blob: Blob, filename: string) {
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = filename
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
-}
-
 export interface ConverterProps {
   onBack: () => void
   onSave: (input: SavedChartInput) => Promise<SavedChart>
@@ -81,7 +68,6 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   const [error, setError] = useState<string | null>(null)
   // Abre já com um fio escolhido, para a legenda e as imagens sempre trazerem o número das linhas.
   const [yarnId, setYarnId] = useState(defaultYarnId)
-  const [picked, setPicked] = useState<Record<string, string>>({})
   const [savedId, setSavedId] = useState<string | undefined>(undefined)
   const [name, setName] = useState(`Meu gráfico · ${today()}`)
   const [nameTouched, setNameTouched] = useState(false)
@@ -116,7 +102,6 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
         const result = await generateChart(raw, params)
         if (id === run.current) {
           setChart(result)
-          setPicked({})
           setError(null)
         }
       } catch (e) {
@@ -164,10 +149,6 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
     }
   }
 
-  const yarn = YARN_PALETTES.find((y) => y.id === yarnId)
-  const matches = useMemo(() => (chart && yarn ? matchPalette(chart, yarn, picked) : []), [chart, yarn, picked])
-  const shopping = useMemo(() => shoppingList(matches), [matches])
-  const legendLabels = useMemo(() => Object.fromEntries(matches.map((m) => [m.letter, `${m.best.yarn.code} ${m.best.yarn.name}`.trim()])), [matches])
   const options: RenderOptions = useMemo(() => ({ cell: zoom, symbols, startSide, legend: false }), [zoom, symbols, startSide])
   const set = <K extends keyof EngineParams>(k: K, v: EngineParams[K]) => setParams((p) => ({ ...p, [k]: v }))
 
@@ -183,40 +164,10 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
     return { x: 0, y: (1 - h) / 2, w: 1, h }
   }
 
-  const baseName = name.trim() || loaded?.name || 'grafico'
-
-  const downloadChart = async () => {
-    if (!chart) return
-    download(await chartToPngBlob(chart, { cell: 20, symbols: true, startSide, legendLabels }), `${baseName}-${APP_SLUG}.png`)
-  }
-
-  const downloadShopping = async () => {
-    if (!chart || !yarn) return
-    const blob = await shoppingSheetToPng({
-      title: `Lista de compras · ${baseName} · ${today()}`,
-      yarnName: `${yarn.brand} ${yarn.line}`.trim(),
-      width: chart.width,
-      height: chart.height,
-      items: shopping,
-    })
-    download(blob, `${baseName}-lista-de-compras.png`)
-  }
-
-  /** Ajuste manual: muda a cor no gráfico e o fio sugerido acompanha (a escolha manual de fio dessa cor é descartada). */
-  const changeColor = (letter: string, hex: string) => {
-    setChart((c) => (c ? { ...c, palette: c.palette.map((p) => (p.letter === letter ? { ...p, hex } : p)) } : c))
-    setPicked((p) => {
-      if (!(letter in p)) return p
-      const { [letter]: _drop, ...rest } = p
-      return rest
-    })
-    setSaveMsg(null)
-  }
-
   const save = async () => {
     if (!chart) return
     try {
-      const saved = await onSave({ id: savedId, name: name.trim() || `Meu gráfico · ${today()}`, chart, yarnId, picked, startSide })
+      const saved = await onSave({ id: savedId, name: name.trim() || `Meu gráfico · ${today()}`, chart, yarnId, picked: {}, startSide })
       setSavedId(saved.id)
       onSaved(saved) // segue para o editor
     } catch (e) {
@@ -269,7 +220,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
 
           <label className="field">
             <span className="side-label">Fio</span>
-            <select value={yarnId} onChange={(e) => { setYarnId(e.target.value); setPicked({}) }}>
+            <select value={yarnId} onChange={(e) => setYarnId(e.target.value)}>
               <option value="">Cores livres (sem fio)</option>
               {(['croche', 'ponto-cruz'] as const).map((kind) => {
                 const list = YARN_PALETTES.filter((y) => y.kind === kind)
@@ -376,38 +327,6 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
                 </div>
               </section>
 
-              <div className="results">
-              <section className="card">
-                <h2>Cores{yarn ? ` · ${yarn.brand} ${yarn.line}` : ''}</h2>
-                {yarn ? (
-                  <YarnLegend chart={chart} yarn={yarn} matches={matches} onChoose={(letter, code) => setPicked((p) => ({ ...p, [letter]: code }))} onColorChange={changeColor} />
-                ) : (
-                  <PlainLegend chart={chart} onColorChange={changeColor} />
-                )}
-                {!yarn && <p className="hint">Sem número de fio. Escolha um fio em “Fio” para ver o número das linhas.</p>}
-              </section>
-
-              {yarn && (
-                <section className="card">
-                  <h2>Lista de compras</h2>
-                  <table className="shop">
-                    <thead><tr><th>Fio</th><th>Cores</th><th>Pontos</th></tr></thead>
-                    <tbody>
-                      {shopping.map((i) => (
-                        <tr key={i.yarn.code}>
-                          <td><span className="chip__dot" style={{ background: i.yarn.hex }} /> <b>{i.yarn.code}</b> {i.yarn.name}</td>
-                          <td>{i.letters.join(', ')}</td>
-                          <td>{i.stitches.toLocaleString('pt-BR')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <button className="btn" onClick={downloadShopping}>Baixar lista de compras (PNG)</button>
-                </section>
-              )}
-
-              <button className="btn btn--primary" onClick={downloadChart}>Baixar gráfico (PNG)</button>
-              </div>
             </>
           )}
         </main>

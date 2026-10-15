@@ -350,11 +350,8 @@ button, a, label, summary, select { touch-action: manipulation; }
 .appbar { background: rgba(255, 255, 255, 0.94); border-bottom-color: var(--line); }
 .avatar { background: var(--lilac); border-color: transparent; }
 .home-grid > .tile:nth-child(2) { background: var(--lilac); border-color: transparent; }
-.home-grid > .tile:nth-child(3) { background: var(--butter); border-color: transparent; }
-.tools > .tool:nth-child(1) { background: var(--sky); }
-.tools > .tool:nth-child(2) { background: var(--mint); }
-.tools > .tool:nth-child(3) { background: var(--butter); }
-.tools > .tool:nth-child(4) { background: var(--peach); }
+.tools > .tool:nth-child(1) { background: var(--mint); }
+.tools > .tool:nth-child(2) { background: var(--butter); }
 .tool { border-style: solid; border-color: transparent; opacity: 1; }
 .tool span:not(.tile__icon) { color: #5c5066; }
 .tile--soon { opacity: 1; }

@@ -1,10 +1,10 @@
-# Supabase do Crochê Inteligente
+# Supabase do Tramado
 
-Tudo aqui está **preparado, mas não aplicado**. Siga os passos quando o projeto Supabase do Crochê Inteligente existir.
+Tudo aqui está **preparado, mas não aplicado**. Siga os passos quando o projeto Supabase do Tramado existir.
 
 ## 1. Criar o projeto
 
-- Crie um projeto **dedicado ao Crochê Inteligente** (sugestão: nome `croche-inteligente`, região `sa-east-1`, São Paulo).
+- Crie um projeto **dedicado ao Tramado** (sugestão: nome `tramado`, região `sa-east-1`, São Paulo).
   Não reaproveite o projeto de outro app: as contas de login (Auth) são compartilhadas por projeto.
 - A conta gratuita permite 2 projetos ativos. Se estiver no limite, faça upgrade (Pro) ou pause/apague um projeto que não usa.
 
@@ -14,7 +14,7 @@ Escolha uma opção:
 
 - **Painel:** SQL Editor → cole `migrations/20261015000000_init_tramado.sql` → Run.
 - **CLI:** `supabase link --project-ref <ref>` e `supabase db push`.
-- **Pelo Claude:** peça "aplicar a migração do Crochê Inteligente no projeto <ref>" (usa o conector Supabase).
+- **Pelo Claude:** peça "aplicar a migração do Tramado no projeto <ref>" (usa o conector Supabase).
 
 O que a migração cria:
 

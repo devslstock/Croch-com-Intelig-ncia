@@ -1,7 +1,7 @@
-# Crochê Inteligente
+# Tramado
 
 App web, pensado primeiro para o celular, que transforma fotos em gráficos de crochê.
-Nome do site: **Crochê Inteligente** (definido em `src/brand.ts`). Tema claro com cores pastéis (`src/styles.css`, variáveis no topo).
+Nome do site: **Tramado** (definido em `src/brand.ts`). Tema claro com cores pastéis (`src/styles.css`, variáveis no topo).
 
 ## O que já existe (MVP, parte 1)
 
@@ -19,7 +19,7 @@ Nome do site: **Crochê Inteligente** (definido em `src/brand.ts`). Tema claro c
 ## Login e página inicial
 
 - Primeira tela: **Entrar / Criar conta** (e-mail e senha; Google opcional). Depois do login: página inicial
-  com atalhos (Foto em gráfico; Modelos e Gráfico em branco como "em breve"), ferramentas "em breve" e **Meus gráficos**.
+  com atalhos (Foto em gráfico e Modelos), ferramentas "em breve" (assistente de vendas e calculadora de preço) e **Meus gráficos**.
 - O login usa Supabase Auth. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (veja `.env.example`).
   Sem essas variáveis o app abre em **modo demonstração** (nada vai para a nuvem).
 - "Meus gráficos": com login real grava na tabela `charts` do Supabase (`src/storage/supabaseCharts.ts`);
@@ -40,7 +40,8 @@ Tela **Modelos** (início → Modelos): 21 modelos **desenhados do zero** (nada 
 
 ## Editor e modo Crochetar
 
-Depois de **Salvar gráfico** na tela de foto, abre o editor (`src/pages/Editor.tsx`):
+Na tela de foto, só se ajusta o gráfico (estilo, tamanho, cores, recorte, fio); o mapa de cores, a lista de compras e o
+baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/pages/Editor.tsx`):
 
 - **Ferramentas:** lápis (arrastar), balde, pegar cor, texto (alfabeto de 7 carreiras, com acentos, Ç e `<3`),
   paleta, desfazer/refazer (Ctrl+Z / Ctrl+Y), zoom, símbolos (letras nos pontos), "Como fica em crochê",

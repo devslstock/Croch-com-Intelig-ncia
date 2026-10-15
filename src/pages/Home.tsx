@@ -12,10 +12,8 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
-  { icon: '🛍️', title: 'Vitrine de vendas', text: 'Mostre suas peças e receba pedidos pelo WhatsApp.' },
   { icon: '💬', title: 'Assistente de vendas', text: 'Cole a conversa e receba uma resposta sugerida.' },
   { icon: '🧮', title: 'Calculadora de preço', text: 'Material, horas e lucro: o preço certo da peça.' },
-  { icon: '📍', title: 'Clientes na sua cidade', text: 'Encontre fotógrafas, lojas e decoradoras perto de você.' },
 ]
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
@@ -75,11 +73,6 @@ export function Home({ store, onNew, onModels, onOpen }: { store: ChartStore; on
             <b>Modelos</b>
             <span>Desenhos, nomes e alfabeto prontos para usar.</span>
           </button>
-          <div className="tile tile--soon" aria-disabled="true">
-            <span className="tile__icon" aria-hidden>▦</span>
-            <b>Gráfico em branco <em className="badge">Em breve</em></b>
-            <span>Desenhe ponto a ponto, do seu jeito.</span>
-          </div>
         </section>
 
         <h2 className="section-title">Ferramentas</h2>
