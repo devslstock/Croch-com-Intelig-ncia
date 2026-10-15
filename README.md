@@ -1,7 +1,7 @@
-# Tramado (Crochê com Inteligência)
+# Crochê Inteligente
 
 App web, pensado primeiro para o celular, que transforma fotos em gráficos de crochê.
-Nome de trabalho: **Tramado** (nome e domínio ainda por confirmar).
+Nome do site: **Crochê Inteligente** (definido em `src/brand.ts`). Tema claro com cores pastéis (`src/styles.css`, variáveis no topo).
 
 ## O que já existe (MVP, parte 1)
 

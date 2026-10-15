@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { APP_SLUG } from '../brand'
 import { printImage } from '../chart/print'
 import { chartToPngBlob, MARGIN, type RenderOptions } from '../chart/render'
 import { shoppingSheetToPng } from '../chart/shoppingPng'
@@ -252,7 +253,7 @@ export function Editor({ saved, startInCrochetar, onBack, onSave }: EditorProps)
   // ---- saídas -----------------------------------------------------------------
   const baseName = name.trim() || 'grafico'
   const pngOptions = { cell: 20, symbols: true, startSide, legendLabels }
-  const downloadChart = async () => download(await chartToPngBlob(chart, pngOptions), `${baseName}-tramado.png`)
+  const downloadChart = async () => download(await chartToPngBlob(chart, pngOptions), `${baseName}-${APP_SLUG}.png`)
   const printChart = async () => printImage(await chartToPngBlob(chart, pngOptions))
   const downloadShopping = async () => {
     if (!yarn) return

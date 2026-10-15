@@ -1,5 +1,5 @@
--- Tramado: estrutura inicial (perfis e gráficos salvos).
--- Aplicar em um projeto Supabase DEDICADO ao Tramado (veja supabase/README.md).
+-- Crochê Inteligente: estrutura inicial (perfis e gráficos salvos).
+-- Aplicar em um projeto Supabase DEDICADO ao Crochê Inteligente (veja supabase/README.md).
 -- Idempotente o bastante para rodar uma vez em projeto novo; não apague tabelas de outros apps.
 
 -- ---------------------------------------------------------------------------

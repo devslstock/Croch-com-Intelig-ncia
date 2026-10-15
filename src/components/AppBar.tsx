@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { APP_NAME } from '../brand'
 
 /** Barra do topo: marca, título da tela, ações (ex.: Salvo, Crochetar) e menu da usuária. */
 export function AppBar({ title, onBack, children }: { title?: string; onBack?: () => void; children?: ReactNode }) {
@@ -13,10 +14,10 @@ export function AppBar({ title, onBack, children }: { title?: string; onBack?: (
       <div className="appbar__left">
         {onBack ? (
           <button className="appbar__brand" onClick={onBack} aria-label="Voltar ao início">
-            <span aria-hidden>←</span> Tramado
+            <span aria-hidden>←</span> {APP_NAME}
           </button>
         ) : (
-          <span className="appbar__brand appbar__brand--static"><span aria-hidden>🧶</span> Tramado</span>
+          <span className="appbar__brand appbar__brand--static"><span aria-hidden>🧶</span> {APP_NAME}</span>
         )}
         {title && <span className="appbar__title">{title}</span>}
       </div>

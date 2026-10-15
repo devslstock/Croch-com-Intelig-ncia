@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { APP_SLUG } from '../brand'
 import { chartToPngBlob, type RenderOptions } from '../chart/render'
 import { shoppingSheetToPng } from '../chart/shoppingPng'
 import { AppBar } from '../components/AppBar'
@@ -186,7 +187,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
 
   const downloadChart = async () => {
     if (!chart) return
-    download(await chartToPngBlob(chart, { cell: 20, symbols: true, startSide, legendLabels }), `${baseName}-tramado.png`)
+    download(await chartToPngBlob(chart, { cell: 20, symbols: true, startSide, legendLabels }), `${baseName}-${APP_SLUG}.png`)
   }
 
   const downloadShopping = async () => {

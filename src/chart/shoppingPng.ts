@@ -55,7 +55,7 @@ export function shoppingSheetToPng(sheet: ShoppingSheet): Promise<Blob> {
 
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, W, height)
-  ctx.fillStyle = '#7a3b5e'
+  ctx.fillStyle = '#f7bfd2'
   ctx.fillRect(0, 0, W, 5)
 
   ctx.fillStyle = '#2a2230'

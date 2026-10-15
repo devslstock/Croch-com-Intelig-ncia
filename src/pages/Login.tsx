@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { googleEnabled } from '../auth/supabase'
+import { APP_NAME, APP_TAGLINE } from '../brand'
 
 type Mode = 'entrar' | 'criar'
 
@@ -41,8 +42,8 @@ export function Login() {
     <div className="login">
       <div className="login__brand">
         <span className="login__logo" aria-hidden>🧶</span>
-        <h1>Tramado</h1>
-        <p>Sua foto vira gráfico de crochê, com os fios certos.</p>
+        <h1>{APP_NAME}</h1>
+        <p>{APP_TAGLINE}</p>
       </div>
 
       <div className="card login__card">
