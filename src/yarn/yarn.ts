@@ -42,15 +42,57 @@ export interface ShoppingItem {
 const hexToLab = (hex: string): Lab =>
   rgbToLab(parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16))
 
-/** CSV com cabeçalho `codigo,nome,hex`. Linhas vazias e começando com # são ignoradas. */
+/** Divide uma linha CSV respeitando campos entre aspas (nomes com vírgula). */
+function splitCsvLine(line: string): string[] {
+  const out: string[] = []
+  let cur = ''
+  let quoted = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      if (quoted && line[i + 1] === '"') {
+        cur += '"'
+        i++
+      } else quoted = !quoted
+    } else if (ch === ',' && !quoted) {
+      out.push(cur.trim())
+      cur = ''
+    } else cur += ch
+  }
+  out.push(cur.trim())
+  return out
+}
+
+const HEADERS = {
+  code: ['codigo', 'código', 'number', 'numero', 'número', 'code', 'no', 'n'],
+  name: ['nome', 'name'],
+  hex: ['hex', 'hexcode', 'hex code', 'cor'],
+}
+
+/**
+ * CSV com cabeçalho. Aceita `codigo,nome,hex` e também planilhas de terceiros
+ * (ex.: `Number,Name,HEX,RGB,CMYK`): as colunas são achadas pelo nome; colunas extras são ignoradas.
+ * Linhas vazias e começando com # são ignoradas.
+ */
 export function parseYarnCsv(id: string, brand: string, line: string, csv: string): YarnPalette {
   const colors: YarnColor[] = []
-  const rows = csv.split(/\r?\n/).map((r) => r.trim()).filter((r) => r && !r.startsWith('#'))
+  const rows = csv.replace(/^\uFEFF/, '').split(/\r?\n/).map((r) => r.trim()).filter((r) => r && !r.startsWith('#'))
+  if (rows.length === 0) return { id, brand, line, colors }
+  const head = splitCsvLine(rows[0]).map((h) => h.toLowerCase())
+  const find = (names: string[], fallback: number) => {
+    const i = head.findIndex((h) => names.includes(h))
+    return i >= 0 ? i : fallback
+  }
+  const iCode = find(HEADERS.code, 0)
+  const iName = find(HEADERS.name, 1)
+  const iHex = find(HEADERS.hex, 2)
   for (const row of rows.slice(1)) {
-    const [code, name, hexRaw] = row.split(',').map((c) => c.trim())
-    const hex = hexRaw?.startsWith('#') ? hexRaw.toLowerCase() : `#${hexRaw ?? ''}`.toLowerCase()
+    const cells = splitCsvLine(row)
+    const code = cells[iCode]
+    const raw = (cells[iHex] ?? '').toLowerCase()
+    const hex = raw.startsWith('#') ? raw : `#${raw}`
     if (!code || !/^#[0-9a-f]{6}$/.test(hex)) continue
-    colors.push({ code, name: name ?? '', hex, lab: hexToLab(hex) })
+    colors.push({ code, name: cells[iName] ?? '', hex, lab: hexToLab(hex) })
   }
   return { id, brand, line, colors }
 }

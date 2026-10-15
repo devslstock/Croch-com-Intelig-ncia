@@ -52,4 +52,13 @@ describe('fios', () => {
       for (const s of item.substitutes) expect(used.has(s.yarn.code)).toBe(false)
     }
   })
+
+  it('aceita planilha de terceiros com colunas extras e nomes entre aspas', () => {
+    const ext = 'Number,Name,HEX,RGB,CMYK\nB5200,"Snow White, bright",#fafaff,"250,250,255","2,2,0,0"\n01,White Tin,#c5c5c5,"197,197,197","0,0,0,23"'
+    const p = parseYarnCsv('x', 'X', 'Y', ext)
+    expect(p.colors.map((c) => [c.code, c.name, c.hex])).toEqual([
+      ['B5200', 'Snow White, bright', '#fafaff'],
+      ['01', 'White Tin', '#c5c5c5'],
+    ])
+  })
 })
