@@ -27,12 +27,16 @@ export interface ColorMatch {
   count: number
   best: YarnChoice
   alternatives: YarnChoice[]
+  /** Fios mais parecidos (sem o escolhido), usados para sugerir substitutos na lista de compras. */
+  pool: YarnChoice[]
 }
 
 export interface ShoppingItem {
   yarn: YarnColor
   letters: string[]
   stitches: number
+  /** Fios parecidos que não repetem nenhum novelo já presente no gráfico. */
+  substitutes: YarnChoice[]
 }
 
 const hexToLab = (hex: string): Lab =>
@@ -66,21 +70,26 @@ export function matchPalette(chart: ChartResult, yarn: YarnPalette, overrides: R
     // A artesã pode trocar o fio sugerido por outro (campo do fio ou chip "Parecidas").
     const chosen = r.find((c) => c.yarn.code === overrides[p.letter]) ?? r[0]
     const alternatives = r.filter((c) => c !== chosen).slice(0, 3)
-    return { letter: p.letter, count: p.count, best: chosen, alternatives }
+    return { letter: p.letter, count: p.count, best: chosen, alternatives, pool: r.filter((c) => c !== chosen).slice(0, 10) }
   })
 }
 
 /** Junta as cores do gráfico que caíram no mesmo fio: o que realmente precisa ser comprado. */
 export function shoppingList(matches: ColorMatch[]): ShoppingItem[] {
   const byCode = new Map<string, ShoppingItem>()
+  const pools = new Map<string, YarnChoice[]>()
   for (const m of matches) {
     const cur = byCode.get(m.best.yarn.code)
     if (cur) {
       cur.letters.push(m.letter)
       cur.stitches += m.count
     } else {
-      byCode.set(m.best.yarn.code, { yarn: m.best.yarn, letters: [m.letter], stitches: m.count })
+      byCode.set(m.best.yarn.code, { yarn: m.best.yarn, letters: [m.letter], stitches: m.count, substitutes: [] })
+      pools.set(m.best.yarn.code, m.pool)
     }
+  }
+  for (const item of byCode.values()) {
+    item.substitutes = (pools.get(item.yarn.code) ?? []).filter((c) => !byCode.has(c.yarn.code)).slice(0, 2)
   }
   return [...byCode.values()].sort((a, b) => b.stitches - a.stitches)
 }

@@ -4,6 +4,7 @@ import { ChartCanvas } from './components/ChartCanvas'
 import { CropPicker, FULL_CROP, type Crop } from './components/CropPicker'
 import { generateChart } from './engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from './engine/pipeline'
+import { shoppingSheetToPng } from './chart/shoppingPng'
 import { YarnLegend } from './components/YarnLegend'
 import { YARN_PALETTES } from './yarn/library'
 import { matchPalette, shoppingList } from './yarn/yarn'
@@ -115,6 +116,24 @@ export function App() {
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `${loaded?.name || 'grafico'}-tramado.png`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+
+  const downloadShopping = async () => {
+    if (!chart || !yarn) return
+    const d = new Date()
+    const date = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+    const blob = await shoppingSheetToPng({
+      title: `Lista de compras · ${loaded?.name || 'Gráfico'} · ${date}`,
+      yarnName: `${yarn.brand} ${yarn.line}`.trim(),
+      width: chart.width,
+      height: chart.height,
+      items: shopping,
+    })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${loaded?.name || 'grafico'}-lista-de-compras.png`
     a.click()
     setTimeout(() => URL.revokeObjectURL(a.href), 1000)
   }
@@ -239,6 +258,7 @@ export function App() {
                     ))}
                   </tbody>
                 </table>
+                <button className="btn" onClick={downloadShopping}>Baixar lista de compras (PNG)</button>
               </>
             )}
             <button className="btn btn--primary" onClick={download}>Baixar imagem (PNG)</button>

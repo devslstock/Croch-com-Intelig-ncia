@@ -43,4 +43,13 @@ describe('fios', () => {
     expect(red.stitches).toBe(3)
     expect(list).toHaveLength(2)
   })
+
+  it('substitutos não repetem fios que já estão na lista', () => {
+    const list = shoppingList(matchPalette(chart, yarn))
+    const used = new Set(list.map((i) => i.yarn.code))
+    for (const item of list) {
+      expect(item.substitutes.length).toBeGreaterThan(0)
+      for (const s of item.substitutes) expect(used.has(s.yarn.code)).toBe(false)
+    }
+  })
 })
