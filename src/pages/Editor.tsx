@@ -275,13 +275,22 @@ export function Editor({ saved, startInCrochetar, onBack, onSave }: EditorProps)
     [zoom, symbols, startSide, mode, crochet.progress, crochet.stitch, guide.from],
   )
 
+  // Mantém a carreira (e o próximo ponto) à vista, rolando só quando saem da área visível.
   useEffect(() => {
     if (mode !== 'crochetar') return
     const box = scrollRef.current
     if (!box) return
     const rowTop = MARGIN + (h - crochet.progress - 1) * zoom
-    box.scrollTo({ top: Math.max(0, rowTop - box.clientHeight / 2), behavior: 'smooth' })
-  }, [mode, crochet.progress, zoom, h])
+    const pad = Math.min(60, box.clientHeight / 4)
+    const nextX = MARGIN + (guide.from === 'right' ? w - 1 - crochet.stitch : crochet.stitch) * zoom
+    const padX = Math.min(60, box.clientWidth / 4)
+    let top = box.scrollTop
+    let left = box.scrollLeft
+    if (rowTop < top + pad || rowTop + zoom > top + box.clientHeight - pad) top = Math.max(0, rowTop - box.clientHeight / 2)
+    if (nextX < left + padX || nextX > left + box.clientWidth - padX) left = Math.max(0, nextX - box.clientWidth / 2)
+    // Uma única rolagem: duas rolagens suaves seguidas se cancelam e a imagem não chega à carreira.
+    if (top !== box.scrollTop || left !== box.scrollLeft) box.scrollTo({ top, left, behavior: 'smooth' })
+  }, [mode, crochet.progress, crochet.stitch, zoom, h, w, guide.from])
 
   const changeCrochet = (s: CrochetState) => {
     setCrochet(s)
@@ -363,7 +372,7 @@ export function Editor({ saved, startInCrochetar, onBack, onSave }: EditorProps)
         {!crocheting && <button className="btn btn--primary btn--sm" onClick={() => setMode('crochetar')}>Crochetar ▶</button>}
       </AppBar>
 
-      <div className={crocheting ? 'studio' : 'studio studio--editor'}>
+      <div className={crocheting ? 'studio studio--crochetar' : 'studio studio--editor'}>
         {crocheting && panel}
 
         <main className="studio__main">

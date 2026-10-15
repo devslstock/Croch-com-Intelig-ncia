@@ -48,6 +48,9 @@ Depois de **Salvar gráfico** na tela de foto, abre o editor (`src/pages/Editor.
 - **Salvamento automático** (indicador "Salvo" no topo).
 - **Crochetar ▶:** carreira atual, lado em que ela vai (idas e vindas, opcional), contador de pontos (−1/+1),
   pontos seguidos por cor com o número do fio, carreira anterior/feita, pular para uma carreira. O progresso é salvo.
+  Na imagem, a carreira do progresso fica destacada (faixa amarela, contorno vermelho, número nas duas margens e o
+  próximo ponto marcado), as carreiras feitas ficam esmaecidas e a imagem rola sozinha até ela. No celular o gráfico
+  fica fixo no topo.
 - A lógica pura (alfabeto, pintura, balde, histórico, carreiras) está em `src/editor/` e tem testes.
 
 ## Rodar

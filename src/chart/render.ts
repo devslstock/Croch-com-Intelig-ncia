@@ -102,23 +102,24 @@ export function drawChart(ctx: CanvasRenderingContext2D, chart: ChartResult, o: 
   ctx.stroke()
   ctx.strokeRect(gridLeft, gridTop, gridW, gridH)
 
-  // Modo Crochetar: esmaece as carreiras feitas e contorna a próxima.
-  if (o.progress !== undefined) {
-    const done = Math.max(0, Math.min(h, o.progress))
-    if (done > 0) {
-      ctx.fillStyle = 'rgba(255,255,255,0.7)'
-      ctx.fillRect(gridLeft, gridTop + (h - done) * cell, gridW, done * cell)
+  // Modo Crochetar: esmaece as carreiras feitas e destaca a carreira do progresso.
+  const hasProgress = o.progress !== undefined
+  const doneRows = hasProgress ? Math.max(0, Math.min(h, o.progress as number)) : 0
+  const curTop = gridTop + (h - doneRows - 1) * cell
+  if (hasProgress) {
+    if (doneRows > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.72)'
+      ctx.fillRect(gridLeft, gridTop + (h - doneRows) * cell, gridW, doneRows * cell)
     }
-    if (done < h && o.rowDone && o.rowDone.count > 0) {
-      const n = Math.min(w, o.rowDone.count)
-      const x0 = o.rowDone.from === 'right' ? w - n : 0
-      ctx.fillStyle = 'rgba(255,255,255,0.7)'
-      ctx.fillRect(gridLeft + x0 * cell, gridTop + (h - done - 1) * cell, n * cell, cell)
-    }
-    if (done < h) {
-      ctx.strokeStyle = '#7a3b5e'
-      ctx.lineWidth = 3
-      ctx.strokeRect(gridLeft + 1.5, gridTop + (h - done - 1) * cell + 1.5, gridW - 3, cell - 3)
+    if (doneRows < h) {
+      ctx.fillStyle = 'rgba(255, 214, 10, 0.3)' // faixa amarela na carreira atual
+      ctx.fillRect(gridLeft, curTop, gridW, cell)
+      if (o.rowDone && o.rowDone.count > 0) {
+        const n = Math.min(w, o.rowDone.count)
+        const x0 = o.rowDone.from === 'right' ? w - n : 0
+        ctx.fillStyle = 'rgba(255,255,255,0.72)' // pontos já feitos nesta carreira
+        ctx.fillRect(gridLeft + x0 * cell, curTop, n * cell, cell)
+      }
     }
   }
 
@@ -140,6 +141,35 @@ export function drawChart(ctx: CanvasRenderingContext2D, chart: ChartResult, o: 
       const cy = gridTop + y * cell + cell / 2
       ctx.fillText(String(n), MARGIN / 2, cy)
       ctx.fillText(String(n), gridLeft + gridW + MARGIN / 2, cy)
+    }
+  }
+
+  // Crochetar: contorno forte, próximo ponto e número da carreira nas duas margens.
+  if (hasProgress && doneRows < h) {
+    const row = doneRows + 1
+    ctx.strokeStyle = '#d62839'
+    ctx.lineWidth = 3
+    ctx.strokeRect(gridLeft - 1, curTop - 1, gridW + 2, cell + 2)
+    if (o.rowDone) {
+      const n = Math.min(w, o.rowDone.count)
+      if (n < w) {
+        const nx = o.rowDone.from === 'right' ? w - 1 - n : n // o próximo ponto a fazer
+        ctx.lineWidth = 2
+        ctx.strokeStyle = '#ffffff'
+        ctx.strokeRect(gridLeft + nx * cell + 1, curTop + 1, cell - 2, cell - 2)
+        ctx.strokeStyle = '#d62839'
+        ctx.strokeRect(gridLeft + nx * cell + 2, curTop + 2, cell - 4, cell - 4)
+      }
+    }
+    const cy = curTop + cell / 2
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    for (const bx of [MARGIN / 2, gridLeft + gridW + MARGIN / 2]) {
+      ctx.fillStyle = '#d62839'
+      ctx.fillRect(bx - 13, cy - 9, 26, 18)
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(String(row), bx, cy + 0.5)
     }
   }
 

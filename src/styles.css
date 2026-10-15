@@ -259,3 +259,13 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .dot--lg { width: 34px; height: 34px; border-radius: 10px; }
 .dot--add { background: var(--card); color: var(--brand); font-size: 1.2rem; font-weight: 700; }
 .viewtabs--center { max-width: 520px; width: 100%; margin: 0 auto; }
+
+/* Crochetar no celular: o gráfico fica fixo no topo para a carreira do progresso estar sempre à vista */
+@media (max-width: 899px) {
+  .studio--crochetar .studio__main { order: -1; position: sticky; top: 56px; z-index: 5; background: var(--bg); padding-bottom: 4px; }
+  .studio--crochetar .chart-scroll--tall { max-height: 42vh; min-height: 180px; }
+  .studio--crochetar .chartcard { padding: 8px; }
+}
+.appbar__brand, .savestate { white-space: nowrap; }
+.appbar__right { display: flex; align-items: center; gap: 8px; }
+.menu { z-index: 20; }
