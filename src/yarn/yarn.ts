@@ -9,8 +9,12 @@ export interface YarnColor {
   lab: Lab
 }
 
+export type YarnKind = 'croche' | 'ponto-cruz'
+
 export interface YarnPalette {
   id: string
+  /** Tipo de trabalho: define o grupo no campo "Fio". */
+  kind: YarnKind
   brand: string
   line: string
   colors: YarnColor[]
@@ -77,7 +81,7 @@ const HEADERS = {
 export function parseYarnCsv(id: string, brand: string, line: string, csv: string): YarnPalette {
   const colors: YarnColor[] = []
   const rows = csv.replace(/^\uFEFF/, '').split(/\r?\n/).map((r) => r.trim()).filter((r) => r && !r.startsWith('#'))
-  if (rows.length === 0) return { id, brand, line, colors }
+  if (rows.length === 0) return { id, kind: 'croche', brand, line, colors }
   const head = splitCsvLine(rows[0]).map((h) => h.toLowerCase())
   const find = (names: string[], fallback: number) => {
     const i = head.findIndex((h) => names.includes(h))
@@ -94,7 +98,7 @@ export function parseYarnCsv(id: string, brand: string, line: string, csv: strin
     if (!code || !/^#[0-9a-f]{6}$/.test(hex)) continue
     colors.push({ code, name: cells[iName] ?? '', hex, lab: hexToLab(hex) })
   }
-  return { id, brand, line, colors }
+  return { id, kind: 'croche', brand, line, colors }
 }
 
 function ranked(hex: string, yarn: YarnPalette): YarnChoice[] {

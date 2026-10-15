@@ -6,7 +6,7 @@ import { generateChart } from './engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from './engine/pipeline'
 import { shoppingSheetToPng } from './chart/shoppingPng'
 import { YarnLegend } from './components/YarnLegend'
-import { YARN_PALETTES } from './yarn/library'
+import { KIND_LABEL, YARN_PALETTES } from './yarn/library'
 import { matchPalette, shoppingList } from './yarn/yarn'
 import { DEFAULT_PARAMS, type ChartResult, type EngineParams, type RawImage, type StartSide } from './engine/types'
 
@@ -195,10 +195,20 @@ export function App() {
             <label className="field">
               <span>Fio</span>
               <select value={yarnId} onChange={(e) => { setYarnId(e.target.value); setPicked({}) }}>
-                <option value="">Cores livres</option>
-                {YARN_PALETTES.map((y) => (
-                  <option key={y.id} value={y.id}>{y.brand} {y.line}</option>
-                ))}
+                <option value="">Cores livres (sem fio)</option>
+                {(['croche', 'ponto-cruz'] as const).map((kind) => {
+                  const list = YARN_PALETTES.filter((y) => y.kind === kind)
+                  if (list.length === 0) {
+                    return kind === 'croche' ? <option key={kind} disabled>Crochê: tabela de cores ainda não incluída</option> : null
+                  }
+                  return (
+                    <optgroup key={kind} label={KIND_LABEL[kind]}>
+                      {list.map((y) => (
+                        <option key={y.id} value={y.id}>{y.brand} {y.line}</option>
+                      ))}
+                    </optgroup>
+                  )
+                })}
               </select>
             </label>
             <label className="check">

@@ -1,4 +1,4 @@
-import dmcCsv from './data/DMC__Mouline.csv?raw'
+import dmcCsv from './data/ponto-cruz/DMC__Mouline.csv?raw'
 import { describe, expect, it } from 'vitest'
 import type { ChartResult } from '../engine/types'
 import { matchPalette, parseYarnCsv, shoppingList } from './yarn'

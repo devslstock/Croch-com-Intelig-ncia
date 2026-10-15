@@ -1,0 +1,1 @@
+# Coloque aqui as tabelas de fios de croche (ex.: Circulo__Amigurumi.csv). Ver ../README.md
