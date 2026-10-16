@@ -81,7 +81,8 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .login__brand { text-align: center; }
 .login__brand h1 { margin: 4px 0; color: var(--accent); font-size: 2rem; }
 .login__brand p { margin: 0; color: var(--muted); }
-.login__logo { font-size: 2.5rem; }
+.login__logo { display: block; margin: 0 auto 8px; max-width: 100%; height: auto; }
+.appbar__logo { vertical-align: -7px; border-radius: 7px; }
 .login__form { display: flex; flex-direction: column; gap: 12px; }
 .login__foot { text-align: center; }
 .tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }

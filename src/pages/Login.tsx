@@ -74,8 +74,8 @@ export function Login() {
   return (
     <div className="login">
       <div className="login__brand">
-        <span className="login__logo" aria-hidden>🧶</span>
-        <h1>{APP_NAME}</h1>
+        <img className="login__logo" src="/logo.svg" alt="" width={300} height={61} />
+        <h1 className="sr-only">{APP_NAME}</h1>
         <p>{APP_TAGLINE}</p>
       </div>
 

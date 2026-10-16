@@ -92,10 +92,18 @@ real (iOS Safari/Chrome Android).
 
 - **Baixar PDF** (editor): uma página A4 com o gráfico e a legenda, em retrato ou paisagem conforme a proporção
   (`src/chart/pdf.ts`, gerador próprio, sem dependências). Gráficos muito largos ficam com pontos pequenos na página.
-- **PWA:** `public/manifest.webmanifest`, ícones em `public/` (gerados por `node scripts/gerar-icones.mjs`) e service worker
+- **PWA:** `public/manifest.webmanifest`, ícones em `public/` (veja **Marca** abaixo) e service worker
   `public/sw.js` (registrado só em produção). Os arquivos do app ficam em cache e a tela abre sem internet; login, nuvem e
   pagamento continuam precisando de conexão e nunca passam pelo cache. No Android o Chrome oferece "Instalar app"; no iPhone,
   Safari → Compartilhar → Adicionar à Tela de Início.
+
+## Marca
+
+Símbolo (coração em pontos com o fio de lã) e logo horizontal ("TRAMADO" escrito em pontos, como num gráfico) desenhados do zero.
+Os SVG são gerados por `node scripts/gerar-marca.mjs` (`logo.svg`, `logo-symbol.svg`, `favicon.svg`, `icon-maskable.svg`); depois
+`npm i --no-save puppeteer-core && node scripts/rasterizar-marca.mjs` cria os PNG e o `favicon.ico` com o Edge/Chrome instalado.
+A logo aparece no login, o símbolo na barra do topo, e o favicon, o ícone do app (PWA) e o do iPhone vêm dos mesmos arquivos.
+O fundo ilustrado vem de `scripts/gerar-fundo.mjs` (`public/fundo-planos.svg`).
 
 ## Rodar
 

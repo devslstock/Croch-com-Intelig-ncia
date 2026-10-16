@@ -22,7 +22,7 @@ export function AppBar({ title, onBack, children }: { title?: string; onBack?: (
             <span aria-hidden>←</span> {APP_NAME}
           </button>
         ) : (
-          <span className="appbar__brand appbar__brand--static"><span aria-hidden>🧶</span> {APP_NAME}</span>
+          <span className="appbar__brand appbar__brand--static"><img className="appbar__logo" src="/logo-symbol.svg" alt="" width={28} height={28} /> {APP_NAME}</span>
         )}
         {title && <span className="appbar__title">{title}</span>}
       </div>
