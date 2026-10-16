@@ -388,7 +388,7 @@ button.tool:hover { border-color: var(--brand-strong); }
 .tool-page .numfield__box input { border: 0; padding: 0; min-height: 40px; background: transparent; outline: none; min-width: 0; }
 .extras { display: flex; flex-direction: column; gap: 8px; }
 .extras__row { display: grid; grid-template-columns: 1fr 120px 44px; gap: 8px; align-items: end; }
-.extras__row .field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.extras__row .numfield > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .more summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 40px; display: flex; align-items: center; }
 .more[open] summary { margin-bottom: 8px; }
 .more .field { margin-top: 10px; }
