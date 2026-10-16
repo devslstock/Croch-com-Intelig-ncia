@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAccount } from '../billing/AccountProvider'
 import {
-  couponLabel, daysLeft, finalPriceCents, formatCents, imageLimit, offersOnlyBasic, PLAN_FEATURES, PLAN_LABEL, priceCents,
+  couponLabel, daysLeft, finalPriceCents, formatCents, imageLimit, PLAN_FEATURES, PLAN_LABEL, priceCents,
   type AccountCoupon, type Cycle, type Method, type PaidPlan,
 } from '../billing/plans'
 import type { CheckoutResult } from '../billing/store'
@@ -72,10 +72,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   const left = daysLeft(account.expiresAt)
   const trialLeft = daysLeft(account.trialEndsAt)
   const lim = imageLimit(account)
-  const onlyBasic = offersOnlyBasic(account)
-  const headline = reason === 'inactive' && onlyBasic
-    ? { title: 'Comece pelo plano Básico', text: 'Assine para usar o Tramado. Você pode pagar por mês ou por ano.' }
-    : reason ? HEADLINE[reason] : null
+  const headline = reason ? HEADLINE[reason] : null
   const needsEmail = !account.demo && !user.email && !account.email
 
   const pay = async () => {
@@ -143,7 +140,6 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
     return (
       <article className={`plan${plan === 'plus' ? ' plan--plus' : ''}${choice === plan ? ' plan--picked' : ''}`} key={plan}>
         {plan === 'plus' && <em className="badge plan__tag">Recomendado</em>}
-        {plan === 'basic' && onlyBasic && <em className="plan__ribbon">Comece aqui</em>}
         <h3>{PLAN_LABEL[plan]}</h3>
         {off > 0 && <s className="plan__was">{formatCents(list)}</s>}
         <p className="plan__price">
@@ -160,7 +156,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
           {features.map((f) => <li key={f}>{f}</li>)}
         </ul>
         <button
-          className={`btn ${plan === 'plus' || onlyBasic ? 'btn--primary' : ''}`}
+          className="btn btn--primary"
           onClick={() => { setChoice(plan); setDone(null); setError(null) }}
           aria-pressed={choice === plan}
         >
@@ -217,14 +213,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
                   Anual <span className="seg__sub">{prices.yearlyFreeMonths} meses grátis</span>
                 </button>
               </div>
-              <div className={`plans${onlyBasic ? ' plans--single' : ''}`}>{(onlyBasic ? ['basic'] as const : ['basic', 'plus'] as const).map(planCard)}</div>
-              {onlyBasic && (
-                <aside className="teaser">
-                  <em className="badge">🔒 Plus · depois</em>
-                  <b>Vende suas peças? O Plus tem a Calculadora de preço e o Assistente de vendas.</b>
-                  <span>Comece pelo Básico. Quando quiser, o upgrade fica a um toque na tela inicial.</span>
-                </aside>
-              )}
+              <div className="plans">{(['basic', 'plus'] as const).map(planCard)}</div>
             </section>
 
             <section className="card coupon" aria-label="Cupom de desconto">

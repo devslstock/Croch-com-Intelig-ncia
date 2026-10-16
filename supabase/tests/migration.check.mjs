@@ -9,6 +9,7 @@ const sqlLanding = readFileSync(new URL('../migrations/20261018000000_landing_ch
 const sqlFix = readFileSync(new URL('../migrations/20261019000000_corrige_salvar_config.sql', import.meta.url), 'utf8')
 const sqlTrial = readFileSync(new URL('../migrations/20261020000000_periodo_gratis.sql', import.meta.url), 'utf8')
 const sqlBank = readFileSync(new URL('../migrations/20261021000000_banco_pagamento.sql', import.meta.url), 'utf8')
+const sqlBuyer = readFileSync(new URL('../migrations/20261022000000_comprador_teste.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0, fail = 0
 const ok = (name, cond) => { cond ? pass++ : fail++; console.log((cond ? 'OK   ' : 'FALHA'), name) }
@@ -38,6 +39,8 @@ await db.exec(sqlTrial)
 ok('migração do período grátis aplicou sem erro', true)
 await db.exec(sqlBank)
 ok('migração do banco (credenciais de pagamento) aplicou sem erro', true)
+await db.exec(sqlBuyer)
+ok('migração do comprador de teste aplicou sem erro', true)
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
 await db.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ana"}'), ('${B}', '{"full_name":"Bia Souza"}')`)
@@ -397,6 +400,15 @@ await savePay('test')
 ok('voltar para teste usa as de teste de novo', (await db.query('select public.get_payment_config() c')).rows[0].c.accessToken === BTT)
 const baud = (await adm(`select public.admin_audit_list(60) a`)).rows[0].a.filter((x) => x.action === 'save_payment_config')
 ok('o histórico registra o que mudou, sem guardar os valores', baud.length >= 3 && !JSON.stringify(baud).includes(BTT) && !JSON.stringify(baud).includes(BPS) && baud.some((x) => x.detail.changed.includes('prod_token')))
+
+// Comprador de teste
+await rejects('usuária comum não define o comprador de teste', () => as(D, () => db.query(`select public.admin_set_test_buyer('a@testuser.com')`)), /sem_permissao/)
+await rejects('comprador que não é @testuser.com é recusado', () => adm(`select public.admin_set_test_buyer('gente@gmail.com')`), /comprador_invalido/)
+ok('começa sem comprador de teste', (await db.query('select public.get_payment_config() c')).rows[0].c.testBuyerEmail === null)
+await adm(`select public.admin_set_test_buyer('  Test_User_123@TestUser.com ')`)
+ok('guarda o comprador de teste em minúsculas; o painel e o servidor o leem', (await db.query('select public.get_payment_config() c')).rows[0].c.testBuyerEmail === 'test_user_123@testuser.com' && (await cfgNow()).testBuyerEmail === 'test_user_123@testuser.com')
+await adm(`select public.admin_set_test_buyer('')`)
+ok('vazio apaga o comprador de teste', (await db.query('select public.get_payment_config() c')).rows[0].c.testBuyerEmail === null)
 
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

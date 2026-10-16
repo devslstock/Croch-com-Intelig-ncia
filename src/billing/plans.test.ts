@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { canUseApp, couponDiscountCents, finalPriceCents, monthlyLeft, type AccountCoupon } from './plans'
-import { addPeriod, onTrial, planWithTrial, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, offersOnlyBasic, priceCents, yearlySavingCents, type Account } from './plans'
+import { addPeriod, onTrial, planWithTrial, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, priceCents, yearlySavingCents, type Account } from './plans'
 import { localAccountStore, DEMO_KEY } from './store'
 import { localAdminStore } from './adminStore'
 
@@ -31,12 +31,6 @@ describe('acesso', () => {
   it('ferramentas só no Plus', () => {
     expect(canUseTools(acc({ effective: 'basic' }))).toBe(false)
     expect(canUseTools(acc({ effective: 'plus' }))).toBe(true)
-  })
-  it('quem nunca assinou só vê o Básico; quem já teve plano vê os dois', () => {
-    expect(offersOnlyBasic(acc({ plan: 'none', effective: 'none' }))).toBe(true)
-    expect(offersOnlyBasic(acc({ plan: 'basic' }))).toBe(false)
-    // Plus vencido: renovar mostra os dois planos
-    expect(offersOnlyBasic(acc({ plan: 'plus', effective: 'none' }))).toBe(false)
   })
   it('vencimento, tolerância e bloqueio', () => {
     const now = new Date('2026-10-16T12:00:00Z')
@@ -226,7 +220,7 @@ describe('período grátis', () => {
     expect(a.plan).toBe('none')
     expect(a.trialEndsAt).toBe('2026-10-23T12:00:00.000Z')
     expect(canCreateImage(a)).toBe(true)
-    expect(offersOnlyBasic(a)).toBe(true) // o Plus continua só para quem assina
+    expect(canUseTools(a)).toBe(false) // as ferramentas do Plus seguem trancadas durante o teste
     s.consumeImage()
     expect((await s.get()).imagesUsed).toBe(1)
     t = new Date('2026-10-23T12:00:01Z')
@@ -273,5 +267,17 @@ describe('Banco (credenciais de pagamento), demonstração', () => {
     await expect(a.savePaymentConfig(inp({ testToken: 'curto', testSecret: 'segredo-teste-1234' }))).rejects.toThrow(/Access Token/)
     await expect(a.savePaymentConfig(inp({ testToken: T, testSecret: 'abc' }))).rejects.toThrow(/assinatura/i)
     expect((await a.checkPayment()).ok).toBe(false)
+  })
+})
+
+describe('Comprador de teste, demonstração', () => {
+  it('aceita só e-mail @testuser.com e pode ser apagado', async () => {
+    const a = localAdminStore(mem())
+    expect((await a.paymentConfig()).testBuyerEmail).toBe('')
+    await expect(a.setTestBuyer('gente@gmail.com')).rejects.toThrow(/testuser/)
+    await a.setTestBuyer(' Test_User_1@TestUser.com ')
+    expect((await a.paymentConfig()).testBuyerEmail).toBe('test_user_1@testuser.com')
+    await a.setTestBuyer('')
+    expect((await a.paymentConfig()).testBuyerEmail).toBe('')
   })
 })

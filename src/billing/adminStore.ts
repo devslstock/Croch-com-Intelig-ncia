@@ -117,6 +117,8 @@ export type PaymentMode = 'test' | 'production'
 export interface PaymentConfig {
   mode: PaymentMode
   updatedAt: string | null
+  /** E-mail do comprador de teste (@testuser.com). Vazio = não definido. */
+  testBuyerEmail: string
   test: PaymentSide
   production: PaymentSide
 }
@@ -156,6 +158,7 @@ export interface AdminStore {
   saveChatConfig(c: ChatConfig): Promise<void>
   paymentConfig(): Promise<PaymentConfig>
   savePaymentConfig(i: PaymentConfigInput): Promise<void>
+  setTestBuyer(email: string): Promise<void>
   checkPayment(): Promise<PaymentCheck>
 }
 
@@ -174,6 +177,7 @@ export const ADMIN_ERRORS: Record<string, string> = {
   token_invalido: 'O Access Token parece inválido: copie o valor inteiro, sem espaços (ele tem de 20 a 255 caracteres).',
   segredo_invalido: 'A assinatura secreta do webhook deve ter de 8 a 200 caracteres, sem espaços.',
   faltam_credenciais_producao: 'Para usar produção, preencha o Access Token e a assinatura secreta de produção.',
+  comprador_invalido: 'O comprador de teste deve ter um e-mail terminado em @testuser.com (veja em Contas de teste, no Mercado Pago).',
   faltam_credenciais_teste: 'Para usar teste, preencha o Access Token e a assinatura secreta de teste.',
 }
 
@@ -261,6 +265,9 @@ export function supabaseAdminStore(client: SupabaseClient): AdminStore {
         p_mode: i.mode, p_test_token: i.testToken, p_test_secret: i.testSecret, p_prod_token: i.prodToken, p_prod_secret: i.prodSecret,
       }))
     },
+    async setTestBuyer(email) {
+      must(await client.rpc('admin_set_test_buyer', { p_email: email }))
+    },
     async checkPayment() {
       const { data, error } = await client.functions.invoke('mp-check')
       if (error || !data) throw new Error('Não consegui testar agora. Tente de novo em instantes.')
@@ -283,7 +290,7 @@ interface DemoAdmin {
 }
 
 const emptySide = (): PaymentSide => ({ hasToken: false, tokenHint: '', hasSecret: false, secretHint: '' })
-const seedPayment = (): PaymentConfig => ({ mode: 'test', updatedAt: null, test: emptySide(), production: emptySide() })
+const seedPayment = (): PaymentConfig => ({ mode: 'test', updatedAt: null, testBuyerEmail: '', test: emptySide(), production: emptySide() })
 
 const seedChatbot = (): AdminChatbot => ({
   config: { ...DEFAULT_CONFIG },
@@ -487,12 +494,20 @@ export function localAdminStore(storage: StorageLike, now: () => Date = () => ne
         hasToken: token !== '' || old.hasToken, tokenHint: token !== '' ? token.slice(-4) : old.tokenHint,
         hasSecret: secret !== '' || old.hasSecret, secretHint: secret !== '' ? secret.slice(-4) : old.secretHint,
       })
-      const next: PaymentConfig = { mode: i.mode, updatedAt: now().toISOString(), test: side(cur.test, tt, ts), production: side(cur.production, pt, ps) }
+      const next: PaymentConfig = { mode: i.mode, updatedAt: now().toISOString(), testBuyerEmail: cur.testBuyerEmail ?? '', test: side(cur.test, tt, ts), production: side(cur.production, pt, ps) }
       const chosen = i.mode === 'production' ? next.production : next.test
       if (!chosen.hasToken || !chosen.hasSecret) throw new Error(i.mode === 'production' ? ADMIN_ERRORS.faltam_credenciais_producao : ADMIN_ERRORS.faltam_credenciais_teste)
       const changed = [tt && 'test_token', ts && 'test_secret', pt && 'prod_token', ps && 'prod_secret', i.mode !== cur.mode && 'mode'].filter(Boolean)
       d.payment = next
       d.audit.unshift({ id: Date.now(), action: 'save_payment_config', userId: null, createdAt: now().toISOString(), detail: { mode: i.mode, changed } })
+      write(d)
+    },
+    async setTestBuyer(email) {
+      const v = email.trim().toLowerCase()
+      if (v !== '' && !/^[^\s@]+@testuser\.com$/.test(v)) throw new Error(ADMIN_ERRORS.comprador_invalido)
+      const d = read()
+      d.payment = { ...(d.payment ?? seedPayment()), testBuyerEmail: v, updatedAt: now().toISOString() }
+      d.audit.unshift({ id: Date.now(), action: 'save_payment_config', userId: null, createdAt: now().toISOString(), detail: { mode: d.payment.mode, changed: ['test_buyer'] } })
       write(d)
     },
     async checkPayment() {

@@ -492,12 +492,13 @@ function Banco() {
   const [cfg, setCfg] = useState<PaymentConfig | null>(null)
   const [mode, setMode] = useState<PaymentMode>('test')
   const [f, setF] = useState({ testToken: '', testSecret: '', prodToken: '', prodSecret: '' })
+  const [buyer, setBuyer] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
   const [check, setCheck] = useState<PaymentCheck | null>(null)
 
   const load = useCallback(
-    () => admin.paymentConfig().then((c) => { setCfg(c); setMode(c.mode) }).catch(() => setMsg({ kind: 'erro', text: 'Não consegui carregar as credenciais.' })),
+    () => admin.paymentConfig().then((c) => { setCfg(c); setMode(c.mode); setBuyer(c.testBuyerEmail ?? '') }).catch(() => setMsg({ kind: 'erro', text: 'Não consegui carregar as credenciais.' })),
     [admin],
   )
 
@@ -508,6 +509,7 @@ function Banco() {
     setCheck(null)
     try {
       await admin.savePaymentConfig({ mode, ...f })
+      if (buyer.trim() !== (cfg?.testBuyerEmail ?? '')) await admin.setTestBuyer(buyer)
       setF({ testToken: '', testSecret: '', prodToken: '', prodSecret: '' })
       await load()
       setMsg({ kind: 'ok', text: `Salvo. Ambiente ativo: ${MODE_LABEL[mode]}.` })
@@ -574,6 +576,11 @@ function Banco() {
       </p>
 
       {side('Credenciais de teste', cfg?.test, 'testToken', 'testSecret')}
+      <label className="field">
+        <span>E-mail do comprador de teste</span>
+        <input className="input" type="email" inputMode="email" autoComplete="off" spellCheck={false} value={buyer} onChange={(e) => setBuyer(e.target.value)} placeholder="test_user_123@testuser.com" />
+        <small className="hint">Em ambiente de teste o Mercado Pago só aceita pagador de teste. Crie um comprador em Contas de teste e cole o e-mail dele aqui: no ambiente de teste, qualquer conta passa a pagar com ele. Em produção este campo é ignorado.</small>
+      </label>
       {side('Credenciais de produção', cfg?.production, 'prodToken', 'prodSecret')}
 
       <h4 className="editor-user__h">Endereço do webhook</h4>

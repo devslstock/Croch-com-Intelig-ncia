@@ -5,6 +5,8 @@ export interface PaymentConfig {
   mode: 'test' | 'production'
   accessToken: string | null
   webhookSecret: string | null
+  /** E-mail do comprador de teste (@testuser.com), usado como pagador só no modo teste. */
+  testBuyerEmail: string | null
 }
 
 export const serviceClient = () =>
@@ -17,5 +19,6 @@ export async function loadPaymentConfig(admin: ReturnType<typeof serviceClient>)
     mode: c?.mode === 'production' ? 'production' : 'test',
     accessToken: c?.accessToken || Deno.env.get('MP_ACCESS_TOKEN') || null,
     webhookSecret: c?.webhookSecret || Deno.env.get('MP_WEBHOOK_SECRET') || null,
+    testBuyerEmail: c?.testBuyerEmail || null,
   }
 }

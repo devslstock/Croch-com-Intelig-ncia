@@ -64,7 +64,7 @@ export function Landing({ go }: { go: (r: PublicRoute) => void }) {
           {PLAN_FEATURES[plan].map((f) => <li key={f}>{f.replace('{limit}', String(prices.basicImageLimit))}</li>)}
         </ul>
         <button className="btn btn--primary" onClick={create}>
-          {plan === 'basic' ? (prices.trialDays > 0 ? `Testar grátis por ${prices.trialDays} dia${prices.trialDays === 1 ? '' : 's'}` : 'Quero começar') : 'Criar conta e fazer o upgrade depois'}
+          {plan === 'basic' ? (prices.trialDays > 0 ? `Testar grátis por ${prices.trialDays} dia${prices.trialDays === 1 ? '' : 's'}` : 'Quero começar') : 'Criar conta e assinar o Plus'}
         </button>
       </article>
     )

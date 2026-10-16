@@ -44,7 +44,7 @@ async function mp(token: string, path: string, init: { method?: string; body?: u
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'metodo' }, 405)
-  const { accessToken, mode } = await loadPaymentConfig(serviceClient())
+  const { accessToken, mode, testBuyerEmail } = await loadPaymentConfig(serviceClient())
   if (!accessToken) return json({ error: 'pagamento_nao_configurado' }, 503)
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
   if (!request) return json({ error: 'pedido_invalido' }, 400)
   // Em ambiente de TESTE o Mercado Pago só aceita pagador de teste (e-mail @testuser.com): a gestão pode informar o do comprador de teste.
   // Em produção esse e-mail informado é ignorado.
-  const testBuyer = mode === 'test' && request.email && /@testuser\.com$/i.test(request.email) ? request.email : undefined
+  // O e-mail do comprador de teste guardado no painel vale para qualquer conta; o informado na tela (só gestão) vale se não houver.
+  const testBuyer = mode === 'test' ? testBuyerEmail ?? (request.email && /@testuser\.com$/i.test(request.email) ? request.email : undefined) : undefined
   const email = testBuyer ?? user.email ?? request.email
   if (!email) return json({ error: 'email_necessario' }, 400)
 
