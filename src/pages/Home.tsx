@@ -6,19 +6,20 @@ import { toChartResult, type ChartStore, type SavedChart } from '../storage/char
 import { YARN_PALETTES } from '../yarn/library'
 
 interface Tool {
+  view: 'assistente' | 'calculadora'
   icon: string
   title: string
   text: string
 }
 
 const TOOLS: Tool[] = [
-  { icon: '💬', title: 'Assistente de vendas', text: 'Cole a conversa e receba uma resposta sugerida.' },
-  { icon: '🧮', title: 'Calculadora de preço', text: 'Material, horas e lucro: o preço certo da peça.' },
+  { view: 'assistente', icon: '💬', title: 'Assistente de vendas', text: 'Cole a conversa e receba uma resposta sugerida.' },
+  { view: 'calculadora', icon: '🧮', title: 'Calculadora de preço', text: 'Material, horas e lucro: o preço certo da peça.' },
 ]
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-export function Home({ store, onNew, onModels, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
+export function Home({ store, onNew, onModels, onTool, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -78,12 +79,11 @@ export function Home({ store, onNew, onModels, onOpen }: { store: ChartStore; on
         <h2 className="section-title">Ferramentas</h2>
         <section className="tools" aria-label="Ferramentas">
           {TOOLS.map((t) => (
-            <div key={t.title} className="tool" aria-disabled="true">
+            <button key={t.title} className="tool" onClick={() => onTool(t.view)}>
               <span className="tile__icon" aria-hidden>{t.icon}</span>
               <b>{t.title}</b>
               <span>{t.text}</span>
-              <em className="badge">Em breve</em>
-            </div>
+            </button>
           ))}
         </section>
 

@@ -19,7 +19,7 @@ Nome do site: **Tramado** (definido em `src/brand.ts`). Tema claro com cores pas
 ## Login e página inicial
 
 - Primeira tela: **Entrar / Criar conta** (e-mail e senha; Google opcional). Depois do login: página inicial
-  com atalhos (Foto em gráfico e Modelos), ferramentas "em breve" (assistente de vendas e calculadora de preço) e **Meus gráficos**.
+  com atalhos (Foto em gráfico e Modelos), as **Ferramentas** (assistente de vendas e calculadora de preço) e **Meus gráficos**.
 - O login usa Supabase Auth. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (veja `.env.example`).
   Sem essas variáveis o app abre em **modo demonstração** (nada vai para a nuvem).
 - "Meus gráficos": com login real grava na tabela `charts` do Supabase (`src/storage/supabaseCharts.ts`);
@@ -53,6 +53,21 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
   próximo ponto marcado), as carreiras feitas ficam esmaecidas e a imagem rola sozinha até ela. No celular o gráfico
   fica fixo no topo.
 - A lógica pura (alfabeto, pintura, balde, histórico, carreiras) está em `src/editor/` e tem testes.
+
+## Ferramentas
+
+- **Calculadora de preço** (`src/pages/PriceCalculator.tsx`, lógica em `src/tools/pricing.ts`): fio (preço e peso do novelo, gramas
+  gastas, novelos inteiros), outros materiais, horas e valor da hora, imprevistos, taxas, impostos, lucro e arredondamento.
+  O lucro e as taxas são calculados sobre o **preço final** (preço = custo ÷ (1 − taxas − impostos − lucro)). Mostra preço sugerido,
+  lucro, preço mínimo sem prejuízo, sinal e restante, para onde vai o dinheiro e um simulador de desconto. Dá para partir de um
+  gráfico salvo (pontos → gramas e horas, pelo seu ritmo). Os orçamentos salvos alimentam o assistente. Os valores iniciais
+  (R$ 15 por novelo de 125 g, R$ 15 por hora, 1,8 g a cada 100 pontos, 200 pontos por hora…) são **só exemplos**: ajuste aos seus.
+- **Assistente de vendas** (`src/pages/SalesAssistant.tsx`, lógica em `src/tools/chat.ts`): cola a conversa (exportação do WhatsApp,
+  "Nome: texto" ou texto solto), reconhece o que a cliente quer (preço, prazo, envio, desconto, pagamento, personalização, problema…),
+  e monta respostas (completa, curta e para fechar agora) em 3 tons, com ou sem emoji, editáveis, com copiar e abrir no WhatsApp.
+  O desconto respeita o preço mínimo e o prazo pedido é comparado com o seu. É feito por **regras no aparelho, sem IA**, e a
+  conversa não sai do navegador. Traz também respostas rápidas e "Seus dados" (Pix, prazo, sinal, envio, trocas).
+- Preferências, dados e orçamentos ficam neste aparelho (`src/tools/storage.ts`, `localStorage`); ainda não vão para o Supabase.
 
 ## Celular
 

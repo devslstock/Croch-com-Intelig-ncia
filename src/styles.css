@@ -373,3 +373,56 @@ button, a, label, summary, select { touch-action: manipulation; }
 .badge { white-space: nowrap; }
 .tile b { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .tile b .badge { margin-left: 0; }
+
+/* ===== Ferramentas ===== */
+button.tool { text-align: left; font: inherit; color: var(--ink); border-style: solid; opacity: 1; cursor: pointer; min-height: 44px; }
+button.tool:hover { border-color: var(--brand-strong); }
+.tool-page { padding-bottom: 24px; }
+.tool-page textarea, .tool-page select, .tool-page input:not([type='checkbox']) { font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); min-height: 44px; width: 100%; box-sizing: border-box; }
+.tool-page textarea { resize: vertical; line-height: 1.4; }
+.tool-page input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent); }
+.card__title { margin: 0; font-size: 1.05rem; color: var(--accent); }
+.numfield__box { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 0 12px; min-height: 44px; }
+.numfield__box:focus-within { border-color: var(--accent); }
+.numfield__box i { font-style: normal; color: var(--muted); }
+.tool-page .numfield__box input { border: 0; padding: 0; min-height: 40px; background: transparent; outline: none; min-width: 0; }
+.extras { display: flex; flex-direction: column; gap: 8px; }
+.extras__row { display: grid; grid-template-columns: 1fr 120px 44px; gap: 8px; align-items: end; }
+.extras__row .field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.more summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 40px; display: flex; align-items: center; }
+.more[open] summary { margin-bottom: 8px; }
+.more .field { margin-top: 10px; }
+.result__price { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 12px; background: var(--brand); color: var(--brand-ink); }
+.result__price b { font-size: 2rem; line-height: 1.1; }
+.result__price small { opacity: 0.85; }
+.stackbar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+.stackbar span { min-width: 3px; }
+.legend-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.92rem; }
+.legend-list li { display: flex; align-items: center; gap: 8px; }
+.legend-list i { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.15); }
+.legend-list b { margin-left: auto; }
+.discount { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 8px; }
+.toast { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--mint); font-size: 0.9rem; }
+.quotes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.quotes li { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.quotes li span { display: flex; flex-direction: column; min-width: 0; }
+.pricebar { display: none; }
+.pricebar-gap { height: 0; }
+.chip--static { cursor: default; background: var(--lilac); border-color: transparent; }
+.chip--on { border: 2px solid var(--accent); color: var(--accent); background: rgba(168, 66, 111, 0.08); }
+.seg--3 { grid-template-columns: repeat(3, 1fr); }
+.reply { min-height: 180px; }
+.warnings { margin: 0; padding: 10px 12px 10px 28px; border-radius: 10px; background: var(--butter); font-size: 0.9rem; display: grid; gap: 4px; }
+.quick { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.quick details { border-top: 1px solid var(--line); padding: 4px 0; }
+.quick summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+.quick__text { white-space: pre-wrap; margin: 4px 0 10px; padding: 10px 12px; border-radius: 10px; background: var(--bg); font-size: 0.95rem; }
+@media (max-width: 600px) {
+  .pricebar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--brand); color: var(--brand-ink); border-top: 1px solid var(--brand-strong); font-size: 0.95rem; }
+  .pricebar b { font-size: 1.3rem; }
+  .pricebar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pricebar-gap { height: 64px; }
+  .extras__row { grid-template-columns: 1fr 100px 44px; }
+}
+
+.tool-page .chip { min-height: 40px; }

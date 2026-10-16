@@ -7,13 +7,15 @@ import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { ModelEditor } from './pages/ModelEditor'
 import { Models } from './pages/Models'
+import { PriceCalculator } from './pages/PriceCalculator'
+import { SalesAssistant } from './pages/SalesAssistant'
 import type { Model } from './models/library'
 import { localChartStore, type ChartStore, type SavedChart, type SavedChartInput } from './storage/charts'
 import { supabaseChartStore } from './storage/supabaseCharts'
 
 const cloudStore: ChartStore | null = supabase ? supabaseChartStore(supabase) : null
 
-type View = { name: 'home' } | { name: 'new' } | { name: 'models' } | { name: 'model'; model: Model } | { name: 'edit'; chart: SavedChart; crochetar?: boolean }
+type View = { name: 'home' } | { name: 'new' } | { name: 'models' } | { name: 'assistente' } | { name: 'calculadora' } | { name: 'model'; model: Model } | { name: 'edit'; chart: SavedChart; crochetar?: boolean }
 
 /** Login primeiro; depois da entrada, a página inicial. Foto → gráfico → salvar → editor. */
 export function App() {
@@ -29,6 +31,8 @@ export function App() {
   const home = () => setView({ name: 'home' })
 
   if (view.name === 'new') return <Converter onBack={home} onSave={save} onSaved={(chart) => setView({ name: 'edit', chart })} />
+  if (view.name === 'assistente') return <SalesAssistant onBack={home} onCalculator={() => setView({ name: 'calculadora' })} />
+  if (view.name === 'calculadora') return <PriceCalculator store={store} onBack={home} onAssistant={() => setView({ name: 'assistente' })} />
   if (view.name === 'models') return <Models onBack={home} onPick={(model) => setView({ name: 'model', model })} />
   if (view.name === 'model') {
     return <ModelEditor model={view.model} onBack={() => setView({ name: 'models' })} onSave={save} onSaved={(chart) => setView({ name: 'edit', chart })} />
@@ -39,6 +43,7 @@ export function App() {
       store={store}
       onNew={() => setView({ name: 'new' })}
       onModels={() => setView({ name: 'models' })}
+      onTool={(t) => setView(t === 'assistente' ? { name: 'assistente' } : { name: 'calculadora' })}
       onOpen={(chart, crochetar) => setView({ name: 'edit', chart, crochetar })}
     />
   )
