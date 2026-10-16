@@ -104,6 +104,40 @@ export interface UserPatch {
   note: string
 }
 
+/** O que o painel vê das credenciais do Mercado Pago: nunca o valor inteiro, só se existe e os 4 últimos caracteres. */
+export interface PaymentSide {
+  hasToken: boolean
+  tokenHint: string
+  hasSecret: boolean
+  secretHint: string
+}
+
+export type PaymentMode = 'test' | 'production'
+
+export interface PaymentConfig {
+  mode: PaymentMode
+  updatedAt: string | null
+  test: PaymentSide
+  production: PaymentSide
+}
+
+/** Campo vazio = mantém o que já está salvo. */
+export interface PaymentConfigInput {
+  mode: PaymentMode
+  testToken: string
+  testSecret: string
+  prodToken: string
+  prodSecret: string
+}
+
+export interface PaymentCheck {
+  ok: boolean
+  mode: PaymentMode
+  error?: 'sem_token' | 'token_recusado' | 'mp_indisponivel' | 'demo'
+  hasWebhookSecret?: boolean
+  account?: { id: number | string | null; nickname: string | null; siteId: string | null }
+}
+
 export interface AdminStore {
   stats(): Promise<AdminStats>
   users(search?: string): Promise<AdminUser[]>
@@ -120,6 +154,9 @@ export interface AdminStore {
   saveChatItem(i: ChatItemInput): Promise<void>
   deleteChatItem(id: string): Promise<void>
   saveChatConfig(c: ChatConfig): Promise<void>
+  paymentConfig(): Promise<PaymentConfig>
+  savePaymentConfig(i: PaymentConfigInput): Promise<void>
+  checkPayment(): Promise<PaymentCheck>
 }
 
 export const ADMIN_ERRORS: Record<string, string> = {
@@ -133,6 +170,11 @@ export const ADMIN_ERRORS: Record<string, string> = {
   texto_invalido: 'As mensagens de boas-vindas e de "não achei" devem ter de 1 a 300 caracteres.',
   whatsapp_invalido: 'O WhatsApp deve ter de 10 a 15 números, com DDI e DDD (ex.: 5581999990000).',
   item_inexistente: 'Pergunta não encontrada.',
+  modo_invalido: 'Escolha teste ou produção.',
+  token_invalido: 'O Access Token parece inválido: copie o valor inteiro, sem espaços (ele tem de 20 a 255 caracteres).',
+  segredo_invalido: 'A assinatura secreta do webhook deve ter de 8 a 200 caracteres, sem espaços.',
+  faltam_credenciais_producao: 'Para usar produção, preencha o Access Token e a assinatura secreta de produção.',
+  faltam_credenciais_teste: 'Para usar teste, preencha o Access Token e a assinatura secreta de teste.',
 }
 
 const must = <T>(r: { data: T | null; error: { message: string } | null }): T => {
@@ -211,6 +253,19 @@ export function supabaseAdminStore(client: SupabaseClient): AdminStore {
     async saveChatConfig(c) {
       must(await client.rpc('admin_save_chatbot_config', { p_greeting: c.greeting, p_fallback: c.fallback, p_whatsapp: c.whatsapp }))
     },
+    async paymentConfig() {
+      return must(await client.rpc('admin_payment_config')) as PaymentConfig
+    },
+    async savePaymentConfig(i) {
+      must(await client.rpc('admin_save_payment_config', {
+        p_mode: i.mode, p_test_token: i.testToken, p_test_secret: i.testSecret, p_prod_token: i.prodToken, p_prod_secret: i.prodSecret,
+      }))
+    },
+    async checkPayment() {
+      const { data, error } = await client.functions.invoke('mp-check')
+      if (error || !data) throw new Error('Não consegui testar agora. Tente de novo em instantes.')
+      return data as PaymentCheck
+    },
   }
 }
 
@@ -224,7 +279,11 @@ interface DemoAdmin {
   audit: AuditEntry[]
   coupons: AdminCoupon[]
   chatbot: AdminChatbot
+  payment?: PaymentConfig
 }
+
+const emptySide = (): PaymentSide => ({ hasToken: false, tokenHint: '', hasSecret: false, secretHint: '' })
+const seedPayment = (): PaymentConfig => ({ mode: 'test', updatedAt: null, test: emptySide(), production: emptySide() })
 
 const seedChatbot = (): AdminChatbot => ({
   config: { ...DEFAULT_CONFIG },
@@ -409,6 +468,36 @@ export function localAdminStore(storage: StorageLike, now: () => Date = () => ne
       d.chatbot.config = { greeting: c.greeting.trim(), fallback: c.fallback.trim(), whatsapp: wa }
       d.audit.unshift({ id: Date.now(), action: 'save_chatbot_config', userId: null, createdAt: now().toISOString(), detail: { whatsapp: wa !== '' } })
       write(d)
+    },
+    async paymentConfig() {
+      return read().payment ?? seedPayment()
+    },
+    async savePaymentConfig(i) {
+      if (i.mode !== 'test' && i.mode !== 'production') throw new Error(ADMIN_ERRORS.modo_invalido)
+      const tok = (v: string) => v.trim()
+      const badToken = (v: string) => v !== '' && !/^[A-Za-z0-9_-]{20,255}$/.test(v)
+      const badSecret = (v: string) => v !== '' && !/^\S{8,200}$/.test(v)
+      const [tt, ts, pt, ps] = [tok(i.testToken), tok(i.testSecret), tok(i.prodToken), tok(i.prodSecret)]
+      if (badToken(tt) || badToken(pt)) throw new Error(ADMIN_ERRORS.token_invalido)
+      if (badSecret(ts) || badSecret(ps)) throw new Error(ADMIN_ERRORS.segredo_invalido)
+      const d = read()
+      const cur = d.payment ?? seedPayment()
+      // Na demonstração só guardamos "tem / não tem" e os 4 últimos caracteres, nunca o valor.
+      const side = (old: PaymentSide, token: string, secret: string): PaymentSide => ({
+        hasToken: token !== '' || old.hasToken, tokenHint: token !== '' ? token.slice(-4) : old.tokenHint,
+        hasSecret: secret !== '' || old.hasSecret, secretHint: secret !== '' ? secret.slice(-4) : old.secretHint,
+      })
+      const next: PaymentConfig = { mode: i.mode, updatedAt: now().toISOString(), test: side(cur.test, tt, ts), production: side(cur.production, pt, ps) }
+      const chosen = i.mode === 'production' ? next.production : next.test
+      if (!chosen.hasToken || !chosen.hasSecret) throw new Error(i.mode === 'production' ? ADMIN_ERRORS.faltam_credenciais_producao : ADMIN_ERRORS.faltam_credenciais_teste)
+      const changed = [tt && 'test_token', ts && 'test_secret', pt && 'prod_token', ps && 'prod_secret', i.mode !== cur.mode && 'mode'].filter(Boolean)
+      d.payment = next
+      d.audit.unshift({ id: Date.now(), action: 'save_payment_config', userId: null, createdAt: now().toISOString(), detail: { mode: i.mode, changed } })
+      write(d)
+    },
+    async checkPayment() {
+      const c = read().payment ?? seedPayment()
+      return { ok: false, mode: c.mode, error: 'demo' }
     },
     async setBonus(userId, bonus) {
       if (!Number.isInteger(bonus) || bonus < 0 || bonus > 10000) throw new Error(ADMIN_ERRORS.bonus_invalido)

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount } from '../billing/AccountProvider'
-import type { AdminChatbot, AdminChatItem, AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, ChatItemInput, CouponInput } from '../billing/adminStore'
+import type { AdminChatbot, AdminChatItem, AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, ChatItemInput, CouponInput, PaymentCheck, PaymentConfig, PaymentMode, PaymentSide } from '../billing/adminStore'
 import { DEFAULT_PRICES, daysLeft, formatCents, PLAN_LABEL, type PaidPlan, type Plan, type Prices } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { NumberField } from '../components/NumberField'
@@ -477,6 +477,128 @@ function Settings() {
   )
 }
 
+const MODE_LABEL: Record<PaymentMode, string> = { test: 'Teste', production: 'Produção' }
+const WEBHOOK_URL = `${(import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? 'https://SEU-PROJETO.supabase.co'}/functions/v1/mp-webhook`
+const CHECK_TEXT: Record<string, string> = {
+  sem_token: 'Não há Access Token cadastrado para este modo.',
+  token_recusado: 'O Mercado Pago recusou este Access Token. Confira se copiou o valor inteiro e se é do modo escolhido.',
+  mp_indisponivel: 'O Mercado Pago não respondeu agora. Tente de novo em instantes.',
+  demo: 'Na demonstração não há conexão real com o Mercado Pago.',
+}
+
+/** Credenciais de pagamento (Mercado Pago): teste e produção, e qual está valendo. Os valores nunca voltam para a tela. */
+function Banco() {
+  const { admin } = useAccount()
+  const [cfg, setCfg] = useState<PaymentConfig | null>(null)
+  const [mode, setMode] = useState<PaymentMode>('test')
+  const [f, setF] = useState({ testToken: '', testSecret: '', prodToken: '', prodSecret: '' })
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
+  const [check, setCheck] = useState<PaymentCheck | null>(null)
+
+  const load = useCallback(
+    () => admin.paymentConfig().then((c) => { setCfg(c); setMode(c.mode) }).catch(() => setMsg({ kind: 'erro', text: 'Não consegui carregar as credenciais.' })),
+    [admin],
+  )
+
+  const save = async () => {
+    if (mode === 'production' && cfg?.mode !== 'production' && !window.confirm('Ativar PRODUÇÃO? A partir de agora os pagamentos serão cobrados de verdade.')) return
+    setBusy(true)
+    setMsg(null)
+    setCheck(null)
+    try {
+      await admin.savePaymentConfig({ mode, ...f })
+      setF({ testToken: '', testSecret: '', prodToken: '', prodSecret: '' })
+      await load()
+      setMsg({ kind: 'ok', text: `Salvo. Ambiente ativo: ${MODE_LABEL[mode]}.` })
+    } catch (e) {
+      setMsg({ kind: 'erro', text: e instanceof Error ? e.message : 'Não foi possível salvar.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const test = async () => {
+    setBusy(true)
+    setMsg(null)
+    setCheck(null)
+    try {
+      setCheck(await admin.checkPayment())
+    } catch (e) {
+      setMsg({ kind: 'erro', text: e instanceof Error ? e.message : 'Não consegui testar.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(WEBHOOK_URL)
+      setMsg({ kind: 'ok', text: 'Endereço copiado.' })
+    } catch {
+      setMsg({ kind: 'erro', text: 'Não consegui copiar: selecione o endereço e copie.' })
+    }
+  }
+
+  const side = (title: string, s: PaymentSide | undefined, tk: 'testToken' | 'prodToken', sk: 'testSecret' | 'prodSecret') => (
+    <fieldset className="bank-side">
+      <legend>{title} <em className={`tag tag--${s?.hasToken && s?.hasSecret ? 'ok' : 'off'}`}>{s?.hasToken && s?.hasSecret ? 'Cadastrado' : 'Faltando'}</em></legend>
+      <label className="field">
+        <span>Access Token</span>
+        <input className="input" type="password" autoComplete="off" spellCheck={false} value={f[tk]} onChange={(e) => setF({ ...f, [tk]: e.target.value })}
+          placeholder={s?.hasToken ? `••••••••${s.tokenHint} (deixe vazio para manter)` : 'APP_USR-…'} />
+      </label>
+      <label className="field">
+        <span>Assinatura secreta do webhook</span>
+        <input className="input" type="password" autoComplete="off" spellCheck={false} value={f[sk]} onChange={(e) => setF({ ...f, [sk]: e.target.value })}
+          placeholder={s?.hasSecret ? `••••••••${s.secretHint} (deixe vazio para manter)` : 'Cole a assinatura secreta'} />
+      </label>
+    </fieldset>
+  )
+
+  return (
+    <details className="card more" onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) void load() }}>
+      <summary>Banco (Mercado Pago)</summary>
+      <p className="hint">Credenciais para receber os pagamentos. Teste e produção têm valores diferentes no Mercado Pago: cadastre os dois e escolha qual está valendo. Os valores salvos não voltam para a tela, só os 4 últimos caracteres.</p>
+      {msg && <p className={msg.kind === 'ok' ? 'ok' : 'error'} role={msg.kind === 'ok' ? 'status' : 'alert'}>{msg.text}</p>}
+
+      <h4 className="editor-user__h">Ambiente em uso</h4>
+      <div className="seg" role="group" aria-label="Ambiente">
+        {(['test', 'production'] as const).map((m) => (
+          <button key={m} className={`seg__btn${mode === m ? ' seg__btn--on' : ''}`} aria-pressed={mode === m} onClick={() => setMode(m)}>{MODE_LABEL[m]}</button>
+        ))}
+      </div>
+      <p className={mode === 'production' ? 'error' : 'hint'}>
+        {mode === 'production' ? '⚠️ Produção: as cobranças são reais.' : 'Teste: nada é cobrado de verdade. Use as credenciais de teste do Mercado Pago.'}
+        {cfg && cfg.mode !== mode ? ' (ainda não salvo)' : ''}
+      </p>
+
+      {side('Credenciais de teste', cfg?.test, 'testToken', 'testSecret')}
+      {side('Credenciais de produção', cfg?.production, 'prodToken', 'prodSecret')}
+
+      <h4 className="editor-user__h">Endereço do webhook</h4>
+      <p className="hint">No Mercado Pago, em Webhooks, cadastre este endereço (nos modos de teste e de produção) com os eventos Pagamentos, Planos e assinaturas e Pagamentos recorrentes. A assinatura secreta que ele mostra é a que vai acima.</p>
+      <div className="coupon__form">
+        <input className="input" readOnly value={WEBHOOK_URL} aria-label="Endereço do webhook" onFocus={(e) => e.currentTarget.select()} />
+        <button className="btn" onClick={copy}>Copiar</button>
+      </div>
+
+      {check && (
+        <p className={check.ok ? 'ok' : 'error'} role="status">
+          {check.ok
+            ? `Conectado ao Mercado Pago (${MODE_LABEL[check.mode]})${check.account?.nickname ? ` · conta ${check.account.nickname}` : ''}.${check.hasWebhookSecret ? '' : ' Falta a assinatura secreta do webhook.'}`
+            : CHECK_TEXT[check.error ?? ''] ?? 'Não consegui conectar.'}
+        </p>
+      )}
+      <div className="row">
+        <button className="btn btn--primary" onClick={save} disabled={busy}>{busy ? 'Aguarde…' : 'Salvar'}</button>
+        <button className="btn" onClick={test} disabled={busy}>Testar conexão</button>
+      </div>
+      {cfg?.updatedAt && <p className="hint">Última alteração: {new Date(cfg.updatedAt).toLocaleString('pt-BR')}. O teste usa o ambiente já salvo.</p>}
+    </details>
+  )
+}
+
 const AUDIT_LABEL: Record<string, string> = {
   update_settings: 'Preços e limites',
   save_coupon: 'Cupom salvo',
@@ -485,6 +607,7 @@ const AUDIT_LABEL: Record<string, string> = {
   save_chatbot_item: 'Pergunta do chatbot salva',
   delete_chatbot_item: 'Pergunta do chatbot apagada',
   save_chatbot_config: 'Textos do chatbot salvos',
+  save_payment_config: 'Credenciais do Banco alteradas',
 }
 
 function Audit() {
@@ -610,6 +733,7 @@ export function Admin({ onBack }: { onBack: () => void }) {
 
         <Coupons />
         <Chatbot />
+        <Banco />
         <Settings />
         <Audit />
       </div>

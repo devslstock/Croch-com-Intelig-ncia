@@ -2,15 +2,16 @@
 // Deploy SEM verificação de JWT (o Mercado Pago não manda login): supabase functions deploy mp-webhook --no-verify-jwt
 // A autenticidade vem da assinatura x-signature (MP_WEBHOOK_SECRET). O pagamento é sempre reconsultado na API do
 // Mercado Pago com o nosso token: nada do que chega no corpo do aviso é aceito como verdade.
-// Variáveis: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET. SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY já existem nas funções.
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// Credenciais: as do painel de gestão (cartão "Banco", modo teste ou produção); se vazias, MP_ACCESS_TOKEN e MP_WEBHOOK_SECRET.
+import { loadPaymentConfig, serviceClient } from '../_shared/config.ts'
 import { parseReference, toCents, verifyMpSignature, type Reference } from '../_shared/billing.ts'
 
 const MP = 'https://api.mercadopago.com'
-const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
+const admin = serviceClient()
 
+let token = ''
 async function mpGet(path: string) {
-  const res = await fetch(`${MP}${path}`, { headers: { Authorization: `Bearer ${Deno.env.get('MP_ACCESS_TOKEN')}` } })
+  const res = await fetch(`${MP}${path}`, { headers: { Authorization: `Bearer ${token}` } })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`mp_${res.status}`)
   return await res.json()
@@ -69,8 +70,10 @@ async function onPreapproval(id: string) {
 }
 
 Deno.serve(async (req) => {
-  const secret = Deno.env.get('MP_WEBHOOK_SECRET')
-  if (!secret || !Deno.env.get('MP_ACCESS_TOKEN')) return new Response('nao_configurado', { status: 503 })
+  const cfg = await loadPaymentConfig(admin)
+  const secret = cfg.webhookSecret
+  if (!secret || !cfg.accessToken) return new Response('nao_configurado', { status: 503 })
+  token = cfg.accessToken
 
   const url = new URL(req.url)
   const body = await req.json().catch(() => ({}))

@@ -690,3 +690,8 @@ body:has(.landing)::after { display: none; }
 
 /* ===== Painel: chatbot ===== */
 .chatbot-item { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.7); }
+
+/* Painel: cartão "Banco" (credenciais do Mercado Pago) */
+.bank-side { margin: 12px 0 0; padding: 4px 14px 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.6); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.bank-side legend { padding: 0 8px; font-weight: 700; font-size: 0.95rem; }
+.bank-side .tag { margin-left: 6px; vertical-align: middle; }

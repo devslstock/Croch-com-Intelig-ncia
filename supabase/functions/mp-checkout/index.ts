@@ -3,8 +3,9 @@
 //  - cartão anual   -> pagamento único (Checkout Pro) com 2 mensalidades de desconto
 //  - Pix (mensal ou anual) -> QR Code (copia e cola); o Pix não renova sozinho, a pessoa paga de novo no vencimento
 // O VALOR vem do banco (checkout_price: tabela de preços + cupom da conta), nunca do navegador.
-// Variáveis: MP_ACCESS_TOKEN (segredo), APP_URL (endereço do app). SUPABASE_URL/ANON_KEY já existem nas funções.
+// Credenciais: as do painel de gestão (cartão "Banco"); se vazias, a variável MP_ACCESS_TOKEN. APP_URL = endereço do app.
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { loadPaymentConfig, serviceClient } from '../_shared/config.ts'
 import { buildReference, cycleLabel, PLAN_NAME, toReais, validCheckoutRequest } from '../_shared/billing.ts'
 
 const cors = {
@@ -16,11 +17,11 @@ const json = (body: unknown, status = 200) =>
 
 const MP = 'https://api.mercadopago.com'
 
-async function mp(path: string, init: { method?: string; body?: unknown; idempotencyKey?: string }) {
+async function mp(token: string, path: string, init: { method?: string; body?: unknown; idempotencyKey?: string }) {
   const res = await fetch(`${MP}${path}`, {
     method: init.method ?? 'POST',
     headers: {
-      Authorization: `Bearer ${Deno.env.get('MP_ACCESS_TOKEN')}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
       ...(init.idempotencyKey ? { 'X-Idempotency-Key': init.idempotencyKey } : {}),
     },
@@ -37,7 +38,8 @@ async function mp(path: string, init: { method?: string; body?: unknown; idempot
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'metodo' }, 405)
-  if (!Deno.env.get('MP_ACCESS_TOKEN')) return json({ error: 'pagamento_nao_configurado' }, 503)
+  const { accessToken } = await loadPaymentConfig(serviceClient())
+  if (!accessToken) return json({ error: 'pagamento_nao_configurado' }, 503)
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
     global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
 
   try {
     if (request.method === 'pix') {
-      const p = await mp('/v1/payments', {
+      const p = await mp(accessToken, '/v1/payments', {
         idempotencyKey: crypto.randomUUID(),
         body: {
           transaction_amount: amount,
@@ -82,7 +84,7 @@ Deno.serve(async (req) => {
     }
 
     if (request.cycle === 'monthly') {
-      const s = await mp('/preapproval', {
+      const s = await mp(accessToken, '/preapproval', {
         body: {
           reason: title,
           external_reference: reference,
@@ -97,7 +99,7 @@ Deno.serve(async (req) => {
     }
 
     // cartão anual: pagamento único, com parcelamento do cartão se a pessoa quiser
-    const pref = await mp('/checkout/preferences', {
+    const pref = await mp(accessToken, '/checkout/preferences', {
       body: {
         items: [{ title, quantity: 1, unit_price: amount, currency_id: 'BRL' }],
         payer: { email },

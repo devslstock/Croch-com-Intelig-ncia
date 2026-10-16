@@ -242,3 +242,36 @@ describe('período grátis', () => {
     expect(a.trialEndsAt).toBeNull()
   })
 })
+
+describe('Banco (credenciais de pagamento), demonstração', () => {
+  const T = 'TEST-1111111111111111-111111-aaaaaaaaaaaaaaaaaaaaaaaa-1111'
+  const P = 'APP_USR-2222222222222222-222222-bbbbbbbbbbbbbbbbbbbbbbbb-2222'
+  const inp = (over: object = {}) => ({ mode: 'test' as const, testToken: '', testSecret: '', prodToken: '', prodSecret: '', ...over })
+  it('começa vazio, em teste; só guarda "tem" e os 4 últimos caracteres', async () => {
+    const a = localAdminStore(mem())
+    const c0 = await a.paymentConfig()
+    expect(c0.mode).toBe('test')
+    expect(c0.test.hasToken).toBe(false)
+    await a.savePaymentConfig(inp({ testToken: T, testSecret: 'segredo-teste-1234' }))
+    const c1 = await a.paymentConfig()
+    expect(c1.test).toEqual({ hasToken: true, tokenHint: '1111', hasSecret: true, secretHint: '1234' })
+    expect(JSON.stringify(c1)).not.toContain(T)
+  })
+  it('produção só ativa com token e segredo de produção; vazio mantém o salvo', async () => {
+    const a = localAdminStore(mem())
+    await a.savePaymentConfig(inp({ testToken: T, testSecret: 'segredo-teste-1234' }))
+    await expect(a.savePaymentConfig(inp({ mode: 'production' }))).rejects.toThrow(/produção/i)
+    await a.savePaymentConfig(inp({ mode: 'production', prodToken: P, prodSecret: 'segredo-prod-9876' }))
+    expect((await a.paymentConfig()).mode).toBe('production')
+    await a.savePaymentConfig(inp({ mode: 'test' }))
+    const c = await a.paymentConfig()
+    expect(c.mode).toBe('test')
+    expect(c.test.hasToken && c.production.hasToken).toBe(true)
+  })
+  it('recusa valores inválidos e o teste de conexão avisa que é demonstração', async () => {
+    const a = localAdminStore(mem())
+    await expect(a.savePaymentConfig(inp({ testToken: 'curto', testSecret: 'segredo-teste-1234' }))).rejects.toThrow(/Access Token/)
+    await expect(a.savePaymentConfig(inp({ testToken: T, testSecret: 'abc' }))).rejects.toThrow(/assinatura/i)
+    expect((await a.checkPayment()).ok).toBe(false)
+  })
+})
