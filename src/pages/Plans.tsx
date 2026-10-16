@@ -36,6 +36,8 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const [pix, setPix] = useState<Pix | null>(null)
+  /** Endereço do pagamento aberto em outra aba (cartão): enquanto houver, esta tela confere se o plano foi liberado. */
+  const [payUrl, setPayUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [couponText, setCouponText] = useState('')
   const [couponBusy, setCouponBusy] = useState(false)
@@ -48,19 +50,21 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
     if (preselect) window.setTimeout(() => payRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)
   }, [preselect])
 
-  // Depois de gerar o Pix, confere sozinho a cada 5 s se o pagamento entrou.
+  // Depois de gerar o Pix ou abrir o pagamento em outra aba, confere sozinho a cada 5 s se o pagamento entrou.
+  const waiting = pix !== null || payUrl !== null
   useEffect(() => {
-    if (!pix) return
+    if (!waiting) return
     const t = window.setInterval(() => void reload(), 5000)
     return () => window.clearInterval(t)
-  }, [pix, reload])
+  }, [waiting, reload])
   useEffect(() => {
-    if (pix && account && account.expiresAt !== startExpiry.current && account.effective !== 'none') {
+    if (waiting && account && account.expiresAt !== startExpiry.current && account.effective !== 'none') {
       setPix(null)
+      setPayUrl(null)
       setChoice(null)
       setDone('Pagamento confirmado! Seu plano já está ativo.')
     }
-  }, [pix, account])
+  }, [waiting, account])
 
   if (!user || !account) return null
   const prices = account.prices
@@ -79,12 +83,17 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
     setBusy(true)
     setError(null)
     startExpiry.current = account.expiresAt
+    // A aba é aberta já no toque (antes da espera pela rede) para o navegador não bloquear; depois recebe o endereço do pagamento.
+    const tab = method === 'card' && !account.demo ? window.open('', '_blank') : null
+    if (tab) tab.opener = null
     try {
       const r = await store.checkout({ plan: choice, cycle, method, email: email.trim() || undefined })
       if (r.kind === 'redirect') {
-        window.location.href = r.url
+        if (tab) tab.location.href = r.url
+        setPayUrl(r.url)
         return
       }
+      tab?.close()
       if (r.kind === 'pix') setPix(r)
       else {
         await reload()
@@ -92,6 +101,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
         setDone('Pagamento simulado (demonstração): plano ativado.')
       }
     } catch (e) {
+      tab?.close()
       setError(e instanceof Error ? e.message : 'Não consegui iniciar o pagamento.')
     } finally {
       setBusy(false)
@@ -235,7 +245,17 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
               <p className="hint">No cartão mensal, o desconto vale em todas as cobranças da assinatura.</p>
             </section>
 
-            {choice && !pix && (
+            {payUrl && (
+              <section className="card pix" aria-live="polite">
+                <h2 className="card__title">Finalize o pagamento na outra aba</h2>
+                <p>O pagamento abriu em uma nova aba do navegador. Quando concluir, volte para esta aba: o seu plano é liberado sozinho, em alguns segundos.</p>
+                <a className="btn btn--primary" href={payUrl} target="_blank" rel="noopener noreferrer">Abrir o pagamento de novo</a>
+                <button className="btn" onClick={() => { setPayUrl(null); setChoice(null) }}>Escolher outro plano ou forma de pagamento</button>
+                <p className="hint">Se a aba não abriu, libere os pop-ups deste site ou use o botão acima.</p>
+              </section>
+            )}
+
+            {choice && !pix && !payUrl && (
               <section className="card" aria-live="polite" ref={payRef}>
                 <h2 className="card__title">Como você quer pagar o {PLAN_LABEL[choice]} {cycle === 'yearly' ? 'anual' : 'mensal'}?</h2>
                 <div className="seg" role="group" aria-label="Forma de pagamento">
