@@ -65,6 +65,7 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
 - **Página "Saiba mais" (sem login):** `#saiba-mais` apresenta o produto, mostra os planos com os preços do painel e leva a "Criar conta"
   (`#criar`, com cupom em `#criar&cupom=CÓDIGO`). Tem um **chatbot** de respostas predefinidas, cadastradas e editadas no painel de
   gestão (`src/landing/`, `src/components/ChatBot.tsx`, `src/pages/Landing.tsx`). O login abre direto com e-mail e senha.
+- **Período grátis:** no painel, *Preços e limites* → "Dias grátis no cadastro". Contas novas usam o Básico de graça por esses dias (limite mensal do Básico, sem o Plus); depois precisam assinar. Quem assina durante o teste começa a pagar quando o teste acaba. Só vale para quem se cadastra depois de ligar. Migração `20261020000000_periodo_gratis.sql`.
 - **Bônus e cupons:** o painel define quantos gráficos de presente cada conta nova ganha e cadastra cupons de desconto (%, R$, planos,
   período, limite de pessoas, validade). O cupom pode ser informado ao criar a conta ou na tela de assinatura, e a anotação da pessoa no
   painel recebe "Cupom usado: CÓDIGO". O preço com desconto é calculado no banco. Detalhes em `supabase/README.md`.

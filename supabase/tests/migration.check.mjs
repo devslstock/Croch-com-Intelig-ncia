@@ -7,6 +7,7 @@ const sqlBilling = readFileSync(new URL('../migrations/20261016000000_assinatura
 const sqlCoupons = readFileSync(new URL('../migrations/20261017000000_cupons_bonus.sql', import.meta.url), 'utf8')
 const sqlLanding = readFileSync(new URL('../migrations/20261018000000_landing_chatbot.sql', import.meta.url), 'utf8')
 const sqlFix = readFileSync(new URL('../migrations/20261019000000_corrige_salvar_config.sql', import.meta.url), 'utf8')
+const sqlTrial = readFileSync(new URL('../migrations/20261020000000_periodo_gratis.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0, fail = 0
 const ok = (name, cond) => { cond ? pass++ : fail++; console.log((cond ? 'OK   ' : 'FALHA'), name) }
@@ -32,6 +33,8 @@ await db.exec(sqlLanding)
 ok('migração da página pública e chatbot aplicou sem erro', true)
 await db.exec(sqlFix)
 ok('migração de correção do salvar config aplicou sem erro', true)
+await db.exec(sqlTrial)
+ok('migração do período grátis aplicou sem erro', true)
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
 await db.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ana"}'), ('${B}', '{"full_name":"Bia Souza"}')`)
@@ -136,7 +139,7 @@ const st = (await as(ADM, () => db.query('select public.admin_stats() s'))).rows
 ok('estatísticas do painel', st.users >= 3 && st.blocked === 1 && st.revenue30dCents === 5970)
 const audit = (await as(ADM, () => db.query('select public.admin_audit_list() a'))).rows[0].a
 ok('mudanças manuais ficam registradas', audit.length === 2 && audit[0].detail.after.blocked === true)
-await as(ADM, () => db.query(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 0)`))
+await as(ADM, () => db.query(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 0, 0)`))
 ok('admin muda preços e limite', (await price('plus', 'monthly')) === 4990 && (await price('plus', 'yearly')) === 49900)
 await rejects('plano inválido é recusado', () => as(ADM, () => db.query(`select public.admin_update_user('${C}','vip', null, false, '')`)), /plano_invalido/)
 
@@ -152,7 +155,7 @@ const noteOf = async (id) => (await db.query(`select note from public.admin_note
 
 await addUser(D, 'Dora')
 ok('com bônus 0 a conta nasce sem gráficos de presente', (await profile(D)).bonus_images === 0)
-await adm(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 3)`)
+await adm(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 3, 0)`)
 ok('admin define bônus de cadastro', (await db.query(`select signup_bonus_images n from public.app_settings`)).rows[0].n === 3)
 await addUser(E, 'Eva')
 ok('conta nova recebe o bônus configurado; antigas não mudam', (await profile(E)).bonus_images === 3 && (await profile(D)).bonus_images === 0)
@@ -316,6 +319,45 @@ await adm(`select public.admin_save_chatbot_config('Olá!', 'Chame no zap.', '')
 ok('WhatsApp pode ficar vazio', (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r.config.whatsapp === '')
 const au2 = (await adm(`select public.admin_audit_list(60) a`)).rows[0].a.map((x) => x.action)
 ok('mudanças no chatbot ficam no histórico', au2.includes('save_chatbot_item') && au2.includes('delete_chatbot_item') && au2.includes('save_chatbot_config'))
+
+// ---------------------------------------------------------------------------
+// Período grátis no cadastro
+// ---------------------------------------------------------------------------
+const T1 = U('d'), T2 = U('e'), T3 = U('f')
+await addUser(T1, 'Tais')
+ok('com 0 dias, a conta nasce sem período grátis', (await profile(T1)).trial_ends_at === null)
+await adm(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 0, 7)`)
+ok('admin define os dias grátis', (await db.query(`select trial_days n from public.app_settings`)).rows[0].n === 7)
+await rejects('dias grátis acima de 365 são recusados', () => adm(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 0, 400)`), /check constraint/)
+await addUser(T2, 'Tati')
+const trT = await profile(T2)
+const daysT = (new Date(trT.trial_ends_at).getTime() - Date.now()) / 86_400_000
+ok('conta nova ganha o prazo (7 dias); antigas não mudam', daysT > 6.99 && daysT <= 7 && (await profile(T1)).trial_ends_at === null)
+const accT = (await as(T2, () => db.query('select public.my_account() a'))).rows[0].a
+ok('my_account: Básico por período grátis, plano segue "none" e informa o fim', accT.effective === 'basic' && accT.plan === 'none' && !!accT.trialEndsAt && accT.prices.trialDays === 7)
+ok('o painel mostra a conta em teste', (await adm(`select public.admin_list_users() u`)).rows[0].u.find((x) => x.id === T2).trialEndsAt !== null)
+for (let i = 0; i < 15; i++) await as(T2, () => db.query(newChart(`t${i}`)))
+await rejects('no teste vale o limite mensal do Básico', () => as(T2, () => db.query(newChart('t99'))), /limite_mensal/)
+ok('o teste não gasta o bônus', (await profile(T2)).bonus_images === 0 && (await profile(T2)).images_count === 15)
+await rejects('usuária não altera o próprio prazo de teste', () => as(T2, () => db.query(`update public.profiles set trial_ends_at = now() + interval '999 days' where id='${T2}'`)), /permission denied/)
+
+await db.exec(`update public.profiles set trial_ends_at = now() - interval '1 minute' where id='${T2}'`)
+ok('acabou o teste: sem tolerância, volta a "none"', (await as(T2, () => db.query('select public.my_account() a'))).rows[0].a.effective === 'none')
+await rejects('sem teste, sem plano e sem bônus: bloqueada', () => as(T2, () => db.query(newChart('t100'))), /assinatura_inativa/)
+
+await addUser(T3, 'Teo')
+await db.exec(`update public.profiles set trial_ends_at = now() + interval '5 days' where id='${T3}'`)
+const payT = await db.query(`select public.apply_payment('${T3}', 'basic', 'monthly', 'pix', 'trial-pay-1', 2490) r`)
+const expT = new Date(payT.rows[0].r.expiresAt).getTime()
+const trEnd = new Date((await profile(T3)).trial_ends_at).getTime()
+ok('pagar durante o teste: o período pago começa quando o teste acaba', expT > trEnd + 27 * 86_400_000 && expT < trEnd + 32 * 86_400_000)
+const accT3 = (await as(T3, () => db.query('select public.my_account() a'))).rows[0].a
+ok('depois de assinar, deixa de aparecer como teste', accT3.effective === 'basic' && accT3.trialEndsAt === null && accT3.plan === 'basic')
+await db.exec(`update public.profiles set blocked = true where id='${T3}'`)
+ok('conta desativada não usa o teste', (await as(T3, () => db.query('select public.my_account() a'))).rows[0].a.effective === 'none')
+ok('visitante vê os dias grátis na página pública', (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r.prices.trialDays === 7)
+ok('a resposta "posso testar" do chatbot usa o marcador {{teste}}', (await adm('select public.admin_list_chatbot() r')).rows[0].r.items.some((i) => i.question === 'Posso testar antes de assinar?' && i.answer.includes('{{teste}}')))
+await adm(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 0, 0)`)
 
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

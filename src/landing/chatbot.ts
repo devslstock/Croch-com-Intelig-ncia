@@ -73,7 +73,7 @@ export const DEFAULT_ITEMS: ChatItem[] = [
   },
   {
     id: 'd-teste', question: 'Posso testar antes de assinar?',
-    answer: 'Ao criar a conta você pode ganhar gráficos de presente para experimentar: {{bonus}}. Se tiver um cupom de desconto, é só digitar ao criar a conta ou na tela de assinatura.',
+    answer: '{{teste}} Ao criar a conta você também pode ganhar gráficos de presente para experimentar: {{bonus}}. Se tiver um cupom de desconto, é só digitar ao criar a conta ou na tela de assinatura.',
     keywords: 'testar, grátis, gratis, teste, experimentar, cupom, desconto, promoção, promocao',
   },
   {
@@ -91,7 +91,14 @@ export function fillTokens(text: string, p: Prices): string {
     p.signupBonusImages > 0
       ? `hoje são ${p.signupBonusImages} gráfico${p.signupBonusImages === 1 ? '' : 's'}`
       : 'a quantidade depende da promoção do momento'
+  const days = p.trialDays
+  const teste =
+    days > 0
+      ? `Sim! Você usa o plano Básico grátis por ${days} dia${days === 1 ? '' : 's'}, sem pagar nada antes.`
+      : 'No momento não há período grátis.'
   const values: Record<string, string> = {
+    dias_gratis: String(days),
+    teste,
     basico_mensal: formatCents(p.basicMonthlyCents),
     plus_mensal: formatCents(p.plusMonthlyCents),
     basico_anual: formatCents(priceCents(p, 'basic', 'yearly')),

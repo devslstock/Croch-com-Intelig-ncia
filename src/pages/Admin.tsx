@@ -27,6 +27,7 @@ function matches(u: AdminUser, f: Filter): boolean {
 function statusOf(u: AdminUser): { label: string; kind: 'ok' | 'warn' | 'off' } {
   if (u.blocked) return { label: 'Desativada', kind: 'off' }
   if (u.effective === 'none') return { label: u.plan === 'none' ? 'Sem plano' : 'Vencida', kind: u.plan === 'none' ? 'off' : 'warn' }
+  if (u.trialEndsAt) return { label: `Teste grátis até ${new Date(u.trialEndsAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`, kind: 'ok' }
   const d = daysLeft(u.expiresAt)
   if (d !== null && d <= 7) return { label: `Vence em ${Math.max(0, d)} d`, kind: 'warn' }
   return { label: 'Ativa', kind: 'ok' }
@@ -441,7 +442,7 @@ function Settings() {
     setBusy(true)
     setMsg(null)
     try {
-      await admin.updateSettings({ ...p, basicMonthlyCents: Math.max(1, p.basicMonthlyCents), plusMonthlyCents: Math.max(1, p.plusMonthlyCents), yearlyFreeMonths: Math.min(11, p.yearlyFreeMonths), basicImageLimit: Math.max(1, p.basicImageLimit), signupBonusImages: Math.max(0, Math.min(1000, p.signupBonusImages)) })
+      await admin.updateSettings({ ...p, basicMonthlyCents: Math.max(1, p.basicMonthlyCents), plusMonthlyCents: Math.max(1, p.plusMonthlyCents), yearlyFreeMonths: Math.min(11, p.yearlyFreeMonths), basicImageLimit: Math.max(1, p.basicImageLimit), signupBonusImages: Math.max(0, Math.min(1000, p.signupBonusImages)), trialDays: Math.max(0, Math.min(365, p.trialDays)) })
       await reload()
       setMsg('Preços salvos. Valem para os próximos pagamentos.')
     } catch (e) {
@@ -465,6 +466,7 @@ function Settings() {
             <NumberField label="Imagens por mês no Básico" value={p.basicImageLimit} onChange={(v) => set('basicImageLimit', Math.round(v))} max={10000} />
           </div>
           <NumberField label="Dias de tolerância após vencer" value={p.graceDays} onChange={(v) => set('graceDays', Math.round(v))} max={30} hint="Tempo extra para o Pix compensar ou o cartão tentar de novo." />
+          <NumberField label="Dias grátis no cadastro" value={p.trialDays} onChange={(v) => set('trialDays', Math.round(v))} max={365} hint="Quem criar a conta usa o plano Básico de graça por esses dias; depois precisa assinar. 0 = sem período grátis. Só vale para quem se cadastrar depois de salvar." />
           <NumberField label="Gráficos de bônus no cadastro" value={p.signupBonusImages} onChange={(v) => set('signupBonusImages', Math.round(v))} max={1000} hint="Cada conta nova ganha esses gráficos de presente, mesmo sem assinar. 0 = nenhum. Só vale para quem se cadastrar depois de salvar." />
           <p className="hint">Anual: {formatCents(p.basicMonthlyCents * (12 - p.yearlyFreeMonths))} no Básico e {formatCents(p.plusMonthlyCents * (12 - p.yearlyFreeMonths))} no Plus.</p>
           {msg && <p className="hint" role="status">{msg}</p>}

@@ -66,6 +66,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   const prices = account.prices
   const active = account.effective !== 'none'
   const left = daysLeft(account.expiresAt)
+  const trialLeft = daysLeft(account.trialEndsAt)
   const lim = imageLimit(account)
   const onlyBasic = offersOnlyBasic(account)
   const headline = reason === 'inactive' && onlyBasic
@@ -127,7 +128,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
     const list = priceCents(prices, plan, cycle)
     const total = finalPriceCents(prices, plan, cycle, account.coupon)
     const off = list - total
-    const isCurrent = account.effective === plan
+    const isCurrent = account.effective === plan && !account.trialEndsAt
     const features = PLAN_FEATURES[plan].map((f) => f.replace('{limit}', String(prices.basicImageLimit)))
     return (
       <article className={`plan${plan === 'plus' ? ' plan--plus' : ''}${choice === plan ? ' plan--picked' : ''}`} key={plan}>
@@ -190,9 +191,9 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
             {active && (
               <section className="card status">
                 <h2 className="card__title">Seu plano agora</h2>
-                <p className="status__plan"><b>{PLAN_LABEL[account.effective]}</b>{account.method === 'manual' ? <em className="badge">Cortesia</em> : null}</p>
+                <p className="status__plan"><b>{PLAN_LABEL[account.effective]}</b>{account.method === 'manual' ? <em className="badge">Cortesia</em> : null}{account.trialEndsAt ? <em className="badge">Período grátis</em> : null}</p>
                 <ul className="status__list">
-                  <li>{account.expiresAt ? <>Vale até <b>{new Date(account.expiresAt).toLocaleDateString('pt-BR')}</b>{left !== null && left >= 0 ? ` (${left} dia${left === 1 ? '' : 's'})` : ' (em tolerância: renove já)'}</> : 'Sem data de vencimento'}</li>
+                  <li>{account.trialEndsAt ? <>Grátis até <b>{new Date(account.trialEndsAt).toLocaleDateString('pt-BR')}</b>{trialLeft !== null ? ` (${trialLeft} dia${trialLeft === 1 ? '' : 's'})` : ''}. Assine antes para não ficar sem acesso: o plano pago começa quando o teste acaba.</> : account.expiresAt ? <>Vale até <b>{new Date(account.expiresAt).toLocaleDateString('pt-BR')}</b>{left !== null && left >= 0 ? ` (${left} dia${left === 1 ? '' : 's'})` : ' (em tolerância: renove já)'}</> : 'Sem data de vencimento'}</li>
                   <li>{lim === null ? 'Imagens ilimitadas' : `Imagens deste mês: ${account.imagesUsed} de ${lim}`}</li>
                   {account.method && account.method !== 'manual' && <li>Pagamento por {account.method === 'pix' ? 'Pix' : 'cartão'}, {account.cycle === 'yearly' ? 'plano anual' : 'plano mensal'}</li>}
                 </ul>

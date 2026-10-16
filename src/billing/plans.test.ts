@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { canUseApp, couponDiscountCents, finalPriceCents, monthlyLeft, type AccountCoupon } from './plans'
-import { addPeriod, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, offersOnlyBasic, priceCents, yearlySavingCents, type Account } from './plans'
+import { addPeriod, onTrial, planWithTrial, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, offersOnlyBasic, priceCents, yearlySavingCents, type Account } from './plans'
 import { localAccountStore, DEMO_KEY } from './store'
 import { localAdminStore } from './adminStore'
 
@@ -8,7 +8,7 @@ const mem = () => {
   const m = new Map<string, string>()
   return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }
 }
-const acc = (over: Partial<Account>): Account => ({ plan: 'basic', effective: 'basic', expiresAt: null, blocked: false, cycle: null, method: null, isAdmin: false, email: null, imagesUsed: 0, bonusImages: 0, coupon: null, prices: DEFAULT_PRICES, ...over })
+const acc = (over: Partial<Account>): Account => ({ plan: 'basic', effective: 'basic', expiresAt: null, trialEndsAt: null, blocked: false, cycle: null, method: null, isAdmin: false, email: null, imagesUsed: 0, bonusImages: 0, coupon: null, prices: DEFAULT_PRICES, ...over })
 
 describe('preços', () => {
   it('anual = 12 mensalidades menos 2', () => {
@@ -198,5 +198,47 @@ describe('cupons (demonstração)', () => {
     expect((await admin.coupons())[0].active).toBe(false)
     await admin.deleteCoupon(c.id)
     expect(await admin.coupons()).toHaveLength(0)
+  })
+})
+
+describe('período grátis', () => {
+  const now = new Date('2026-10-16T12:00:00Z')
+  it('vale como Básico até o fim do prazo, sem tolerância extra', () => {
+    expect(planWithTrial('none', false, null, 3, '2026-10-20T00:00:00Z', now)).toBe('basic')
+    expect(planWithTrial('none', false, null, 3, '2026-10-16T11:00:00Z', now)).toBe('none') // acabou há 1 h: sem os 3 dias de tolerância
+    expect(planWithTrial('none', false, null, 3, null, now)).toBe('none')
+    expect(planWithTrial('none', true, null, 3, '2026-10-20T00:00:00Z', now)).toBe('none') // conta desativada
+  })
+  it('assinatura ativa vale mais que o teste; Plus pago não vira Básico', () => {
+    expect(planWithTrial('plus', false, '2026-11-20T00:00:00Z', 3, '2026-10-20T00:00:00Z', now)).toBe('plus')
+  })
+  it('onTrial', () => {
+    expect(onTrial({ trialEndsAt: '2026-10-20T00:00:00Z' })).toBe(true)
+    expect(onTrial({ trialEndsAt: null })).toBe(false)
+  })
+  it('demonstração: a conta nova ganha os dias do painel, usa o Básico e depois perde o acesso', async () => {
+    const st = mem()
+    await localAdminStore(st).updateSettings({ ...(await localAdminStore(st).settings()), trialDays: 7 })
+    let t = new Date('2026-10-16T12:00:00Z')
+    const s = localAccountStore(st, () => t)
+    const a = await s.get()
+    expect(a.effective).toBe('basic')
+    expect(a.plan).toBe('none')
+    expect(a.trialEndsAt).toBe('2026-10-23T12:00:00.000Z')
+    expect(canCreateImage(a)).toBe(true)
+    expect(offersOnlyBasic(a)).toBe(true) // o Plus continua só para quem assina
+    s.consumeImage()
+    expect((await s.get()).imagesUsed).toBe(1)
+    t = new Date('2026-10-23T12:00:01Z')
+    const late = await s.get()
+    expect(late.effective).toBe('none')
+    expect(late.trialEndsAt).toBeNull()
+    expect(canCreateImage(late)).toBe(false)
+  })
+  it('sem dias no painel, não há período grátis', async () => {
+    const s = localAccountStore(mem())
+    const a = await s.get()
+    expect(a.effective).toBe('none')
+    expect(a.trialEndsAt).toBeNull()
   })
 })

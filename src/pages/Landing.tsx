@@ -64,7 +64,7 @@ export function Landing({ go }: { go: (r: PublicRoute) => void }) {
           {PLAN_FEATURES[plan].map((f) => <li key={f}>{f.replace('{limit}', String(prices.basicImageLimit))}</li>)}
         </ul>
         <button className="btn btn--primary" onClick={create}>
-          {plan === 'basic' ? 'Quero começar' : 'Criar conta e fazer o upgrade depois'}
+          {plan === 'basic' ? (prices.trialDays > 0 ? `Testar grátis por ${prices.trialDays} dia${prices.trialDays === 1 ? '' : 's'}` : 'Quero começar') : 'Criar conta e fazer o upgrade depois'}
         </button>
       </article>
     )
@@ -104,6 +104,9 @@ export function Landing({ go }: { go: (r: PublicRoute) => void }) {
           </div>
         </section>
 
+        {prices.trialDays > 0 && (
+          <p className="lp-gift">🎉 Crie sua conta e use o plano Básico <b>grátis por {prices.trialDays} dia{prices.trialDays === 1 ? '' : 's'}</b>. Sem pagar nada agora.</p>
+        )}
         {prices.signupBonusImages > 0 && (
           <p className="lp-gift">🎁 Crie sua conta e ganhe <b>{prices.signupBonusImages} gráfico{prices.signupBonusImages === 1 ? '' : 's'} de presente</b> para experimentar.</p>
         )}

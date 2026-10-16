@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { addPeriod, DEFAULT_PRICES, effectivePlan, MONTH_KEY, AccessError, LIMIT_MESSAGE, INACTIVE_MESSAGE, type Account, type AccountCoupon, type Cycle, type Method, type PaidPlan, type Plan, type Prices } from './plans'
+import { addPeriod, DEFAULT_PRICES, effectivePlan, planWithTrial, MONTH_KEY, AccessError, LIMIT_MESSAGE, INACTIVE_MESSAGE, type Account, type AccountCoupon, type Cycle, type Method, type PaidPlan, type Plan, type Prices } from './plans'
 import { DEMO_ADMIN_KEY, seedDemoAdmin, type AdminCoupon } from './adminStore'
 import { readJson, type StorageLike } from '../tools/storage'
 
@@ -49,6 +49,7 @@ export function accountFromRow(r: Record<string, unknown>): Account {
     plan: (r.plan as Plan) ?? 'none',
     effective: (r.effective as Plan) ?? 'none',
     expiresAt: (r.expiresAt as string | null) ?? null,
+    trialEndsAt: (r.trialEndsAt as string | null) ?? null,
     blocked: Boolean(r.blocked),
     cycle: (r.cycle as Cycle | null) ?? null,
     method: (r.method as Account['method']) ?? null,
@@ -102,6 +103,8 @@ interface DemoState {
   /** Gráficos de presente restantes (ausente = ainda não definido: usa o valor do painel de demonstração). */
   bonus?: number
   couponCode?: string
+  /** Fim do período grátis (ausente = ainda não definido; null = sem período grátis). */
+  trialEnds?: string | null
 }
 
 const EMPTY: DemoState = { plan: 'none', expiresAt: null, cycle: null, method: null, imagesMonth: '', imagesCount: 0 }
@@ -128,10 +131,13 @@ export function localAccountStore(storage: StorageLike, now: () => Date = () => 
   }
   const view = (s: DemoState): Account => {
     const prices = demoAdmin().prices
+    const paid = effectivePlan(s.plan, false, s.expiresAt, prices.graceDays, now())
+    const effective = planWithTrial(s.plan, false, s.expiresAt, prices.graceDays, s.trialEnds, now())
     return {
       plan: s.plan,
-      effective: effectivePlan(s.plan, false, s.expiresAt, prices.graceDays, now()),
+      effective,
       expiresAt: s.expiresAt,
+      trialEndsAt: paid === 'none' && effective === 'basic' ? s.trialEnds ?? null : null,
       blocked: false,
       cycle: s.cycle,
       method: s.method,
@@ -146,7 +152,14 @@ export function localAccountStore(storage: StorageLike, now: () => Date = () => 
   }
   return {
     async get(): Promise<Account> {
-      return view(read())
+      let s = read()
+      if (s.trialEnds === undefined) {
+        // Primeiro acesso da demonstração = "cadastro": começa o período grátis do painel.
+        const days = demoAdmin().prices.trialDays
+        s = { ...s, trialEnds: days > 0 ? new Date(now().getTime() + days * 86_400_000).toISOString() : null }
+        write(s)
+      }
+      return view(s)
     },
     async checkout(req: CheckoutRequest): Promise<CheckoutResult> {
       const s = read()

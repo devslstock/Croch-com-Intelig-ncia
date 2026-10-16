@@ -80,7 +80,7 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpe
 
         {account && (
           <button className="planchip" onClick={onPlans} aria-label="Minha assinatura">
-            <b>{account.effective === 'none' ? 'Sem plano ativo' : `Plano ${PLAN_LABEL[account.effective]}`}</b>
+            <b>{account.effective === 'none' ? 'Sem plano ativo' : account.trialEndsAt ? `Teste grátis · até ${fmtDate(account.trialEndsAt)}` : `Plano ${PLAN_LABEL[account.effective]}`}</b>
             <span>{quotaText(account)}</span>
             <em>Ver</em>
           </button>

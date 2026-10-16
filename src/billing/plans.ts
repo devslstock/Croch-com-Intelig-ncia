@@ -14,6 +14,8 @@ export interface Prices {
   graceDays: number
   /** Gráficos de presente que cada conta nova recebe (funcionam mesmo sem plano). */
   signupBonusImages: number
+  /** Dias de Básico grátis para cada conta nova (0 = sem período grátis). */
+  trialDays: number
 }
 
 /** Valores de EXEMPLO (mesmos do banco): o painel de gestão altera os de verdade. */
@@ -24,6 +26,7 @@ export const DEFAULT_PRICES: Prices = {
   basicImageLimit: 12,
   graceDays: 3,
   signupBonusImages: 0,
+  trialDays: 0,
 }
 
 /** Cupom ligado à conta (o banco decide se vale; isto só espelha para mostrar o preço). */
@@ -42,6 +45,8 @@ export interface Account {
   /** Plano que vale agora (já considera bloqueio, vencimento e tolerância). */
   effective: Plan
   expiresAt: string | null
+  /** Fim do período grátis, quando é ele que dá acesso agora (o plano é o Básico). */
+  trialEndsAt: string | null
   blocked: boolean
   cycle: Cycle | null
   method: 'card' | 'pix' | 'manual' | null
@@ -81,6 +86,16 @@ export function effectivePlan(plan: Plan, blocked: boolean, expiresAt: string | 
   if (!expiresAt) return plan
   return new Date(expiresAt).getTime() + graceDays * 86_400_000 > now.getTime() ? plan : 'none'
 }
+
+/** Como effectivePlan, mas o período grátis (sem tolerância extra) vale como Básico quando não há assinatura ativa. */
+export function planWithTrial(plan: Plan, blocked: boolean, expiresAt: string | null, graceDays: number, trialEndsAt: string | null | undefined, now: Date = new Date()): Plan {
+  const paid = effectivePlan(plan, blocked, expiresAt, graceDays, now)
+  if (paid !== 'none' || blocked) return paid
+  return trialEndsAt && new Date(trialEndsAt).getTime() > now.getTime() ? 'basic' : 'none'
+}
+
+/** Está usando o período grátis (e ainda não assinou). */
+export const onTrial = (a: Pick<Account, 'trialEndsAt'>) => a.trialEndsAt !== null
 
 /** Limite de imagens novas por mês: número (Básico), null (ilimitado) ou 0 (sem assinatura). */
 export function imageLimit(a: Account): number | null {

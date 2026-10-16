@@ -50,6 +50,13 @@ describe('chatbot: marcadores de preço', () => {
     expect(sp(fillTokens('{{basico_mensal}} / {{basico_anual}} / {{bonus}}', p))).toBe('R$ 25,00 / R$ 250,00 / hoje são 3 gráficos')
     expect(fillTokens('{{bonus}}', { ...p, signupBonusImages: 0 })).toContain('promoção')
   })
+  it('dias grátis: frase do teste e número', () => {
+    const p = { ...DEFAULT_PRICES, trialDays: 7 }
+    expect(fillTokens('{{teste}}', p)).toBe('Sim! Você usa o plano Básico grátis por 7 dias, sem pagar nada antes.')
+    expect(fillTokens('{{dias_gratis}} dias', p)).toBe('7 dias')
+    expect(fillTokens('{{teste}}', { ...p, trialDays: 1 })).toContain('por 1 dia,')
+    expect(fillTokens('{{teste}}', DEFAULT_PRICES)).toBe('No momento não há período grátis.')
+  })
   it('marcador desconhecido fica como está', () => {
     expect(fillTokens('oi {{nada}}', DEFAULT_PRICES)).toBe('oi {{nada}}')
   })

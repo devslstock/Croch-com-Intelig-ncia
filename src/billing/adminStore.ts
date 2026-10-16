@@ -11,6 +11,8 @@ export interface AdminUser {
   plan: Plan
   effective: Plan
   expiresAt: string | null
+  /** Fim do período grátis, quando é ele que dá acesso agora. */
+  trialEndsAt?: string | null
   blocked: boolean
   cycle: Cycle | null
   method: 'card' | 'pix' | 'manual' | null
@@ -168,12 +170,13 @@ export function supabaseAdminStore(client: SupabaseClient): AdminStore {
         basicImageLimit: data.basic_image_limit,
         graceDays: data.grace_days,
         signupBonusImages: data.signup_bonus_images ?? 0,
+        trialDays: data.trial_days ?? 0,
       }
     },
     async updateSettings(p) {
       must(await client.rpc('admin_update_settings', {
         p_basic_cents: p.basicMonthlyCents, p_plus_cents: p.plusMonthlyCents, p_free_months: p.yearlyFreeMonths,
-        p_image_limit: p.basicImageLimit, p_grace_days: p.graceDays, p_signup_bonus: p.signupBonusImages,
+        p_image_limit: p.basicImageLimit, p_grace_days: p.graceDays, p_signup_bonus: p.signupBonusImages, p_trial_days: p.trialDays,
       }))
     },
     async audit() {
