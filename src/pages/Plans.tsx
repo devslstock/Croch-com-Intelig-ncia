@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAccount } from '../billing/AccountProvider'
 import {
-  daysLeft, formatCents, imageLimit, PLAN_FEATURES, PLAN_LABEL, priceCents, yearlySavingCents,
+  daysLeft, formatCents, imageLimit, offersOnlyBasic, PLAN_FEATURES, PLAN_LABEL, priceCents, yearlySavingCents,
   type Cycle, type Method, type PaidPlan,
 } from '../billing/plans'
 import type { CheckoutResult } from '../billing/store'
@@ -18,11 +18,11 @@ const HEADLINE: Record<Exclude<PlansReason, null>, { title: string; text: string
 
 type Pix = Extract<CheckoutResult, { kind: 'pix' }>
 
-export function Plans({ reason, onBack, onAdmin }: { reason: PlansReason; onBack?: () => void; onAdmin?: () => void }) {
+export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansReason; /** Plano já escolhido ao abrir (vem da janela de upgrade). */ preselect?: PaidPlan; onBack?: () => void; onAdmin?: () => void }) {
   const { user, signOut } = useAuth()
   const { account, reload, store, resetDemo } = useAccount()
   const [cycle, setCycle] = useState<Cycle>('yearly')
-  const [choice, setChoice] = useState<PaidPlan | null>(null)
+  const [choice, setChoice] = useState<PaidPlan | null>(preselect ?? null)
   const [method, setMethod] = useState<Method>('pix')
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
@@ -51,7 +51,10 @@ export function Plans({ reason, onBack, onAdmin }: { reason: PlansReason; onBack
   const active = account.effective !== 'none'
   const left = daysLeft(account.expiresAt)
   const lim = imageLimit(account)
-  const headline = reason ? HEADLINE[reason] : null
+  const onlyBasic = offersOnlyBasic(account)
+  const headline = reason === 'inactive' && onlyBasic
+    ? { title: 'Comece pelo plano Básico', text: 'Assine para usar o Tramado. Você pode pagar por mês ou por ano.' }
+    : reason ? HEADLINE[reason] : null
   const needsEmail = !account.demo && !user.email && !account.email
 
   const pay = async () => {
@@ -158,7 +161,8 @@ export function Plans({ reason, onBack, onAdmin }: { reason: PlansReason; onBack
                   Anual <span className="seg__sub">{prices.yearlyFreeMonths} meses grátis</span>
                 </button>
               </div>
-              <div className="plans">{(['basic', 'plus'] as const).map(planCard)}</div>
+              <div className={`plans${onlyBasic ? ' plans--single' : ''}`}>{(onlyBasic ? ['basic'] as const : ['basic', 'plus'] as const).map(planCard)}</div>
+              {onlyBasic && <p className="hint">Quer a Calculadora de preço e o Assistente de vendas? Depois de assinar, o upgrade para o Plus fica a um toque na tela inicial.</p>}
             </section>
 
             {choice && !pix && (

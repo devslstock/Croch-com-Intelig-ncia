@@ -4,6 +4,7 @@ import { useAccount } from '../billing/AccountProvider'
 import { canUseTools, imageLimit, imagesLeft, PLAN_LABEL } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { ChartThumb } from '../components/ChartThumb'
+import { UpgradeModal } from '../components/UpgradeModal'
 import { toChartResult, type ChartStore, type SavedChart } from '../storage/charts'
 import { YARN_PALETTES } from '../yarn/library'
 
@@ -21,11 +22,12 @@ const TOOLS: Tool[] = [
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-export function Home({ store, onNew, onModels, onTool, onPlans, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onPlans: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
+export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onPlans: () => void; onUpgrade: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
   const { account } = useAccount()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [upgrade, setUpgrade] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -92,7 +94,12 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onOpen }: { stor
         <h2 className="section-title">Ferramentas</h2>
         <section className="tools" aria-label="Ferramentas">
           {TOOLS.map((t) => (
-            <button key={t.title} className="tool" onClick={() => onTool(t.view)}>
+            <button
+              key={t.title}
+              className={`tool${account && !canUseTools(account) ? ' tool--locked' : ''}`}
+              onClick={() => (account && !canUseTools(account) ? setUpgrade(true) : onTool(t.view))}
+              aria-haspopup={account && !canUseTools(account) ? 'dialog' : undefined}
+            >
               <span className="tile__icon" aria-hidden>{t.icon}</span>
               <b>{t.title}</b>
               <span>{t.text}</span>
@@ -135,6 +142,7 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onOpen }: { stor
         </section>
       </main>
       </div>
+      {upgrade && <UpgradeModal onClose={() => setUpgrade(false)} onChoose={() => { setUpgrade(false); onUpgrade() }} />}
     </div>
   )
 }

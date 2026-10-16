@@ -79,6 +79,8 @@ export function imagesLeft(a: Account): number | null {
 
 export const canCreateImage = (a: Account) => imagesLeft(a) !== 0
 export const canUseTools = (a: Account) => a.effective === 'plus'
+/** Quem nunca assinou começa pelo Básico: o Plus aparece depois, como upgrade nas funções com cadeado. */
+export const offersOnlyBasic = (a: Account) => a.plan === 'none'
 
 export function daysLeft(expiresAt: string | null, now: Date = new Date()): number | null {
   if (!expiresAt) return null

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addPeriod, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, priceCents, yearlySavingCents, type Account } from './plans'
+import { addPeriod, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, offersOnlyBasic, priceCents, yearlySavingCents, type Account } from './plans'
 import { localAccountStore, DEMO_KEY } from './store'
 import { localAdminStore } from './adminStore'
 
@@ -30,6 +30,12 @@ describe('acesso', () => {
   it('ferramentas só no Plus', () => {
     expect(canUseTools(acc({ effective: 'basic' }))).toBe(false)
     expect(canUseTools(acc({ effective: 'plus' }))).toBe(true)
+  })
+  it('quem nunca assinou só vê o Básico; quem já teve plano vê os dois', () => {
+    expect(offersOnlyBasic(acc({ plan: 'none', effective: 'none' }))).toBe(true)
+    expect(offersOnlyBasic(acc({ plan: 'basic' }))).toBe(false)
+    // Plus vencido: renovar mostra os dois planos
+    expect(offersOnlyBasic(acc({ plan: 'plus', effective: 'none' }))).toBe(false)
   })
   it('vencimento, tolerância e bloqueio', () => {
     const now = new Date('2026-10-16T12:00:00Z')

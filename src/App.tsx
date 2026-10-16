@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from './auth/supabase'
 import { useAuth } from './auth/AuthProvider'
 import { useAccount } from './billing/AccountProvider'
-import { canCreateImage, canUseTools } from './billing/plans'
+import { canCreateImage, canUseTools, type PaidPlan } from './billing/plans'
 import { NavContext } from './nav'
 import { Admin } from './pages/Admin'
 import { Plans, type PlansReason } from './pages/Plans'
@@ -20,7 +20,7 @@ import { supabaseChartStore } from './storage/supabaseCharts'
 
 const cloudStore: ChartStore | null = supabase ? supabaseChartStore(supabase) : null
 
-type View = { name: 'home' } | { name: 'new' } | { name: 'models' } | { name: 'assistente' } | { name: 'calculadora' } | { name: 'model'; model: Model } | { name: 'edit'; chart: SavedChart; crochetar?: boolean } | { name: 'plans'; reason: PlansReason } | { name: 'admin' }
+type View = { name: 'home' } | { name: 'new' } | { name: 'models' } | { name: 'assistente' } | { name: 'calculadora' } | { name: 'model'; model: Model } | { name: 'edit'; chart: SavedChart; crochetar?: boolean } | { name: 'plans'; reason: PlansReason; preselect?: PaidPlan } | { name: 'admin' }
 
 /** Login primeiro; depois a assinatura; depois a página inicial. Foto → gráfico → salvar → editor. */
 export function App() {
@@ -56,7 +56,7 @@ export function App() {
       return <Plans reason={account.blocked ? null : 'inactive'} onBack={home} onAdmin={nav.goAdmin} />
     }
     if (view.name === 'admin') return <Admin onBack={home} />
-    if (view.name === 'plans') return <Plans reason={view.reason} onBack={home} onAdmin={nav.goAdmin} />
+    if (view.name === 'plans') return <Plans reason={view.reason} preselect={view.preselect} onBack={home} onAdmin={nav.goAdmin} />
     if (view.name === 'new') return <Converter onBack={home} onSave={save} onSaved={(chart) => setView({ name: 'edit', chart })} />
     if (view.name === 'assistente' || view.name === 'calculadora') {
       if (!canUseTools(account)) return <Plans reason="tools" onBack={home} />
@@ -76,6 +76,7 @@ export function App() {
         onModels={() => setView({ name: 'models' })}
         onTool={(t) => (canUseTools(account) ? setView(t === 'assistente' ? { name: 'assistente' } : { name: 'calculadora' }) : setView({ name: 'plans', reason: 'tools' }))}
         onPlans={nav.goPlans}
+        onUpgrade={() => setView({ name: 'plans', reason: 'tools', preselect: 'plus' })}
         onOpen={(chart, crochetar) => setView({ name: 'edit', chart, crochetar })}
       />
     )
