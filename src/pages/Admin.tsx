@@ -273,7 +273,7 @@ function Coupons() {
               <li key={c.id} className="coupon-item">
                 <div className="coupon-item__top">
                   <b className="coupon-item__code">{c.code}</b>
-                  <em className={`pill pill--${st.kind}`}>{st.label}</em>
+                  <em className={`tag tag--${st.kind}`}>{st.label}</em>
                 </div>
                 <small>{couponSummary(c)}</small>
                 {c.description && <small className="hint">{c.description}</small>}
@@ -409,7 +409,7 @@ function Chatbot() {
             <li key={i.id} className="chatbot-item">
               <div className="coupon-item__top">
                 <b>{i.question}</b>
-                <em className={`pill pill--${i.active ? 'ok' : 'off'}`}>{i.active ? 'Ativa' : 'Pausada'}</em>
+                <em className={`tag tag--${i.active ? 'ok' : 'off'}`}>{i.active ? 'Ativa' : 'Pausada'}</em>
               </div>
               <small className="hint">{i.answer.length > 140 ? `${i.answer.slice(0, 140)}…` : i.answer}</small>
               <small className="hint">Ordem {i.sort}{i.keywords ? ` · palavras-chave: ${i.keywords}` : ''}</small>
@@ -582,15 +582,18 @@ export function Admin({ onBack }: { onBack: () => void }) {
               return (
                 <li key={u.id} className={`user${isOpen ? ' user--open' : ''}`}>
                   <button className="user__head" onClick={() => setOpen(isOpen ? null : u.id)} aria-expanded={isOpen}>
+                    <span className="user__avatar" aria-hidden>{(u.name || u.email || '?').trim().charAt(0).toUpperCase()}</span>
                     <span className="user__main">
                       <b>{u.name || 'Sem nome'}</b>
                       <small>{contact(u)}</small>
+                      <span className="user__meta">
+                        {u.effective !== 'none' && <em className={`tag tag--${u.effective}`}>{PLAN_LABEL[u.effective]}</em>}
+                        <em className={`tag tag--${st.kind}`}>{st.label}</em>
+                        {u.coupon && <em className="tag tag--ok">🎟 {u.coupon}</em>}
+                        {u.isAdmin && <em className="tag tag--plus">Gestão</em>}
+                      </span>
                     </span>
-                    <span className="user__meta">
-                      <em className={`pill pill--${u.effective}`}>{PLAN_LABEL[u.effective]}</em>
-                      <em className={`pill pill--${st.kind}`}>{st.label}</em>
-                      {u.coupon && <em className="pill pill--ok">🎟 {u.coupon}</em>}
-                    </span>
+                    <span className="user__chev" aria-hidden>{isOpen ? '▴' : '▾'}</span>
                   </button>
                   {isOpen && (
                     <>
