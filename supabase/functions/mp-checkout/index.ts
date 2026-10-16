@@ -17,6 +17,12 @@ const json = (body: unknown, status = 200) =>
 
 const MP = 'https://api.mercadopago.com'
 
+class MpError extends Error {
+  constructor(public path: string, public status: number, public mpMessage: string, public cause_: string) {
+    super('mp_error')
+  }
+}
+
 async function mp(token: string, path: string, init: { method?: string; body?: unknown; idempotencyKey?: string }) {
   const res = await fetch(`${MP}${path}`, {
     method: init.method ?? 'POST',
@@ -30,7 +36,7 @@ async function mp(token: string, path: string, init: { method?: string; body?: u
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     console.error('Mercado Pago recusou', path, res.status, JSON.stringify(data).slice(0, 500))
-    throw new Error('mp_error')
+    throw new MpError(path, res.status, String((data as { message?: string }).message ?? ''), String((data as { cause?: Array<{ description?: string }> }).cause?.[0]?.description ?? ''))
   }
   return data
 }
@@ -38,7 +44,7 @@ async function mp(token: string, path: string, init: { method?: string; body?: u
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'metodo' }, 405)
-  const { accessToken } = await loadPaymentConfig(serviceClient())
+  const { accessToken, mode } = await loadPaymentConfig(serviceClient())
   if (!accessToken) return json({ error: 'pagamento_nao_configurado' }, 503)
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
@@ -50,7 +56,10 @@ Deno.serve(async (req) => {
 
   const request = validCheckoutRequest(await req.json().catch(() => null))
   if (!request) return json({ error: 'pedido_invalido' }, 400)
-  const email = user.email ?? request.email
+  // Em ambiente de TESTE o Mercado Pago só aceita pagador de teste (e-mail @testuser.com): a gestão pode informar o do comprador de teste.
+  // Em produção esse e-mail informado é ignorado.
+  const testBuyer = mode === 'test' && request.email && /@testuser\.com$/i.test(request.email) ? request.email : undefined
+  const email = testBuyer ?? user.email ?? request.email
   if (!email) return json({ error: 'email_necessario' }, 400)
 
   // Preço da tabela já com o cupom da conta (se valer para este plano e período). Calculado no banco.
@@ -111,7 +120,9 @@ Deno.serve(async (req) => {
       },
     })
     return json({ kind: 'redirect', url: pref.init_point, amountCents: cents })
-  } catch {
-    return json({ error: 'pagamento_falhou' }, 502)
+  } catch (e) {
+    // Motivo devolvido pelo Mercado Pago (texto dele, sem segredos): ajuda a achar o problema.
+    const detail = e instanceof MpError ? { path: e.path, status: e.status, message: e.mpMessage, cause: e.cause_ } : undefined
+    return json({ error: 'pagamento_falhou', detail }, 502)
   }
 })

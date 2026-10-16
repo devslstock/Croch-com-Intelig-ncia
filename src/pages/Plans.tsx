@@ -249,9 +249,9 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
                       ? `Cobrança de ${formatCents(finalPriceCents(prices, choice, cycle, account.coupon))} todo mês no cartão, renovada sozinha. Cancele quando quiser.`
                       : `Pagamento de ${formatCents(finalPriceCents(prices, choice, cycle, account.coupon))} no cartão, com parcelamento se o seu cartão permitir. Não renova sozinho.`}
                 </p>
-                {needsEmail && (
+                {(needsEmail || (account.isAdmin && !account.demo)) && (
                   <label className="field">
-                    <span>Seu e-mail (para o comprovante)</span>
+                    <span>{needsEmail ? 'Seu e-mail (para o comprovante)' : 'E-mail do comprador de teste (só no ambiente de teste; ex.: test_user_123@testuser.com)'}</span>
                     <input className="input" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </label>
                 )}
