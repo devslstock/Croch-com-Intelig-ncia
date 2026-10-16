@@ -6,6 +6,7 @@ const sql = readFileSync(new URL('../migrations/20261015000000_init_tramado.sql'
 const sqlBilling = readFileSync(new URL('../migrations/20261016000000_assinaturas.sql', import.meta.url), 'utf8')
 const sqlCoupons = readFileSync(new URL('../migrations/20261017000000_cupons_bonus.sql', import.meta.url), 'utf8')
 const sqlLanding = readFileSync(new URL('../migrations/20261018000000_landing_chatbot.sql', import.meta.url), 'utf8')
+const sqlFix = readFileSync(new URL('../migrations/20261019000000_corrige_salvar_config.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0, fail = 0
 const ok = (name, cond) => { cond ? pass++ : fail++; console.log((cond ? 'OK   ' : 'FALHA'), name) }
@@ -29,6 +30,8 @@ await db.exec(sqlCoupons)
 ok('migração de cupons e bônus aplicou sem erro', true)
 await db.exec(sqlLanding)
 ok('migração da página pública e chatbot aplicou sem erro', true)
+await db.exec(sqlFix)
+ok('migração de correção do salvar config aplicou sem erro', true)
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
 await db.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ana"}'), ('${B}', '{"full_name":"Bia Souza"}')`)
