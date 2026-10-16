@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="site-footer">
       <p>© {new Date().getFullYear()} {APP_NAME.toUpperCase()}. Todos os direitos reservados.</p>
       <p>
-        Desenvolvido pela {DEV_NAME} (<a href={`https://${DEV_SITE}`} target="_blank" rel="noopener noreferrer">{DEV_SITE}</a>)
+        Desenvolvido pela <a href={`https://${DEV_SITE}`} target="_blank" rel="noopener noreferrer">{DEV_NAME}</a>
       </p>
     </footer>
   )
