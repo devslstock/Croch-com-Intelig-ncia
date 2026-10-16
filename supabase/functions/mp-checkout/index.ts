@@ -123,6 +123,8 @@ Deno.serve(async (req) => {
     return json({ kind: 'redirect', url: pref.init_point, amountCents: cents })
   } catch (e) {
     // Motivo devolvido pelo Mercado Pago (texto dele, sem segredos): ajuda a achar o problema.
+    // Pix com credenciais de TESTE: o Mercado Pago não oferece Pix nesse ambiente (só em produção).
+    if (request.method === 'pix' && mode === 'test' && e instanceof MpError && e.status === 401) return json({ error: 'pix_so_em_producao' }, 502)
     const detail = e instanceof MpError ? { path: e.path, status: e.status, message: e.mpMessage, cause: e.cause_ } : undefined
     return json({ error: 'pagamento_falhou', detail }, 502)
   }

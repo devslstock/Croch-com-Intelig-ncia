@@ -71,8 +71,19 @@ export function supabaseAccountStore(client: SupabaseClient): AccountStore {
     },
     async checkout(req) {
       const { data, error } = await client.functions.invoke('mp-checkout', { body: req })
+      let body = data as { error?: string } | null
+      // Em resposta de erro (4xx/5xx) o corpo vem dentro do erro, não em `data`.
+      if (error && !body) {
+        try {
+          body = (await (error as { context?: Response }).context?.json()) as { error?: string } | null
+        } catch {
+          body = null
+        }
+      }
       if (error || !data || (data as { error?: string }).error) {
-        const code = (data as { error?: string } | null)?.error
+        const code = body?.error
+        if (code === 'pix_so_em_producao') throw new Error('O Pix só funciona no ambiente de produção (o ambiente de teste do Mercado Pago não oferece Pix). Para testar agora, use o cartão.')
+        if (code === 'preco_indisponivel') throw new Error('O preço não está disponível agora. Tente de novo em instantes.')
         if (code === 'email_necessario') throw new Error('Informe um e-mail para receber o comprovante.')
         if (code === 'pagamento_nao_configurado') throw new Error('O pagamento ainda não foi configurado.')
         throw new Error('Não consegui iniciar o pagamento. Tente de novo em instantes.')
