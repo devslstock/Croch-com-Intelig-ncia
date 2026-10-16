@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { AppBar } from '../components/AppBar'
 import { NumberField } from '../components/NumberField'
-import { analyze, buildReplies, EXAMPLE_CHAT, INTENT_LABEL, quickReplies, TONE_LABEL, type Tone } from '../tools/chat'
+import { analyze, buildReplies, EXAMPLE_CHAT, INTENT_LABEL, INTENT_ORDER, quickReplies, TONE_LABEL, type Intent, type Tone } from '../tools/chat'
 import { money } from '../tools/pricing'
 import { toolsStorage, type ShopSettings } from '../tools/storage'
 
@@ -13,6 +13,7 @@ export function SalesAssistant({ onBack, onCalculator }: { onBack: () => void; o
   const quotes = useMemo(() => db.listQuotes(), [db])
   const [raw, setRaw] = useState('')
   const [nameOverride, setNameOverride] = useState<string | null>(null)
+  const [picked, setPicked] = useState<Intent[] | null>(null)
   const [tone, setTone] = useState<Tone>('simpatica')
   const [emoji, setEmoji] = useState(true)
   const [quoteId, setQuoteId] = useState('')
@@ -36,11 +37,22 @@ export function SalesAssistant({ onBack, onCalculator }: { onBack: () => void; o
     : { price: manualPrice > 0 ? manualPrice : null, minPrice: manualMin > 0 ? manualMin : null, deposit: null, days: null }
 
   const hasText = raw.trim().length > 0
-  const named = nameOverride !== null ? { ...analysis, customerName: nameOverride.trim() || null } : analysis
+  const intents = picked ?? analysis.intents
+  const named = {
+    ...analysis,
+    intents,
+    ...(nameOverride !== null ? { customerName: nameOverride.trim() || null } : {}),
+  }
+  const toggle = (i: Intent) => {
+    const base = picked ?? analysis.intents
+    const next = base.includes(i) ? base.filter((x) => x !== i) : INTENT_ORDER.filter((x) => x === i || base.includes(x))
+    setPicked(next)
+    setEdited(null)
+  }
   const suggestion = useMemo(
     () => (hasText ? buildReplies(named, { tone, emoji, price, settings }) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hasText, raw, nameOverride, tone, emoji, quoteId, manualPrice, manualMin, settings],
+    [hasText, raw, nameOverride, picked, tone, emoji, quoteId, manualPrice, manualMin, settings],
   )
   const variant = suggestion?.variants.find((v) => v.id === variantId) ?? suggestion?.variants[0]
   const text = edited ?? variant?.text ?? ''
@@ -84,14 +96,14 @@ export function SalesAssistant({ onBack, onCalculator }: { onBack: () => void; o
             <textarea
               rows={7}
               value={raw}
-              onChange={(e) => { setRaw(e.target.value); setEdited(null); setNameOverride(null) }}
+              onChange={(e) => { setRaw(e.target.value); setEdited(null); setNameOverride(null); setPicked(null) }}
               placeholder="Cole a conversa do WhatsApp, Instagram ou e-mail…"
             />
           </label>
           <div className="row row--tight">
             <button className="btn btn--soft btn--sm" onClick={paste}>📋 Colar</button>
-            <button className="btn btn--sm" onClick={() => { setRaw(EXAMPLE_CHAT); setEdited(null); setNameOverride(null) }}>Ver exemplo</button>
-            {hasText && <button className="btn btn--sm" onClick={() => { setRaw(''); setEdited(null); setNameOverride(null) }}>Limpar</button>}
+            <button className="btn btn--sm" onClick={() => { setRaw(EXAMPLE_CHAT); setEdited(null); setNameOverride(null); setPicked(null) }}>Ver exemplo</button>
+            {hasText && <button className="btn btn--sm" onClick={() => { setRaw(''); setEdited(null); setNameOverride(null); setPicked(null) }}>Limpar</button>}
           </div>
           <p className="hint">As sugestões são montadas no seu aparelho, por regras simples, sem IA e sem enviar a conversa para lugar nenhum. Revise antes de enviar.</p>
         </section>
@@ -100,13 +112,14 @@ export function SalesAssistant({ onBack, onCalculator }: { onBack: () => void; o
           <>
             <section className="card">
               <h2 className="card__title">2. O que ela quer</h2>
-              {analysis.intents.length > 0 ? (
-                <div className="chips" aria-label="O que a cliente quer">
-                  {analysis.intents.map((i) => <span className="chip chip--static" key={i}>{INTENT_LABEL[i]}</span>)}
-                </div>
-              ) : (
-                <p className="hint">Não identifiquei um pedido claro. A resposta pergunta o que ela procura.</p>
-              )}
+              <p className="hint">Toque para ligar ou desligar o que entra na resposta.</p>
+              <div className="chips" role="group" aria-label="O que a cliente quer">
+                {INTENT_ORDER.map((i) => (
+                  <button key={i} type="button" aria-pressed={intents.includes(i)} className={`chip${intents.includes(i) ? ' chip--on' : ''}`} onClick={() => toggle(i)}>
+                    {intents.includes(i) ? '✓ ' : ''}{INTENT_LABEL[i]}
+                  </button>
+                ))}
+              </div>
               <p className="hint">
                 {analysis.product ? `Peça: ${analysis.product}. ` : ''}
                 {analysis.quantity ? `Quantidade: ${analysis.quantity}. ` : ''}

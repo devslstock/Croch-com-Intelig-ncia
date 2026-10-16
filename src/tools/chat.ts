@@ -104,7 +104,7 @@ const INTENT_RULES: Array<[Intent, RegExp]> = [
   ['agradecimento', /\b(obrigad[oa]|chegou|amei|adorei|lind[oa]|perfeit[oa]|maravilhos[oa])\b/],
 ]
 
-const INTENT_ORDER: Intent[] = ['problema', 'sumiu', 'agradecimento', 'urgente', 'fechar', 'preco', 'desconto', 'prazo', 'pagamento', 'envio', 'personalizar', 'duvida']
+export const INTENT_ORDER: Intent[] = ['problema', 'sumiu', 'agradecimento', 'urgente', 'fechar', 'preco', 'desconto', 'prazo', 'pagamento', 'envio', 'personalizar', 'duvida']
 
 const PRODUCTS = [
   'manta', 'tapete', 'bolsa', 'amigurumi', 'ursinho', 'naninha', 'touca', 'sousplat', 'cesto', 'porta-copos', 'jogo americano',
