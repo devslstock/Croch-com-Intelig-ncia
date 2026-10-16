@@ -31,6 +31,12 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   const [pix, setPix] = useState<Pix | null>(null)
   const [copied, setCopied] = useState(false)
   const startExpiry = useRef<string | null>(null)
+  const payRef = useRef<HTMLElement>(null)
+
+  // Veio da janela de upgrade com o plano já escolhido: leva direto à escolha da forma de pagamento.
+  useEffect(() => {
+    if (preselect) window.setTimeout(() => payRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)
+  }, [preselect])
 
   // Depois de gerar o Pix, confere sozinho a cada 5 s se o pagamento entrou.
   useEffect(() => {
@@ -98,6 +104,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
     return (
       <article className={`plan${plan === 'plus' ? ' plan--plus' : ''}${choice === plan ? ' plan--picked' : ''}`} key={plan}>
         {plan === 'plus' && <em className="badge plan__tag">Recomendado</em>}
+        {plan === 'basic' && onlyBasic && <em className="plan__ribbon">Comece aqui</em>}
         <h3>{PLAN_LABEL[plan]}</h3>
         <p className="plan__price">
           <b>{formatCents(total)}</b>
@@ -112,7 +119,7 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
           {features.map((f) => <li key={f}>{f}</li>)}
         </ul>
         <button
-          className={`btn ${plan === 'plus' ? 'btn--primary' : ''}`}
+          className={`btn ${plan === 'plus' || onlyBasic ? 'btn--primary' : ''}`}
           onClick={() => { setChoice(plan); setDone(null); setError(null) }}
           aria-pressed={choice === plan}
         >
@@ -123,12 +130,20 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   }
 
   return (
-    <div className="studio-page">
+    <div className="studio-page plans-page">
       <AppBar title="Assinatura" onBack={active || account.isAdmin ? onBack : undefined} />
       <div className="app tool-page">
-        <header className="top">
+        <header className="phero">
+          {!active && !account.blocked && <span className="phero__eyebrow">✨ Bem-vinda ao Tramado</span>}
           <h1>{headline?.title ?? 'Minha assinatura'}</h1>
           <p>{headline?.text.replace('{limit}', String(prices.basicImageLimit)) ?? 'Veja seu plano e escolha como renovar ou mudar.'}</p>
+          {!account.blocked && (
+            <ul className="phero__trust" aria-label="Vantagens">
+              <li>💳 Pix ou cartão</li>
+              <li>🔒 Pagamento pelo Mercado Pago</li>
+              <li>⚡ Liberação automática</li>
+            </ul>
+          )}
         </header>
 
         {account.blocked ? (
@@ -162,11 +177,17 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
                 </button>
               </div>
               <div className={`plans${onlyBasic ? ' plans--single' : ''}`}>{(onlyBasic ? ['basic'] as const : ['basic', 'plus'] as const).map(planCard)}</div>
-              {onlyBasic && <p className="hint">Quer a Calculadora de preço e o Assistente de vendas? Depois de assinar, o upgrade para o Plus fica a um toque na tela inicial.</p>}
+              {onlyBasic && (
+                <aside className="teaser">
+                  <em className="badge">🔒 Plus · depois</em>
+                  <b>Vende suas peças? O Plus tem a Calculadora de preço e o Assistente de vendas.</b>
+                  <span>Comece pelo Básico. Quando quiser, o upgrade fica a um toque na tela inicial.</span>
+                </aside>
+              )}
             </section>
 
             {choice && !pix && (
-              <section className="card" aria-live="polite">
+              <section className="card" aria-live="polite" ref={payRef}>
                 <h2 className="card__title">Como você quer pagar o {PLAN_LABEL[choice]} {cycle === 'yearly' ? 'anual' : 'mensal'}?</h2>
                 <div className="seg" role="group" aria-label="Forma de pagamento">
                   <button className={`seg__btn${method === 'pix' ? ' seg__btn--on' : ''}`} onClick={() => setMethod('pix')}>Pix</button>
