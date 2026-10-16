@@ -4,6 +4,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { readFileSync } from 'node:fs'
 const sql = readFileSync(new URL('../migrations/20261015000000_init_tramado.sql', import.meta.url), 'utf8')
 const sqlBilling = readFileSync(new URL('../migrations/20261016000000_assinaturas.sql', import.meta.url), 'utf8')
+const sqlCoupons = readFileSync(new URL('../migrations/20261017000000_cupons_bonus.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0, fail = 0
 const ok = (name, cond) => { cond ? pass++ : fail++; console.log((cond ? 'OK   ' : 'FALHA'), name) }
@@ -23,6 +24,8 @@ await db.exec(sql)
 ok('migração inicial aplicou sem erro', true)
 await db.exec(sqlBilling)
 ok('migração de assinaturas aplicou sem erro', true)
+await db.exec(sqlCoupons)
+ok('migração de cupons e bônus aplicou sem erro', true)
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
 await db.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ana"}'), ('${B}', '{"full_name":"Bia Souza"}')`)
@@ -127,9 +130,144 @@ const st = (await as(ADM, () => db.query('select public.admin_stats() s'))).rows
 ok('estatísticas do painel', st.users >= 3 && st.blocked === 1 && st.revenue30dCents === 5970)
 const audit = (await as(ADM, () => db.query('select public.admin_audit_list() a'))).rows[0].a
 ok('mudanças manuais ficam registradas', audit.length === 2 && audit[0].detail.after.blocked === true)
-await as(ADM, () => db.query(`select public.admin_update_settings(2490, 4990, 2, 15, 3)`))
+await as(ADM, () => db.query(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 0)`))
 ok('admin muda preços e limite', (await price('plus', 'monthly')) === 4990 && (await price('plus', 'yearly')) === 49900)
 await rejects('plano inválido é recusado', () => as(ADM, () => db.query(`select public.admin_update_user('${C}','vip', null, false, '')`)), /plano_invalido/)
+
+// ---------------------------------------------------------------------------
+// Bônus de cadastro
+// ---------------------------------------------------------------------------
+const U = (n) => `${n}${n}${n}${n}${n}${n}${n}${n}-${n}${n}${n}${n}-4${n}${n}${n}-8${n}${n}${n}-${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}`
+const D = U(5), E = U(6), F = U(7), G = U(8), H = U(9), I = U('a'), J = U('b'), K = U('c')
+const adm = (sql) => as(ADM, () => db.query(sql))
+const addUser = (id, name, meta = {}) => db.exec(`insert into auth.users (id, raw_user_meta_data, email) values ('${id}', '${JSON.stringify({ name, ...meta })}', '${name.toLowerCase()}@ex.com')`)
+const profile = async (id) => (await db.query(`select * from public.profiles where id='${id}'`)).rows[0]
+const noteOf = async (id) => (await db.query(`select note from public.admin_notes where user_id='${id}'`)).rows[0]?.note ?? ''
+
+await addUser(D, 'Dora')
+ok('com bônus 0 a conta nasce sem gráficos de presente', (await profile(D)).bonus_images === 0)
+await adm(`select public.admin_update_settings(2490, 4990, 2, 15, 3, 3)`)
+ok('admin define bônus de cadastro', (await db.query(`select signup_bonus_images n from public.app_settings`)).rows[0].n === 3)
+await addUser(E, 'Eva')
+ok('conta nova recebe o bônus configurado; antigas não mudam', (await profile(E)).bonus_images === 3 && (await profile(D)).bonus_images === 0)
+await rejects('sem plano e sem bônus continua bloqueada', () => as(D, () => db.query(newChart())), /assinatura_inativa/)
+for (let i = 0; i < 3; i++) await as(E, () => db.query(newChart(`b${i}`)))
+ok('sem plano, o bônus libera 3 gráficos', (await db.query(`select count(*)::int n from public.charts where user_id='${E}'`)).rows[0].n === 3)
+await rejects('acabou o bônus: volta a exigir assinatura', () => as(E, () => db.query(newChart('b4'))), /assinatura_inativa/)
+const accE = (await as(E, () => db.query('select public.my_account() a'))).rows[0].a
+ok('my_account mostra bônus restante e preços com o bônus', accE.bonusImages === 0 && accE.prices.signupBonusImages === 3)
+
+// Básico que esgotou a cota do mês usa o bônus; Plus não gasta bônus.
+await db.exec(`update public.profiles set plan='basic', plan_expires_at=now()+interval '10 days', images_month=public.current_month(), images_count=15, bonus_images=2 where id='${E}'`)
+await as(E, () => db.query(newChart('x1'))); await as(E, () => db.query(newChart('x2')))
+ok('Básico sem cota usa o bônus', (await profile(E)).bonus_images === 0)
+await rejects('Básico sem cota e sem bônus: limite do mês', () => as(E, () => db.query(newChart('x3'))), /limite_mensal/)
+await db.exec(`update public.profiles set plan='plus', bonus_images=2 where id='${E}'`)
+await as(E, () => db.query(newChart('p1')))
+ok('Plus não gasta o bônus', (await profile(E)).bonus_images === 2)
+await db.exec(`update public.profiles set plan='none', plan_expires_at=null, blocked=true, bonus_images=5 where id='${E}'`)
+await rejects('conta desativada não usa o bônus', () => as(E, () => db.query(newChart('blk'))), /assinatura_inativa/)
+await db.exec(`update public.profiles set blocked=false where id='${E}'`)
+await adm(`select public.admin_set_bonus('${D}', 4)`)
+ok('admin dá bônus a uma pessoa', (await profile(D)).bonus_images === 4)
+await rejects('bônus negativo é recusado', () => adm(`select public.admin_set_bonus('${D}', -1)`), /bonus_invalido/)
+await rejects('usuária comum não mexe no bônus', () => as(D, () => db.query(`select public.admin_set_bonus('${D}', 99)`)), /sem_permissao/)
+await rejects('usuária não edita o próprio bônus', () => as(D, () => db.query(`update public.profiles set bonus_images=99 where id='${D}'`)), /permission denied/)
+
+// ---------------------------------------------------------------------------
+// Cupons
+// ---------------------------------------------------------------------------
+const saveCoupon = (code, kind, value, plans = "array['basic','plus']", cycles = 'both', max = 'null', exp = 'null', active = 'true', desc = '') =>
+  adm(`select public.admin_save_coupon(null, '${code}', '${desc}', '${kind}', ${value}, ${plans}, '${cycles}', ${max}, ${exp}, ${active}) id`)
+const c1 = (await saveCoupon('bemvinda10', 'percent', 10, undefined, undefined, 'null', 'null', 'true', 'Boas-vindas')).rows[0].id
+ok('cupom é guardado em MAIÚSCULAS', (await db.query(`select code from public.coupons where id='${c1}'`)).rows[0].code === 'BEMVINDA10')
+await rejects('código repetido é recusado', () => saveCoupon('BEMVINDA10', 'percent', 5), /duplicate key|unique/)
+await rejects('código com espaço/curto é recusado', () => saveCoupon('a b', 'percent', 5), /codigo_invalido/)
+await rejects('desconto de 100% é recusado', () => saveCoupon('GRATIS', 'percent', 100), /desconto_invalido/)
+await rejects('desconto zero é recusado', () => saveCoupon('ZERO', 'fixed', 0), /desconto_invalido/)
+await rejects('usuária comum não cria cupom', () => as(D, () => db.query(`select public.admin_save_coupon(null,'HACK','','percent',99,array['basic'],'both',null,null,true)`)), /sem_permissao/)
+await rejects('usuária comum não lê a tabela de cupons', () => as(D, () => db.query('select * from public.coupons')), /permission denied/)
+await rejects('usuária comum não lista cupons', () => as(D, () => db.query('select public.admin_list_coupons()')), /sem_permissao/)
+await rejects('usuária não chama a regra interna do cupom', () => as(D, () => db.query(`select public.coupon_discount('${c1}','${D}','plus','yearly',49900)`)), /permission denied/)
+await rejects('usuária não escreve na anotação por fora', () => as(D, () => db.query(`select public.note_coupon('${D}','X')`)), /permission denied/)
+await rejects('usuária não troca o próprio cupom por update', () => as(D, () => db.query(`update public.profiles set coupon_id='${c1}' where id='${D}'`)), /permission denied/)
+
+// Cupom informado no cadastro
+await addUser(F, 'Fabi', { coupon: ' bemvinda10 ' })
+ok('cupom do cadastro é associado (ignora caixa e espaços)', (await profile(F)).coupon_id === c1)
+ok('anotação diz qual cupom foi usado', (await noteOf(F)) === 'Cupom usado: BEMVINDA10')
+const fl = (await adm(`select public.admin_list_users('fabi') l`)).rows[0].l[0]
+ok('painel mostra o cupom e a anotação da conta', fl.coupon === 'BEMVINDA10' && fl.note === 'Cupom usado: BEMVINDA10')
+await addUser(G, 'Gabi', { coupon: 'NAOEXISTE' })
+ok('cupom inválido no cadastro é ignorado (sem anotação)', (await profile(G)).coupon_id === null && (await noteOf(G)) === '')
+
+// Preço com desconto, calculado no banco
+const cp = async (uid, plan, cycle) => (await as(uid, () => db.query(`select public.checkout_price('${plan}','${cycle}') r`))).rows[0].r
+const pr = await cp(F, 'plus', 'yearly')
+ok('Plus anual com 10%: 49.900 → 44.910', pr.listCents === 49900 && pr.discountCents === 4990 && pr.finalCents === 44910 && pr.coupon === 'BEMVINDA10')
+const noCp = await cp(G, 'plus', 'yearly')
+ok('sem cupom o preço é o da tabela', noCp.finalCents === 49900 && noCp.coupon === null)
+const myAcc = (await as(F, () => db.query('select public.my_account() a'))).rows[0].a
+ok('my_account traz o cupom da conta', myAcc.coupon?.code === 'BEMVINDA10' && myAcc.coupon.kind === 'percent' && myAcc.coupon.value === 10)
+
+const c2 = (await saveCoupon('MENOS5', 'fixed', 500, "array['basic']", 'monthly')).rows[0].id
+await as(G, () => db.query(`select public.redeem_coupon('menos5')`))
+ok('cupom fixo vale só no plano e período certos', (await cp(G, 'basic', 'monthly')).finalCents === 1990 && (await cp(G, 'plus', 'monthly')).discountCents === 0 && (await cp(G, 'basic', 'yearly')).discountCents === 0)
+await saveCoupon('QUASEGRATIS', 'fixed', 99999)
+await as(G, () => db.query(`select public.redeem_coupon('QUASEGRATIS')`))
+ok('o preço final nunca fica abaixo de R$ 1,00', (await cp(G, 'basic', 'monthly')).finalCents === 100)
+
+// Resgate pela tela de assinatura
+await addUser(H, 'Helo')
+const bad = (await as(H, () => db.query(`select public.redeem_coupon('xxxxx') r`))).rows[0].r
+ok('código errado devolve erro (sem exceção)', bad.ok === false && bad.error === 'cupom_invalido')
+const good = (await as(H, () => db.query(`select public.redeem_coupon('BemVinda10') r`))).rows[0].r
+ok('código certo associa o cupom', good.ok === true && good.coupon.code === 'BEMVINDA10' && (await profile(H)).coupon_id === c1)
+ok('anotação registra o cupom', (await noteOf(H)) === 'Cupom usado: BEMVINDA10')
+await as(H, () => db.query(`select public.redeem_coupon('MENOS5')`))
+ok('um segundo cupom acrescenta outra linha', (await noteOf(H)) === 'Cupom usado: BEMVINDA10\nCupom usado: MENOS5')
+await as(H, () => db.query(`select public.redeem_coupon('MENOS5')`))
+ok('o mesmo cupom não repete a linha', (await noteOf(H)).split('\n').length === 2)
+await addUser(I, 'Ivo')
+for (let i = 0; i < 8; i++) await as(I, () => db.query(`select public.redeem_coupon('errado${i}')`))
+ok('depois de 8 erros seguidos, trava mesmo com código certo', (await as(I, () => db.query(`select public.redeem_coupon('BEMVINDA10') r`))).rows[0].r.error === 'muitas_tentativas')
+
+// Cupom inativo / vencido
+await saveCoupon('PAUSADO', 'percent', 20, undefined, undefined, 'null', 'null', 'false')
+await saveCoupon('VENCIDO', 'percent', 20, undefined, undefined, 'null', `now() - interval '1 day'`)
+await addUser(J, 'Joel')
+ok('cupom inativo não vale', (await as(J, () => db.query(`select public.redeem_coupon('PAUSADO') r`))).rows[0].r.ok === false)
+ok('cupom vencido não vale', (await as(J, () => db.query(`select public.redeem_coupon('VENCIDO') r`))).rows[0].r.ok === false)
+
+// Pagamento aprovado registra o cupom (aqui: 1.990 pagos num plano que custa 49.900)
+await pay('mp-c1', 'plus', 'yearly', 'pix', F)
+const fp = (await db.query(`select coupon_id, discount_cents from public.payments where user_id='${F}'`)).rows[0]
+ok('pagamento com cupom grava cupom e desconto', fp.coupon_id === c1 && fp.discount_cents === 49900 - 1990)
+const adminPay = (await adm(`select public.admin_payments('${F}') p`)).rows[0].p
+ok('painel mostra o cupom no pagamento', adminPay[0].coupon === 'BEMVINDA10' && adminPay[0].discountCents === 47910)
+await db.query(`select public.apply_payment('${G}','basic','monthly','pix','mp-full',2490)`)
+ok('pagar o preço cheio não conta como cupom', (await db.query(`select coupon_id from public.payments where provider_payment_id='mp-full'`)).rows[0].coupon_id === null)
+
+// Limite de pessoas
+const c4 = (await saveCoupon('SOUMA', 'percent', 50, undefined, undefined, '1')).rows[0].id
+await db.exec(`update public.profiles set coupon_id='${c4}' where id='${J}'`)
+await db.query(`select public.apply_payment('${J}','basic','monthly','pix','mp-j',1245)`)
+ok('cupom de uso único: 1ª pessoa paga com desconto', (await db.query(`select coupon_id from public.payments where provider_payment_id='mp-j'`)).rows[0].coupon_id === c4)
+await addUser(K, 'Kau')
+ok('depois do limite, outra pessoa não resgata', (await as(K, () => db.query(`select public.redeem_coupon('SOUMA') r`))).rows[0].r.ok === false)
+await db.exec(`update public.profiles set coupon_id='${c4}' where id='${K}'`)
+ok('depois do limite, o desconto some para quem ainda não usou', (await cp(K, 'basic', 'monthly')).discountCents === 0)
+ok('quem já usou continua tendo desconto (renovação)', (await cp(J, 'basic', 'monthly')).discountCents === 1245)
+
+// Lista e exclusão
+const lst = (await adm(`select public.admin_list_coupons() l`)).rows[0].l
+const bv = lst.find((x) => x.code === 'BEMVINDA10')
+ok('painel lista cupons com usos e contas associadas', bv.uses === 1 && bv.attached === 1 && lst.length >= 6)
+await adm(`select public.admin_delete_coupon('${c2}')`)
+ok('apaga cupom sem pagamentos', (await db.query(`select count(*)::int n from public.coupons where id='${c2}'`)).rows[0].n === 0)
+await rejects('cupom já usado em pagamento não pode ser apagado', () => adm(`select public.admin_delete_coupon('${c1}')`), /cupom_em_uso/)
+const au = (await adm(`select public.admin_audit_list(50) a`)).rows[0].a.map((x) => x.action)
+ok('criação de cupom e bônus ficam no histórico', au.includes('save_coupon') && au.includes('set_bonus') && au.includes('delete_coupon'))
 
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

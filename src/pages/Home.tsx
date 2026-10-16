@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAccount } from '../billing/AccountProvider'
-import { canUseTools, imageLimit, imagesLeft, PLAN_LABEL } from '../billing/plans'
+import { canUseTools, imageLimit, monthlyLeft, PLAN_LABEL, type Account } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { ChartThumb } from '../components/ChartThumb'
 import { UpgradeModal } from '../components/UpgradeModal'
@@ -19,6 +19,16 @@ const TOOLS: Tool[] = [
   { view: 'assistente', icon: '💬', title: 'Assistente de vendas', text: 'Cole a conversa e receba uma resposta sugerida.' },
   { view: 'calculadora', icon: '🧮', title: 'Calculadora de preço', text: 'Material, horas e lucro: o preço certo da peça.' },
 ]
+
+/** Linha de resumo do plano na tela inicial (cota do mês e gráficos de presente). */
+function quotaText(a: Account): string {
+  const lim = imageLimit(a)
+  if (lim === null) return 'Imagens ilimitadas'
+  const bonus = a.bonusImages > 0 ? `${a.bonusImages} gráfico${a.bonusImages === 1 ? '' : 's'} de presente` : ''
+  if (a.effective === 'none') return bonus ? `${bonus} para criar · assine para continuar` : 'Sem imagens disponíveis'
+  const month = `${monthlyLeft(a)} de ${lim} imagens restantes este mês`
+  return bonus ? `${month} + ${bonus}` : month
+}
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
@@ -70,10 +80,8 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpe
 
         {account && (
           <button className="planchip" onClick={onPlans} aria-label="Minha assinatura">
-            <b>Plano {PLAN_LABEL[account.effective]}</b>
-            <span>
-              {imageLimit(account) === null ? 'Imagens ilimitadas' : `${imagesLeft(account)} de ${imageLimit(account)} imagens restantes este mês`}
-            </span>
+            <b>{account.effective === 'none' ? 'Sem plano ativo' : `Plano ${PLAN_LABEL[account.effective]}`}</b>
+            <span>{quotaText(account)}</span>
             <em>Ver</em>
           </button>
         )}

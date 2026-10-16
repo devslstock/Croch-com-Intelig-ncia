@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { appleEnabled, googleEnabled, whatsappEnabled } from '../auth/supabase'
 import { normalizeBrPhone } from '../auth/phone'
@@ -17,6 +17,7 @@ export function Login() {
   const [wa, setWa] = useState<'off' | 'phone' | 'code'>('off')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
+  const [coupon, setCoupon] = useState('')
   const [msg, setMsg] = useState<{ kind: 'erro' | 'ok'; text: string } | null>(null)
 
   const run = async (fn: () => Promise<{ ok: boolean; message?: string }>) => {
@@ -32,6 +33,8 @@ export function Login() {
   const showGoogle = demo || googleEnabled
   const showApple = demo || appleEnabled
   const showWhatsapp = demo || whatsappEnabled
+  // Sem nenhum login social ligado, o e-mail e senha é o jeito principal: o formulário já aparece aberto.
+  const emailOnly = !demo && !showGoogle && !showApple && !showWhatsapp
 
   const social = (fn: () => Promise<{ ok: boolean; message?: string }>) => (demo ? auth.startDemo() : run(fn))
 
@@ -61,7 +64,7 @@ export function Login() {
     if (mode === 'criar') {
       if (name.trim().length < 2) return setMsg({ kind: 'erro', text: 'Diga como podemos te chamar.' })
       if (password.length < 8) return setMsg({ kind: 'erro', text: 'A senha precisa ter pelo menos 8 caracteres.' })
-      return run(() => auth.signUp(name, email, password))
+      return run(() => auth.signUp(name, email, password, coupon))
     }
     return run(() => auth.signIn(email, password))
   }
@@ -86,8 +89,8 @@ export function Login() {
           </p>
         )}
 
-        <h2 className="login__title">Entrar ou criar conta</h2>
-        <p className="hint">Sem senha: escolha um jeito e pronto. Se for sua primeira vez, a conta é criada na hora.</p>
+        <h2 className="login__title">{emailOnly ? (mode === 'criar' ? 'Criar minha conta' : 'Entrar na minha conta') : 'Entrar ou criar conta'}</h2>
+        {!emailOnly && <p className="hint">Sem senha: escolha um jeito e pronto. Se for sua primeira vez, a conta é criada na hora.</p>}
 
         {wa === 'off' && (
           <div className="login__methods">
@@ -124,8 +127,7 @@ export function Login() {
         {wa === 'off' && msg && <p className={msg.kind === 'erro' ? 'error' : 'ok'} role={msg.kind === 'erro' ? 'alert' : 'status'}>{msg.text}</p>}
 
         {wa === 'off' && !demo && (
-          <details className="more login__email">
-            <summary>Prefiro usar e-mail e senha</summary>
+          <EmailShell emailOnly={emailOnly}>
             <div className="tabs" role="tablist">
               <button role="tab" aria-selected={mode === 'entrar'} className={mode === 'entrar' ? 'tab tab--on' : 'tab'} onClick={() => { setMode('entrar'); setMsg(null) }}>Entrar</button>
               <button role="tab" aria-selected={mode === 'criar'} className={mode === 'criar' ? 'tab tab--on' : 'tab'} onClick={() => { setMode('criar'); setMsg(null) }}>Criar conta</button>
@@ -159,16 +161,33 @@ export function Login() {
                 </div>
                 {mode === 'criar' && <small className="hint">Mínimo de 8 caracteres.</small>}
               </label>
+              {mode === 'criar' && (
+                <label className="field">
+                  <span>Cupom de desconto <small className="hint">(opcional)</small></span>
+                  <input className="input input--coupon" autoComplete="off" autoCapitalize="characters" maxLength={32} placeholder="Ex.: BEMVINDA10" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))} />
+                </label>
+              )}
               <button className="btn btn--primary" type="submit" disabled={busy}>
                 {busy ? 'Aguarde…' : mode === 'criar' ? 'Criar minha conta' : 'Entrar'}
               </button>
               {mode === 'entrar' && <button type="button" className="linkbtn" onClick={forgot} disabled={busy}>Esqueci minha senha</button>}
             </form>
-          </details>
+          </EmailShell>
         )}
       </div>
 
       <p className="hint login__foot">Sua foto é processada no seu aparelho e não é enviada nem guardada.</p>
     </div>
+  )
+}
+
+/** Com login social ligado, o e-mail fica recolhido; sem ele, o formulário já vem aberto. */
+function EmailShell({ emailOnly, children }: { emailOnly: boolean; children: ReactNode }) {
+  if (emailOnly) return <div className="login__email">{children}</div>
+  return (
+    <details className="more login__email">
+      <summary>Prefiro usar e-mail e senha</summary>
+      {children}
+    </details>
   )
 }

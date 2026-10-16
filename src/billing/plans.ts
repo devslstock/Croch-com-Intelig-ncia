@@ -12,6 +12,8 @@ export interface Prices {
   yearlyFreeMonths: number
   basicImageLimit: number
   graceDays: number
+  /** Gráficos de presente que cada conta nova recebe (funcionam mesmo sem plano). */
+  signupBonusImages: number
 }
 
 /** Valores de EXEMPLO (mesmos do banco): o painel de gestão altera os de verdade. */
@@ -21,6 +23,18 @@ export const DEFAULT_PRICES: Prices = {
   yearlyFreeMonths: 2,
   basicImageLimit: 12,
   graceDays: 3,
+  signupBonusImages: 0,
+}
+
+/** Cupom ligado à conta (o banco decide se vale; isto só espelha para mostrar o preço). */
+export interface AccountCoupon {
+  code: string
+  description: string
+  kind: 'percent' | 'fixed'
+  /** percent: 1–99 (%); fixed: centavos. */
+  value: number
+  plans: PaidPlan[]
+  cycles: 'both' | Cycle
 }
 
 export interface Account {
@@ -34,6 +48,9 @@ export interface Account {
   isAdmin: boolean
   email: string | null
   imagesUsed: number
+  /** Gráficos de presente que ainda restam. */
+  bonusImages: number
+  coupon: AccountCoupon | null
   prices: Prices
   demo?: boolean
 }
@@ -67,15 +84,43 @@ export function effectivePlan(plan: Plan, blocked: boolean, expiresAt: string | 
 
 /** Limite de imagens novas por mês: número (Básico), null (ilimitado) ou 0 (sem assinatura). */
 export function imageLimit(a: Account): number | null {
+  if (a.blocked) return 0
   if (a.effective === 'plus') return null
   if (a.effective === 'basic') return a.prices.basicImageLimit
   return 0
 }
 
+/** Quantas imagens ainda dá para criar: o resto da cota do mês + os gráficos de bônus. Nulo = ilimitado. */
 export function imagesLeft(a: Account): number | null {
+  const lim = imageLimit(a)
+  if (lim === null) return null
+  if (a.blocked) return 0
+  return Math.max(0, lim - a.imagesUsed) + a.bonusImages
+}
+
+/** Resto da cota mensal do plano, sem o bônus. */
+export const monthlyLeft = (a: Account): number | null => {
   const lim = imageLimit(a)
   return lim === null ? null : Math.max(0, lim - a.imagesUsed)
 }
+
+/** Entra no app (fora da tela de planos): plano ativo, ou ainda tem gráficos de presente. */
+export const canUseApp = (a: Account) => !a.blocked && (a.effective !== 'none' || a.bonusImages > 0)
+
+/** Desconto (centavos) do cupom neste plano e período; 0 se não vale. Espelha coupon_discount() do banco (mínimo final: R$ 1,00). */
+export function couponDiscountCents(list: number, c: AccountCoupon | null, plan: PaidPlan, cycle: Cycle): number {
+  if (!c || !c.plans.includes(plan) || (c.cycles !== 'both' && c.cycles !== cycle)) return 0
+  const d = c.kind === 'percent' ? Math.round((list * c.value) / 100) : c.value
+  return Math.max(0, Math.min(d, list - 100))
+}
+
+/** Preço do plano já com o cupom da conta. */
+export function finalPriceCents(p: Prices, plan: PaidPlan, cycle: Cycle, c: AccountCoupon | null): number {
+  const list = priceCents(p, plan, cycle)
+  return list - couponDiscountCents(list, c, plan, cycle)
+}
+
+export const couponLabel = (c: Pick<AccountCoupon, 'kind' | 'value'>) => (c.kind === 'percent' ? `${c.value}%` : formatCents(c.value))
 
 export const canCreateImage = (a: Account) => imagesLeft(a) !== 0
 export const canUseTools = (a: Account) => a.effective === 'plus'

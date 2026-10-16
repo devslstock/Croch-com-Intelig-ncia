@@ -59,9 +59,12 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
 - **Planos:** *Básico* (usar a plataforma, até 12 imagens novas por mês) e *Plus* (imagens ilimitadas + Calculadora de preço + Assistente de vendas).
   Mensal ou anual (anual = 2 mensalidades de desconto). Os valores (exemplo: R$ 19,90 e R$ 39,90) e o limite ficam no painel.
 - **Pagamento:** Mercado Pago, com cartão ou Pix (`supabase/functions/mp-checkout`, `mp-webhook`). O webhook libera e renova o plano sozinho.
-- **Login sem senha:** Google, Apple e WhatsApp (código de 6 dígitos); e-mail e senha continua como opção.
+- **Login:** e-mail e senha por padrão (a tela já abre o formulário). Google, Apple e WhatsApp são opcionais: aparecem só se `VITE_GOOGLE_AUTH`, `VITE_APPLE_AUTH` ou `VITE_WHATSAPP_AUTH` forem `true`.
 - **Painel de gestão** (`src/pages/Admin.tsx`, só para administradoras): resumo, busca e filtros, ativar/desativar, mudar plano e vencimento
   (+30 dias, +1 ano, sem vencimento), anotações, pagamentos de cada pessoa, preços/limites e histórico de mudanças.
+- **Bônus e cupons:** o painel define quantos gráficos de presente cada conta nova ganha e cadastra cupons de desconto (%, R$, planos,
+  período, limite de pessoas, validade). O cupom pode ser informado ao criar a conta ou na tela de assinatura, e a anotação da pessoa no
+  painel recebe "Cupom usado: CÓDIGO". O preço com desconto é calculado no banco. Detalhes em `supabase/README.md`.
 - Cota e acesso valem **no banco** (gatilho em `charts`), não só na tela. Configuração e passo a passo em `supabase/README.md`.
 - Em **modo demonstração** tudo isso funciona no navegador com pagamento simulado e usuárias de mentira, para testar as telas.
 

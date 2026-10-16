@@ -12,7 +12,7 @@ Tudo aqui está **preparado, mas não aplicado**. Siga os passos quando o projet
 
 Escolha uma opção:
 
-- **Painel:** SQL Editor → cole e rode, nesta ordem, `migrations/20261015000000_init_tramado.sql` e `migrations/20261016000000_assinaturas.sql`.
+- **Painel:** SQL Editor → cole e rode, nesta ordem, `migrations/20261015000000_init_tramado.sql`, `migrations/20261016000000_assinaturas.sql` e `migrations/20261017000000_cupons_bonus.sql`.
 - **CLI:** `supabase link --project-ref <ref>` e `supabase db push`.
 - **Pelo Claude:** peça "aplicar a migração do Tramado no projeto <ref>" (usa o conector Supabase).
 
@@ -72,6 +72,20 @@ banco ao criar um gráfico novo; apagar não devolve), tabelas `payments`, `subs
 - Quem usa o app não consegue mudar plano, vencimento, bloqueio nem admin (permissões por coluna + funções só do servidor).
 - Plano anual = 12 − 2 mensalidades (valor editável). Preços de exemplo: Básico R$ 19,90 e Plus R$ 39,90 por mês — **ajuste no painel**.
 
+### Bônus de cadastro e cupons (`20261017000000_cupons_bonus.sql`)
+
+- **Gráficos de bônus:** no painel, em *Preços e limites → Gráficos de bônus no cadastro*. Cada conta **nova** recebe essa quantidade de
+  gráficos de presente, que funcionam mesmo sem assinatura e também depois que a cota do mês do Básico acaba (o Plus já é ilimitado).
+  Quem já tinha conta não muda; o bônus de uma pessoa pode ser ajustado na ficha dela. A regra vale no banco (gatilho de `charts`).
+- **Cupons:** painel → *Cupons de desconto*. Código (guardado em maiúsculas), desconto em % (1–99) ou em R$, planos e período em que vale
+  (mensal, anual ou ambos), limite de **pessoas**, validade e ativo/pausado. O preço final nunca fica abaixo de R$ 1,00.
+- **Como a pessoa usa:** campo opcional "Cupom" ao criar a conta (vai em `user_metadata.coupon`) ou a caixa "Tem um cupom?" na tela de
+  assinatura (`redeem_coupon`, com trava de 8 erros por hora). O cupom fica ligado à conta; o preço cobrado vem de `checkout_price()`,
+  que a função `mp-checkout` chama. **Publique de novo a `mp-checkout`** depois de aplicar esta migração.
+- **Anotação:** ao ligar um cupom à conta (e de novo no pagamento), a linha `Cupom usado: CÓDIGO` entra na anotação da pessoa no painel.
+- **Pagamento:** se o valor pago for menor que a tabela e a conta tem cupom, o pagamento grava o cupom e o desconto. Cupom que já teve
+  pagamento não pode ser apagado (pause-o). No cartão **mensal**, o desconto vale em todas as cobranças da assinatura.
+
 ### Tornar você administradora
 
 Depois de entrar uma vez no app, no SQL Editor (troque pelo seu e-mail ou telefone):
@@ -113,7 +127,7 @@ credenciais confirma tudo (use as credenciais de teste primeiro). O Pix recorren
 
 ## Testar a estrutura sem Supabase
 
-`npm run test:db` aplica as duas migrações num Postgres local (PGlite) e confere, entre outros: cadastro sem plano, pagamento
+`npm run test:db` aplica as três migrações num Postgres local (PGlite) e confere, entre outros: cadastro sem plano, pagamento
 idempotente, renovação, cota de 12 imagens, vencimento/tolerância/bloqueio, funções fechadas para o app e painel só para admin.
 
 ## Fica para depois

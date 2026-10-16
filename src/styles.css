@@ -569,3 +569,19 @@ body:has(.plans-page)::after, body:has(.login)::after { display: none; }
 .site-footer a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
 @media (max-width: 600px) { body:has(.pricebar) .site-footer { margin-bottom: 88px; } }
+
+/* Cupons e bônus */
+.plan__was { color: var(--muted); font-size: 1rem; }
+.plan__coupon { font-style: normal; font-size: 0.82rem; font-weight: 700; color: #1f7a52; background: var(--mint); padding: 3px 10px; border-radius: 999px; }
+.coupon__form { display: flex; gap: 8px; }
+.coupon__form .input { flex: 1; min-width: 0; }
+.input--coupon { text-transform: uppercase; letter-spacing: 0.04em; }
+.coupons { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.coupon-item { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.7); }
+.coupon-item__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.coupon-item__code { font-size: 1.05rem; letter-spacing: 0.04em; color: var(--accent); }
+.coupon-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: rgba(235, 227, 250, 0.5); margin-bottom: 8px; }
+.field--group { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.field--group legend { padding: 0; font-weight: 600; margin-bottom: 4px; }
+.bonus-row { display: flex; align-items: flex-end; gap: 10px; }
+.bonus-row .numfield { flex: 1; }

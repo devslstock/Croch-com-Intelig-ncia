@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { canUseApp, couponDiscountCents, finalPriceCents, monthlyLeft, type AccountCoupon } from './plans'
 import { addPeriod, canCreateImage, canUseTools, DEFAULT_PRICES, effectivePlan, imageLimit, imagesLeft, offersOnlyBasic, priceCents, yearlySavingCents, type Account } from './plans'
 import { localAccountStore, DEMO_KEY } from './store'
 import { localAdminStore } from './adminStore'
@@ -7,7 +8,7 @@ const mem = () => {
   const m = new Map<string, string>()
   return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }
 }
-const acc = (over: Partial<Account>): Account => ({ plan: 'basic', effective: 'basic', expiresAt: null, blocked: false, cycle: null, method: null, isAdmin: false, email: null, imagesUsed: 0, prices: DEFAULT_PRICES, ...over })
+const acc = (over: Partial<Account>): Account => ({ plan: 'basic', effective: 'basic', expiresAt: null, blocked: false, cycle: null, method: null, isAdmin: false, email: null, imagesUsed: 0, bonusImages: 0, coupon: null, prices: DEFAULT_PRICES, ...over })
 
 describe('preços', () => {
   it('anual = 12 mensalidades menos 2', () => {
@@ -85,7 +86,7 @@ describe('painel (demonstração)', () => {
     const now = new Date('2026-10-16T12:00:00Z')
     const a = localAdminStore(mem(), () => now)
     const st = await a.stats()
-    expect(st.users).toBe(7)
+    expect(st.users).toBe(8)
     expect(st.blocked).toBe(1)
     expect((await a.users('joana')).length).toBe(1)
     const joana = (await a.users('joana'))[0]
@@ -96,5 +97,106 @@ describe('painel (demonstração)', () => {
     expect((await a.audit()).length).toBe(1)
     await a.updateSettings({ ...(await a.settings()), basicMonthlyCents: 2500 })
     expect((await a.settings()).basicMonthlyCents).toBe(2500)
+  })
+})
+
+const pct = (value: number, over: Partial<AccountCoupon> = {}): AccountCoupon => ({ code: 'BEMVINDA10', description: '', kind: 'percent', value, plans: ['basic', 'plus'], cycles: 'both', ...over })
+
+describe('cupons', () => {
+  it('porcentagem e valor fixo, sobre o preço de tabela', () => {
+    expect(couponDiscountCents(19900, pct(10), 'basic', 'yearly')).toBe(1990)
+    expect(couponDiscountCents(1990, pct(10), 'basic', 'monthly')).toBe(199)
+    expect(couponDiscountCents(1990, pct(0, { kind: 'fixed', value: 500 }), 'basic', 'monthly')).toBe(500)
+    expect(finalPriceCents(DEFAULT_PRICES, 'plus', 'yearly', pct(10))).toBe(35910)
+    expect(finalPriceCents(DEFAULT_PRICES, 'plus', 'yearly', null)).toBe(39900)
+  })
+  it('só vale no plano e no período do cupom', () => {
+    const c = pct(20, { plans: ['basic'], cycles: 'yearly' })
+    expect(couponDiscountCents(19900, c, 'basic', 'yearly')).toBe(3980)
+    expect(couponDiscountCents(39900, c, 'plus', 'yearly')).toBe(0)
+    expect(couponDiscountCents(1990, c, 'basic', 'monthly')).toBe(0)
+  })
+  it('o preço final nunca fica abaixo de R$ 1,00', () => {
+    expect(couponDiscountCents(1990, pct(0, { kind: 'fixed', value: 99999 }), 'basic', 'monthly')).toBe(1890)
+    expect(finalPriceCents(DEFAULT_PRICES, 'basic', 'monthly', pct(0, { kind: 'fixed', value: 99999 }))).toBe(100)
+  })
+})
+
+describe('gráficos de bônus', () => {
+  it('sem plano, o bônus libera o app e conta como imagens restantes', () => {
+    const none = acc({ plan: 'none', effective: 'none', bonusImages: 3 })
+    expect(canUseApp(none)).toBe(true)
+    expect(imagesLeft(none)).toBe(3)
+    expect(canCreateImage(none)).toBe(true)
+    expect(canUseApp(acc({ plan: 'none', effective: 'none', bonusImages: 0 }))).toBe(false)
+    expect(canCreateImage(acc({ plan: 'none', effective: 'none', bonusImages: 0 }))).toBe(false)
+  })
+  it('no Básico, o bônus soma à cota do mês', () => {
+    const a = acc({ imagesUsed: 12, bonusImages: 2 })
+    expect(monthlyLeft(a)).toBe(0)
+    expect(imagesLeft(a)).toBe(2)
+    expect(canCreateImage(a)).toBe(true)
+    expect(imagesLeft(acc({ imagesUsed: 5, bonusImages: 2 }))).toBe(9)
+  })
+  it('Plus segue ilimitado e conta bloqueada não usa o bônus', () => {
+    expect(imagesLeft(acc({ effective: 'plus', bonusImages: 5 }))).toBeNull()
+    const blocked = acc({ plan: 'none', effective: 'none', blocked: true, bonusImages: 5 })
+    expect(canUseApp(blocked)).toBe(false)
+    expect(canCreateImage(blocked)).toBe(false)
+  })
+  it('demonstração: o bônus cobre "sem plano" e "acabou a cota"', async () => {
+    const st = mem()
+    const admin = localAdminStore(st)
+    await admin.updateSettings({ ...(await admin.settings()), signupBonusImages: 2 })
+    const s = localAccountStore(st)
+    expect((await s.get()).bonusImages).toBe(2)
+    s.consumeImage()
+    s.consumeImage()
+    expect(() => s.consumeImage()).toThrow(/assinatura/)
+    await s.checkout({ plan: 'basic', cycle: 'monthly', method: 'pix' })
+    for (let i = 0; i < 12; i++) s.consumeImage()
+    expect(() => s.consumeImage()).toThrow(/Plus/)
+  })
+})
+
+describe('cupons (demonstração)', () => {
+  it('admin cria o cupom, a conta o aplica e o preço muda', async () => {
+    const st = mem()
+    const admin = localAdminStore(st)
+    await admin.saveCoupon({ code: 'oi25', description: '', kind: 'percent', value: 25, plans: ['basic', 'plus'], cycles: 'both', maxUses: null, expiresAt: null, active: true })
+    expect((await admin.coupons()).some((c) => c.code === 'OI25')).toBe(true)
+    const s = localAccountStore(st)
+    await expect(s.applyCoupon('nada')).rejects.toThrow(/inválido/)
+    const c = await s.applyCoupon(' oi25 ')
+    expect(c.code).toBe('OI25')
+    const a = await s.get()
+    expect(a.coupon?.code).toBe('OI25')
+    expect(finalPriceCents(a.prices, 'plus', 'monthly', a.coupon)).toBe(2992)
+  })
+  it('cupom pausado ou vencido não vale; código repetido e inválido são recusados', async () => {
+    const st = mem()
+    const admin = localAdminStore(st)
+    const base = { description: '', kind: 'percent' as const, value: 10, plans: ['basic' as const], cycles: 'both' as const, maxUses: null, active: true }
+    await admin.saveCoupon({ ...base, code: 'PAUSADO', active: false, expiresAt: null })
+    await admin.saveCoupon({ ...base, code: 'VELHO', expiresAt: '2020-01-01T00:00:00.000Z' })
+    const s = localAccountStore(st)
+    await expect(s.applyCoupon('PAUSADO')).rejects.toThrow()
+    await expect(s.applyCoupon('VELHO')).rejects.toThrow()
+    await expect(admin.saveCoupon({ ...base, code: 'pausado', expiresAt: null })).rejects.toThrow(/já existe/i)
+    await expect(admin.saveCoupon({ ...base, code: 'a b', expiresAt: null })).rejects.toThrow(/código/i)
+    await expect(admin.saveCoupon({ ...base, code: 'GRANDE', value: 100, expiresAt: null })).rejects.toThrow(/inválido/i)
+  })
+  it('admin ajusta o bônus de uma pessoa e pausa/apaga cupons', async () => {
+    const st = mem()
+    const admin = localAdminStore(st)
+    const u = (await admin.users('joana'))[0]
+    await admin.setBonus(u.id, 5)
+    expect((await admin.users('joana'))[0].bonusImages).toBe(5)
+    await expect(admin.setBonus(u.id, -1)).rejects.toThrow()
+    const [c] = await admin.coupons()
+    await admin.saveCoupon({ id: c.id, code: c.code, description: c.description, kind: c.kind, value: c.value, plans: c.plans, cycles: c.cycles, maxUses: c.maxUses, expiresAt: c.expiresAt, active: false })
+    expect((await admin.coupons())[0].active).toBe(false)
+    await admin.deleteCoupon(c.id)
+    expect(await admin.coupons()).toHaveLength(0)
   })
 })

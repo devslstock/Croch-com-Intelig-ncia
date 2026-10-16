@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from './auth/supabase'
 import { useAuth } from './auth/AuthProvider'
 import { useAccount } from './billing/AccountProvider'
-import { canCreateImage, canUseTools, type PaidPlan } from './billing/plans'
+import { canCreateImage, canUseApp, canUseTools, type PaidPlan } from './billing/plans'
 import { NavContext } from './nav'
 import { Admin } from './pages/Admin'
 import { Plans, type PlansReason } from './pages/Plans'
@@ -51,8 +51,8 @@ export function App() {
   const nav = { goPlans: () => setView({ name: 'plans', reason: null }), goAdmin: () => setView({ name: 'admin' }) }
 
   const render = () => {
-    // Sem assinatura ativa só se vê a tela de planos (o painel continua acessível a quem administra).
-    if (account.effective === 'none' && view.name !== 'admin') {
+    // Sem assinatura ativa e sem gráficos de presente só se vê a tela de planos (o painel continua acessível a quem administra).
+    if (!canUseApp(account) && view.name !== 'admin') {
       return <Plans reason={account.blocked ? null : 'inactive'} onBack={home} onAdmin={nav.goAdmin} />
     }
     if (view.name === 'admin') return <Admin onBack={home} />

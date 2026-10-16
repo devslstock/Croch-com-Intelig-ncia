@@ -22,7 +22,8 @@ interface AuthApi {
   loading: boolean
   configured: boolean
   signIn(email: string, password: string): Promise<AuthResult>
-  signUp(name: string, email: string, password: string): Promise<AuthResult>
+  /** `coupon` (opcional) vai junto do cadastro; o banco confere se é válido e anota qual foi usado. */
+  signUp(name: string, email: string, password: string, coupon?: string): Promise<AuthResult>
   signInWithGoogle(): Promise<AuthResult>
   signInWithApple(): Promise<AuthResult>
   /** Envia o código de 6 dígitos pelo WhatsApp. Sem senha. */
@@ -85,12 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? { ok: false, message: friendlyAuthError(error.message) } : { ok: true }
   }, [])
 
-  const signUp = useCallback<AuthApi['signUp']>(async (name, email, password) => {
+  const signUp = useCallback<AuthApi['signUp']>(async (name, email, password, coupon) => {
     if (!supabase) return { ok: false, message: 'O login ainda não está configurado.' }
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { name: name.trim() }, emailRedirectTo: window.location.origin },
+      options: { data: { name: name.trim(), ...(coupon?.trim() ? { coupon: coupon.trim().toUpperCase() } : {}) }, emailRedirectTo: window.location.origin },
     })
     if (error) return { ok: false, message: friendlyAuthError(error.message) }
     // Sem sessão = o projeto exige confirmar o e-mail antes do primeiro acesso.

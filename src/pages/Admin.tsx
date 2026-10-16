@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount } from '../billing/AccountProvider'
-import type { AdminPayment, AdminStats, AdminUser, AuditEntry } from '../billing/adminStore'
-import { DEFAULT_PRICES, daysLeft, formatCents, PLAN_LABEL, type Plan, type Prices } from '../billing/plans'
+import type { AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, CouponInput } from '../billing/adminStore'
+import { DEFAULT_PRICES, daysLeft, formatCents, PLAN_LABEL, type PaidPlan, type Plan, type Prices } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { NumberField } from '../components/NumberField'
 
-type Filter = 'todos' | 'ativos' | 'vencendo' | 'sem' | 'bloqueados'
-const FILTERS: Array<[Filter, string]> = [['todos', 'Todos'], ['ativos', 'Ativos'], ['vencendo', 'Vencem em 7 dias'], ['sem', 'Sem plano'], ['bloqueados', 'Desativados']]
+type Filter = 'todos' | 'ativos' | 'vencendo' | 'sem' | 'bloqueados' | 'cupom'
+const FILTERS: Array<[Filter, string]> = [['todos', 'Todos'], ['ativos', 'Ativos'], ['vencendo', 'Vencem em 7 dias'], ['sem', 'Sem plano'], ['bloqueados', 'Desativados'], ['cupom', 'Com cupom']]
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—')
 const contact = (u: AdminUser) => u.email ?? u.phone ?? 'sem contato'
@@ -19,6 +19,7 @@ function matches(u: AdminUser, f: Filter): boolean {
   }
   if (f === 'sem') return u.effective === 'none' && !u.blocked
   if (f === 'bloqueados') return u.blocked
+  if (f === 'cupom') return !!u.coupon
   return true
 }
 
@@ -36,6 +37,8 @@ function UserEditor({ u, onSaved }: { u: AdminUser; onSaved: () => void }) {
   const [expires, setExpires] = useState<string | null>(u.expiresAt)
   const [blocked, setBlocked] = useState(u.blocked)
   const [note, setNote] = useState(u.note)
+  const [bonus, setBonus] = useState(u.bonusImages)
+  const [bonusBusy, setBonusBusy] = useState(false)
   const [payments, setPayments] = useState<AdminPayment[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
@@ -55,6 +58,20 @@ function UserEditor({ u, onSaved }: { u: AdminUser; onSaved: () => void }) {
   }
   const dateValue = expires ? new Date(expires).toISOString().slice(0, 10) : ''
   const dirty = plan !== u.plan || expires !== u.expiresAt || blocked !== u.blocked || note !== u.note
+
+  const saveBonus = async () => {
+    setBonusBusy(true)
+    setMsg(null)
+    try {
+      await admin.setBonus(u.id, bonus)
+      setMsg({ kind: 'ok', text: 'Bônus salvo.' })
+      onSaved()
+    } catch (e) {
+      setMsg({ kind: 'erro', text: e instanceof Error ? e.message : 'Não foi possível salvar o bônus.' })
+    } finally {
+      setBonusBusy(false)
+    }
+  }
 
   const save = async () => {
     setBusy(true)
@@ -96,10 +113,15 @@ function UserEditor({ u, onSaved }: { u: AdminUser; onSaved: () => void }) {
         <input type="checkbox" checked={blocked} onChange={(e) => setBlocked(e.target.checked)} />
         <span>Desativar esta conta (perde o acesso mesmo com plano pago)</span>
       </label>
+      {u.coupon && <p className="hint">🎟 Cupom ligado à conta: <b>{u.coupon}</b></p>}
       <label className="field">
         <span>Anotação (só você vê)</span>
-        <textarea rows={2} value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
+        <textarea rows={3} value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
       </label>
+      <div className="bonus-row">
+        <NumberField label="Gráficos de bônus" value={bonus} max={10000} onChange={(v) => setBonus(Math.round(v))} hint="Gráficos de presente que a pessoa ainda pode criar." />
+        <button className="btn btn--sm" onClick={saveBonus} disabled={bonusBusy || bonus === u.bonusImages}>{bonusBusy ? 'Salvando…' : 'Salvar bônus'}</button>
+      </div>
       {msg && <p className={msg.kind === 'ok' ? 'ok' : 'error'} role={msg.kind === 'ok' ? 'status' : 'alert'}>{msg.text}</p>}
       <button className="btn btn--primary" onClick={save} disabled={busy || !dirty}>{busy ? 'Salvando…' : 'Salvar alterações'}</button>
 
@@ -108,13 +130,165 @@ function UserEditor({ u, onSaved }: { u: AdminUser; onSaved: () => void }) {
         <ul className="paylist">
           {payments.map((p) => (
             <li key={p.id}>
-              <span>{fmt(p.paidAt)} · {PLAN_LABEL[p.plan]} {p.cycle === 'yearly' ? 'anual' : 'mensal'} · {p.method === 'pix' ? 'Pix' : 'Cartão'}</span>
+              <span>{fmt(p.paidAt)} · {PLAN_LABEL[p.plan]} {p.cycle === 'yearly' ? 'anual' : 'mensal'} · {p.method === 'pix' ? 'Pix' : 'Cartão'}{p.coupon ? ` · cupom ${p.coupon} (−${formatCents(p.discountCents ?? 0)})` : ''}</span>
               <b>{formatCents(p.amountCents)}</b>
             </li>
           ))}
         </ul>
       )}
     </div>
+  )
+}
+
+
+const EMPTY_COUPON: CouponInput = { code: '', description: '', kind: 'percent', value: 10, plans: ['basic', 'plus'], cycles: 'both', maxUses: null, expiresAt: null, active: true }
+
+/** "10% · todos os planos · qualquer período": resumo de um cupom. */
+function couponSummary(c: Pick<AdminCoupon, 'kind' | 'value' | 'plans' | 'cycles'>): string {
+  const off = c.kind === 'percent' ? `${c.value}% de desconto` : `${formatCents(c.value)} de desconto`
+  const plans = c.plans.length === 2 ? 'Básico e Plus' : c.plans[0] === 'basic' ? 'só Básico' : 'só Plus'
+  const cycles = c.cycles === 'both' ? 'mensal e anual' : c.cycles === 'yearly' ? 'só anual' : 'só mensal'
+  return `${off} · ${plans} · ${cycles}`
+}
+
+function couponStatus(c: AdminCoupon): { label: string; kind: 'ok' | 'warn' | 'off' } {
+  if (!c.active) return { label: 'Pausado', kind: 'off' }
+  if (c.expiresAt && new Date(c.expiresAt) <= new Date()) return { label: 'Vencido', kind: 'warn' }
+  if (c.maxUses !== null && c.uses >= c.maxUses) return { label: 'Esgotado', kind: 'warn' }
+  return { label: 'Ativo', kind: 'ok' }
+}
+
+function Coupons() {
+  const { admin } = useAccount()
+  const [list, setList] = useState<AdminCoupon[] | null>(null)
+  const [form, setForm] = useState<CouponInput | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
+
+  const load = useCallback(() => admin.coupons().then(setList).catch(() => setList([])), [admin])
+  const set = <K extends keyof CouponInput>(k: K, v: CouponInput[K]) => setForm((f) => (f ? { ...f, [k]: v } : f))
+  const togglePlan = (p: PaidPlan) => setForm((f) => {
+    if (!f) return f
+    const has = f.plans.includes(p)
+    const plans = has ? f.plans.filter((x) => x !== p) : [...f.plans, p]
+    return plans.length ? { ...f, plans } : f // sempre pelo menos um plano
+  })
+
+  const run = async (fn: () => Promise<void>, ok: string) => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      await fn()
+      await load()
+      setMsg({ kind: 'ok', text: ok })
+      return true
+    } catch (e) {
+      setMsg({ kind: 'erro', text: e instanceof Error ? e.message : 'Não foi possível concluir.' })
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const save = async () => {
+    if (!form) return
+    if (await run(() => admin.saveCoupon({ ...form, code: form.code.trim().toUpperCase() }), form.id ? 'Cupom atualizado.' : 'Cupom criado.')) setForm(null)
+  }
+  const edit = (c: AdminCoupon) => {
+    setMsg(null)
+    setForm({ id: c.id, code: c.code, description: c.description, kind: c.kind, value: c.value, plans: c.plans, cycles: c.cycles, maxUses: c.maxUses, expiresAt: c.expiresAt, active: c.active })
+  }
+  const toggle = (c: AdminCoupon) =>
+    run(() => admin.saveCoupon({ id: c.id, code: c.code, description: c.description, kind: c.kind, value: c.value, plans: c.plans, cycles: c.cycles, maxUses: c.maxUses, expiresAt: c.expiresAt, active: !c.active }), c.active ? 'Cupom pausado.' : 'Cupom ativado.')
+  const remove = (c: AdminCoupon) => {
+    if (!window.confirm(`Apagar o cupom ${c.code}?`)) return
+    void run(() => admin.deleteCoupon(c.id), 'Cupom apagado.')
+  }
+
+  return (
+    <details className="card more" onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) void load() }}>
+      <summary>Cupons de desconto</summary>
+      <p className="hint">A pessoa informa o cupom ao criar a conta ou na tela de assinatura. Quem usa fica com o código escrito na anotação dela.</p>
+      {msg && <p className={msg.kind === 'ok' ? 'ok' : 'error'} role={msg.kind === 'ok' ? 'status' : 'alert'}>{msg.text}</p>}
+
+      {!form && <button className="btn btn--primary btn--sm" onClick={() => { setMsg(null); setForm({ ...EMPTY_COUPON }) }}>+ Novo cupom</button>}
+
+      {form && (
+        <div className="coupon-form">
+          <h4 className="editor-user__h">{form.id ? 'Editar cupom' : 'Novo cupom'}</h4>
+          <label className="field">
+            <span>Código (o que a pessoa digita)</span>
+            <input value={form.code} maxLength={32} autoCapitalize="characters" placeholder="Ex.: BEMVINDA10" onChange={(e) => set('code', e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))} />
+          </label>
+          <label className="field">
+            <span>Descrição (só você vê)</span>
+            <input value={form.description} maxLength={120} placeholder="Ex.: Parceria com a loja X" onChange={(e) => set('description', e.target.value)} />
+          </label>
+          <div className="seg" role="group" aria-label="Tipo de desconto">
+            <button className={`seg__btn${form.kind === 'percent' ? ' seg__btn--on' : ''}`} onClick={() => setForm({ ...form, kind: 'percent', value: Math.min(form.value, 99) })}>Porcentagem</button>
+            <button className={`seg__btn${form.kind === 'fixed' ? ' seg__btn--on' : ''}`} onClick={() => setForm({ ...form, kind: 'fixed', value: form.kind === 'percent' ? 1000 : form.value })}>Valor em R$</button>
+          </div>
+          {form.kind === 'percent'
+            ? <NumberField label="Desconto" suffix="%" value={form.value} max={99} onChange={(v) => set('value', Math.round(v))} />
+            : <NumberField label="Desconto" prefix="R$" value={form.value / 100} onChange={(v) => set('value', Math.round(v * 100))} hint="O preço final nunca fica abaixo de R$ 1,00." />}
+          <fieldset className="field field--group">
+            <legend>Vale para</legend>
+            <label className="field field--inline"><input type="checkbox" checked={form.plans.includes('basic')} onChange={() => togglePlan('basic')} /><span>Plano Básico</span></label>
+            <label className="field field--inline"><input type="checkbox" checked={form.plans.includes('plus')} onChange={() => togglePlan('plus')} /><span>Plano Plus</span></label>
+          </fieldset>
+          <label className="field">
+            <span>Período do pagamento</span>
+            <select value={form.cycles} onChange={(e) => set('cycles', e.target.value as CouponInput['cycles'])}>
+              <option value="both">Mensal e anual</option>
+              <option value="monthly">Só mensal</option>
+              <option value="yearly">Só anual</option>
+            </select>
+          </label>
+          <div className="row">
+            <NumberField label="Limite de pessoas" value={form.maxUses ?? 0} max={1_000_000} onChange={(v) => set('maxUses', v >= 1 ? Math.round(v) : null)} hint="Vazio = sem limite." />
+            <label className="field">
+              <span>Vale até</span>
+              <input type="date" value={form.expiresAt ? new Date(form.expiresAt).toISOString().slice(0, 10) : ''} onChange={(e) => set('expiresAt', e.target.value ? new Date(`${e.target.value}T23:59:59`).toISOString() : null)} />
+            </label>
+          </div>
+          <label className="field field--inline">
+            <input type="checkbox" checked={form.active} onChange={(e) => set('active', e.target.checked)} />
+            <span>Cupom ativo</span>
+          </label>
+          <p className="hint">Na assinatura mensal no cartão o desconto vale em todas as cobranças. Para desconto só no primeiro mês, use o período “Só anual” ou um cupom com data de validade.</p>
+          <div className="row row--tight">
+            <button className="btn btn--primary" onClick={save} disabled={busy || form.code.length < 3 || form.value < 1}>{busy ? 'Salvando…' : 'Salvar cupom'}</button>
+            <button className="btn" onClick={() => { setForm(null); setMsg(null) }} disabled={busy}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {list === null ? <p className="hint">Carregando…</p> : list.length === 0 ? <p className="hint">Nenhum cupom cadastrado.</p> : (
+        <ul className="coupons">
+          {list.map((c) => {
+            const st = couponStatus(c)
+            return (
+              <li key={c.id} className="coupon-item">
+                <div className="coupon-item__top">
+                  <b className="coupon-item__code">{c.code}</b>
+                  <em className={`pill pill--${st.kind}`}>{st.label}</em>
+                </div>
+                <small>{couponSummary(c)}</small>
+                {c.description && <small className="hint">{c.description}</small>}
+                <small className="hint">
+                  Pagaram com o cupom: {c.uses}{c.maxUses !== null ? ` de ${c.maxUses}` : ''} · contas com o cupom: {c.attached}{c.expiresAt ? ` · vale até ${fmt(c.expiresAt)}` : ''}
+                </small>
+                <div className="row row--tight">
+                  <button className="btn btn--sm" onClick={() => edit(c)} disabled={busy}>Editar</button>
+                  <button className="btn btn--sm" onClick={() => void toggle(c)} disabled={busy}>{c.active ? 'Pausar' : 'Ativar'}</button>
+                  <button className="btn btn--sm" onClick={() => remove(c)} disabled={busy || c.uses > 0} title={c.uses > 0 ? 'Já foi usado em pagamentos: pause em vez de apagar' : ''}>Apagar</button>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </details>
   )
 }
 
@@ -134,7 +308,7 @@ function Settings() {
     setBusy(true)
     setMsg(null)
     try {
-      await admin.updateSettings({ ...p, basicMonthlyCents: Math.max(1, p.basicMonthlyCents), plusMonthlyCents: Math.max(1, p.plusMonthlyCents), yearlyFreeMonths: Math.min(11, p.yearlyFreeMonths), basicImageLimit: Math.max(1, p.basicImageLimit) })
+      await admin.updateSettings({ ...p, basicMonthlyCents: Math.max(1, p.basicMonthlyCents), plusMonthlyCents: Math.max(1, p.plusMonthlyCents), yearlyFreeMonths: Math.min(11, p.yearlyFreeMonths), basicImageLimit: Math.max(1, p.basicImageLimit), signupBonusImages: Math.max(0, Math.min(1000, p.signupBonusImages)) })
       await reload()
       setMsg('Preços salvos. Valem para os próximos pagamentos.')
     } catch (e) {
@@ -158,6 +332,7 @@ function Settings() {
             <NumberField label="Imagens por mês no Básico" value={p.basicImageLimit} onChange={(v) => set('basicImageLimit', Math.round(v))} max={10000} />
           </div>
           <NumberField label="Dias de tolerância após vencer" value={p.graceDays} onChange={(v) => set('graceDays', Math.round(v))} max={30} hint="Tempo extra para o Pix compensar ou o cartão tentar de novo." />
+          <NumberField label="Gráficos de bônus no cadastro" value={p.signupBonusImages} onChange={(v) => set('signupBonusImages', Math.round(v))} max={1000} hint="Cada conta nova ganha esses gráficos de presente, mesmo sem assinar. 0 = nenhum. Só vale para quem se cadastrar depois de salvar." />
           <p className="hint">Anual: {formatCents(p.basicMonthlyCents * (12 - p.yearlyFreeMonths))} no Básico e {formatCents(p.plusMonthlyCents * (12 - p.yearlyFreeMonths))} no Plus.</p>
           {msg && <p className="hint" role="status">{msg}</p>}
           <button className="btn btn--primary" onClick={save} disabled={busy}>{busy ? 'Salvando…' : 'Salvar preços'}</button>
@@ -165,6 +340,13 @@ function Settings() {
       )}
     </details>
   )
+}
+
+const AUDIT_LABEL: Record<string, string> = {
+  update_settings: 'Preços e limites',
+  save_coupon: 'Cupom salvo',
+  delete_coupon: 'Cupom apagado',
+  set_bonus: 'Bônus ajustado',
 }
 
 function Audit() {
@@ -177,7 +359,7 @@ function Audit() {
         <ul className="paylist">
           {rows.map((r) => (
             <li key={r.id}>
-              <span>{new Date(r.createdAt).toLocaleString('pt-BR')} · {r.action === 'update_settings' ? 'Preços e limites' : 'Usuária editada'}</span>
+              <span>{new Date(r.createdAt).toLocaleString('pt-BR')} · {AUDIT_LABEL[r.action] ?? 'Usuária editada'}</span>
             </li>
           ))}
         </ul>
@@ -269,12 +451,13 @@ export function Admin({ onBack }: { onBack: () => void }) {
                     <span className="user__meta">
                       <em className={`pill pill--${u.effective}`}>{PLAN_LABEL[u.effective]}</em>
                       <em className={`pill pill--${st.kind}`}>{st.label}</em>
+                      {u.coupon && <em className="pill pill--ok">🎟 {u.coupon}</em>}
                     </span>
                   </button>
                   {isOpen && (
                     <>
-                      <p className="hint">Cadastro em {fmt(u.createdAt)} · vence em {fmt(u.expiresAt)} · imagens no mês: {u.imagesUsed} · último pagamento: {fmt(u.lastPaymentAt)}{u.method ? ` · ${u.method === 'manual' ? 'manual' : u.method === 'pix' ? 'Pix' : 'cartão'}` : ''}</p>
-                      <UserEditor key={`${u.id}-${u.plan}-${u.expiresAt}-${u.blocked}`} u={u} onSaved={() => void load()} />
+                      <p className="hint">Cadastro em {fmt(u.createdAt)} · vence em {fmt(u.expiresAt)} · imagens no mês: {u.imagesUsed} · bônus: {u.bonusImages} · último pagamento: {fmt(u.lastPaymentAt)}{u.method ? ` · ${u.method === 'manual' ? 'manual' : u.method === 'pix' ? 'Pix' : 'cartão'}` : ''}</p>
+                      <UserEditor key={`${u.id}-${u.plan}-${u.expiresAt}-${u.blocked}-${u.note}-${u.bonusImages}`} u={u} onSaved={() => void load()} />
                     </>
                   )}
                 </li>
@@ -284,6 +467,7 @@ export function Admin({ onBack }: { onBack: () => void }) {
           {users && shown.length === 0 && <p className="hint">Ninguém encontrado.</p>}
         </section>
 
+        <Coupons />
         <Settings />
         <Audit />
       </div>

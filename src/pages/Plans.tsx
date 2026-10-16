@@ -1,14 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAccount } from '../billing/AccountProvider'
 import {
-  daysLeft, formatCents, imageLimit, offersOnlyBasic, PLAN_FEATURES, PLAN_LABEL, priceCents, yearlySavingCents,
-  type Cycle, type Method, type PaidPlan,
+  couponLabel, daysLeft, finalPriceCents, formatCents, imageLimit, offersOnlyBasic, PLAN_FEATURES, PLAN_LABEL, priceCents,
+  type AccountCoupon, type Cycle, type Method, type PaidPlan,
 } from '../billing/plans'
 import type { CheckoutResult } from '../billing/store'
 import { AppBar } from '../components/AppBar'
 
 export type PlansReason = 'inactive' | 'limit' | 'tools' | null
+
+/** "no Básico, só no plano anual": onde o cupom vale. Vazio = vale em tudo. */
+function couponScope(c: AccountCoupon): string {
+  const plan = c.plans.length === 2 ? '' : c.plans[0] === 'basic' ? 'no plano Básico' : 'no plano Plus'
+  const cycle = c.cycles === 'both' ? '' : c.cycles === 'yearly' ? 'só no pagamento anual' : 'só no pagamento mensal'
+  return [plan, cycle].filter(Boolean).join(', ')
+}
 
 const HEADLINE: Record<Exclude<PlansReason, null>, { title: string; text: string }> = {
   inactive: { title: 'Escolha seu plano', text: 'Para usar o Tramado, é só assinar. Você pode pagar por mês ou por ano.' },
@@ -30,6 +37,9 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   const [done, setDone] = useState<string | null>(null)
   const [pix, setPix] = useState<Pix | null>(null)
   const [copied, setCopied] = useState(false)
+  const [couponText, setCouponText] = useState('')
+  const [couponBusy, setCouponBusy] = useState(false)
+  const [couponMsg, setCouponMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
   const startExpiry = useRef<string | null>(null)
   const payRef = useRef<HTMLElement>(null)
 
@@ -87,6 +97,22 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
     }
   }
 
+  const applyCoupon = async (e: FormEvent) => {
+    e.preventDefault()
+    setCouponBusy(true)
+    setCouponMsg(null)
+    try {
+      const c = await store.applyCoupon(couponText)
+      await reload()
+      setCouponText('')
+      setCouponMsg({ kind: 'ok', text: `Cupom ${c.code} aplicado: ${couponLabel(c)} de desconto${couponScope(c) ? ` (${couponScope(c)})` : ''}.` })
+    } catch (err) {
+      setCouponMsg({ kind: 'erro', text: err instanceof Error ? err.message : 'Não consegui aplicar o cupom.' })
+    } finally {
+      setCouponBusy(false)
+    }
+  }
+
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -98,7 +124,9 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   }
 
   const planCard = (plan: PaidPlan) => {
-    const total = priceCents(prices, plan, cycle)
+    const list = priceCents(prices, plan, cycle)
+    const total = finalPriceCents(prices, plan, cycle, account.coupon)
+    const off = list - total
     const isCurrent = account.effective === plan
     const features = PLAN_FEATURES[plan].map((f) => f.replace('{limit}', String(prices.basicImageLimit)))
     return (
@@ -106,12 +134,14 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
         {plan === 'plus' && <em className="badge plan__tag">Recomendado</em>}
         {plan === 'basic' && onlyBasic && <em className="plan__ribbon">Comece aqui</em>}
         <h3>{PLAN_LABEL[plan]}</h3>
+        {off > 0 && <s className="plan__was">{formatCents(list)}</s>}
         <p className="plan__price">
           <b>{formatCents(total)}</b>
           <span>{cycle === 'yearly' ? '/ano' : '/mês'}</span>
         </p>
+        {off > 0 && account.coupon && <em className="plan__coupon">🎟 {account.coupon.code} · você economiza {formatCents(off)}</em>}
         {cycle === 'yearly' ? (
-          <p className="hint">Equivale a {formatCents(Math.round(total / 12))} por mês · você economiza {formatCents(yearlySavingCents(prices, plan))}</p>
+          <p className="hint">Equivale a {formatCents(Math.round(total / 12))} por mês · você economiza {formatCents(priceCents(prices, plan, 'monthly') * 12 - total)} no ano</p>
         ) : (
           <p className="hint">Renova todo mês</p>
         )}
@@ -186,6 +216,24 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
               )}
             </section>
 
+            <section className="card coupon" aria-label="Cupom de desconto">
+              <h2 className="card__title">Tem um cupom de desconto?</h2>
+              {account.coupon && (
+                <p className="ok" role="status">
+                  🎟 Cupom <b>{account.coupon.code}</b> ligado à sua conta: {couponLabel(account.coupon)} de desconto{couponScope(account.coupon) ? ` (${couponScope(account.coupon)})` : ''}.
+                </p>
+              )}
+              <form className="coupon__form" onSubmit={applyCoupon}>
+                <input
+                  className="input input--coupon" aria-label="Código do cupom" placeholder="Digite o código" autoComplete="off" autoCapitalize="characters" maxLength={32}
+                  value={couponText} onChange={(e) => setCouponText(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
+                />
+                <button className="btn" type="submit" disabled={couponBusy || couponText.length < 3}>{couponBusy ? 'Conferindo…' : account.coupon ? 'Trocar cupom' : 'Aplicar'}</button>
+              </form>
+              {couponMsg && <p className={couponMsg.kind === 'ok' ? 'ok' : 'error'} role={couponMsg.kind === 'ok' ? 'status' : 'alert'}>{couponMsg.text}</p>}
+              <p className="hint">No cartão mensal, o desconto vale em todas as cobranças da assinatura.</p>
+            </section>
+
             {choice && !pix && (
               <section className="card" aria-live="polite" ref={payRef}>
                 <h2 className="card__title">Como você quer pagar o {PLAN_LABEL[choice]} {cycle === 'yearly' ? 'anual' : 'mensal'}?</h2>
@@ -195,10 +243,10 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
                 </div>
                 <p className="hint">
                   {method === 'pix'
-                    ? `Você paga ${formatCents(priceCents(prices, choice, cycle))} agora, na hora, pelo QR Code. O Pix não renova sozinho: no vencimento você paga de novo.`
+                    ? `Você paga ${formatCents(finalPriceCents(prices, choice, cycle, account.coupon))} agora, na hora, pelo QR Code. O Pix não renova sozinho: no vencimento você paga de novo.`
                     : cycle === 'monthly'
-                      ? `Cobrança de ${formatCents(priceCents(prices, choice, cycle))} todo mês no cartão, renovada sozinha. Cancele quando quiser.`
-                      : `Pagamento de ${formatCents(priceCents(prices, choice, cycle))} no cartão, com parcelamento se o seu cartão permitir. Não renova sozinho.`}
+                      ? `Cobrança de ${formatCents(finalPriceCents(prices, choice, cycle, account.coupon))} todo mês no cartão, renovada sozinha. Cancele quando quiser.`
+                      : `Pagamento de ${formatCents(finalPriceCents(prices, choice, cycle, account.coupon))} no cartão, com parcelamento se o seu cartão permitir. Não renova sozinho.`}
                 </p>
                 {needsEmail && (
                   <label className="field">

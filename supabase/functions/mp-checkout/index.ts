@@ -2,7 +2,7 @@
 //  - cartão mensal  -> assinatura (preapproval): a cobrança se repete sozinha; devolve o link de autorização
 //  - cartão anual   -> pagamento único (Checkout Pro) com 2 mensalidades de desconto
 //  - Pix (mensal ou anual) -> QR Code (copia e cola); o Pix não renova sozinho, a pessoa paga de novo no vencimento
-// O VALOR vem do banco (plan_price_cents), nunca do navegador.
+// O VALOR vem do banco (checkout_price: tabela de preços + cupom da conta), nunca do navegador.
 // Variáveis: MP_ACCESS_TOKEN (segredo), APP_URL (endereço do app). SUPABASE_URL/ANON_KEY já existem nas funções.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { buildReference, cycleLabel, PLAN_NAME, toReais, validCheckoutRequest } from '../_shared/billing.ts'
@@ -51,13 +51,16 @@ Deno.serve(async (req) => {
   const email = user.email ?? request.email
   if (!email) return json({ error: 'email_necessario' }, 400)
 
-  const { data: cents, error } = await supabase.rpc('plan_price_cents', { p_plan: request.plan, p_cycle: request.cycle })
-  if (error || typeof cents !== 'number') return json({ error: 'preco_indisponivel' }, 500)
+  // Preço da tabela já com o cupom da conta (se valer para este plano e período). Calculado no banco.
+  const { data: price, error } = await supabase.rpc('checkout_price', { p_plan: request.plan, p_cycle: request.cycle })
+  const cents = (price as { finalCents?: number } | null)?.finalCents
+  if (error || typeof cents !== 'number' || cents < 100) return json({ error: 'preco_indisponivel' }, 500)
   const amount = toReais(cents)
+  const couponCode = (price as { coupon?: string | null }).coupon
 
   const appUrl = (Deno.env.get('APP_URL') ?? '').replace(/\/$/, '')
   const reference = buildReference({ userId: user.id, plan: request.plan, cycle: request.cycle, method: request.method })
-  const title = `${PLAN_NAME[request.plan]} (${cycleLabel(request.cycle)})`
+  const title = `${PLAN_NAME[request.plan]} (${cycleLabel(request.cycle)})${couponCode ? ` · cupom ${couponCode}` : ''}`
   const notification_url = `${Deno.env.get('SUPABASE_URL')}/functions/v1/mp-webhook`
 
   try {
