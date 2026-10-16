@@ -3,3 +3,6 @@ export const APP_NAME = 'Tramado'
 /** Versão sem acento/espaço, para nomes de arquivo. */
 export const APP_SLUG = 'tramado'
 export const APP_TAGLINE = 'Sua foto vira gráfico de crochê, com os fios certos.'
+/** Rodapé: quem desenvolveu o site. */
+export const DEV_NAME = 'SL Desenvolvimentos'
+export const DEV_SITE = 'sldev.com.br'

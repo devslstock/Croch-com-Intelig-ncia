@@ -560,3 +560,12 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; background: 
 body::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, rgba(255, 247, 250, 0) 0, rgba(255, 247, 250, 0) 110px, rgba(255, 247, 250, 0.8) 300px); }
 body:has(.plans-page)::after, body:has(.login)::after { display: none; }
 .login__brand { padding: 16px; border-radius: 22px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 8px 24px rgba(168, 66, 111, 0.12); }
+
+/* Rodapé: fica no fim da página, mesmo quando o conteúdo é curto */
+#root { min-height: 100dvh; display: flex; flex-direction: column; }
+#root > .studio-page, #root > .login, #root > .app { flex: 1 0 auto; min-height: 0; width: 100%; }
+.site-footer { margin: 24px 16px 16px; align-self: center; width: fit-content; max-width: calc(100% - 32px); border-radius: 16px; background: rgba(255, 255, 255, 0.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 10px 18px; text-align: center; font-size: 0.8rem; color: #5a4a66; line-height: 1.5; }
+.site-footer p { margin: 0; }
+.site-footer a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+@media (max-width: 600px) { body:has(.pricebar) .site-footer { margin-bottom: 88px; } }

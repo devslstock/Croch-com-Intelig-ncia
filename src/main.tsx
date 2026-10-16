@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { AuthProvider } from './auth/AuthProvider'
 import { AccountProvider } from './billing/AccountProvider'
+import { Footer } from './components/Footer'
 import './styles.css'
 
 // PWA: o service worker só roda na versão publicada (no `npm run dev` atrapalharia o recarregamento).
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider>
       <AccountProvider>
         <App />
+        <Footer />
       </AccountProvider>
     </AuthProvider>
   </StrictMode>,
