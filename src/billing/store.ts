@@ -21,6 +21,8 @@ export interface AccountStore {
   checkout(req: CheckoutRequest): Promise<CheckoutResult>
   /** Liga um cupom à conta (o desconto aparece nos preços). Recusa código inválido. */
   applyCoupon(code: string): Promise<AccountCoupon>
+  /** Pede ao servidor para conferir no Mercado Pago os pagamentos aprovados da conta (segunda via do webhook). Nunca falha para a tela. */
+  sync(): Promise<void>
 }
 
 export const COUPON_ERRORS: Record<string, string> = {
@@ -89,6 +91,13 @@ export function supabaseAccountStore(client: SupabaseClient): AccountStore {
         throw new Error('Não consegui iniciar o pagamento. Tente de novo em instantes.')
       }
       return data as CheckoutResult
+    },
+    async sync() {
+      try {
+        await client.functions.invoke('mp-sync')
+      } catch {
+        /* a conferência é só uma segunda via */
+      }
     },
     async applyCoupon(code) {
       const { data, error } = await client.rpc('redeem_coupon', { p_code: code })
@@ -176,6 +185,9 @@ export function localAccountStore(storage: StorageLike, now: () => Date = () => 
       const s = read()
       write({ ...s, plan: req.plan, cycle: req.cycle, method: req.method, expiresAt: addPeriod(now(), req.cycle).toISOString() })
       return { kind: 'demo' }
+    },
+    async sync() {
+      /* demonstração: nada a conferir */
     },
     async applyCoupon(code: string): Promise<AccountCoupon> {
       const c = couponOf(code.trim().toUpperCase())

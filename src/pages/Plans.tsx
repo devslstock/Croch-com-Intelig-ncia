@@ -54,9 +54,17 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
   const waiting = pix !== null || payUrl !== null
   useEffect(() => {
     if (!waiting) return
-    const t = window.setInterval(() => void reload(), 5000)
+    // A cada 5 s: confere no Mercado Pago (segunda via, caso o aviso atrase) e atualiza a conta.
+    const check = () => void store.sync().then(() => reload())
+    check()
+    const t = window.setInterval(check, 5000)
     return () => window.clearInterval(t)
-  }, [waiting, reload])
+  }, [waiting, reload, store])
+  // Ao abrir a tela sem plano: se um pagamento já foi aprovado e o aviso não chegou, libera agora.
+  const noPlan = !!account && account.effective === 'none' && !account.demo
+  useEffect(() => {
+    if (noPlan) void store.sync().then(() => reload())
+  }, [noPlan, store, reload])
   useEffect(() => {
     if (waiting && account && account.expiresAt !== startExpiry.current && account.effective !== 'none') {
       setPix(null)
