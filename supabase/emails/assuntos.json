@@ -1,0 +1,8 @@
+{
+  "confirmation": "Confirme seu e-mail no Tramado 🧶",
+  "recovery": "Redefinir sua senha do Tramado",
+  "magic_link": "Seu link de acesso ao Tramado",
+  "invite": "Você foi convidada para o Tramado",
+  "email_change": "Confirme seu novo e-mail no Tramado",
+  "reauthentication": "{{ .Token }} é o seu código do Tramado"
+}
