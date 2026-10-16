@@ -83,6 +83,10 @@ select { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px sol
 .login__brand p { margin: 0; color: var(--muted); }
 .login__logo { display: block; margin: 0 auto 8px; max-width: 100%; height: auto; }
 .appbar__logo { vertical-align: -7px; border-radius: 7px; }
+.appbar__wordmark { display: block; height: 25px; width: auto; max-width: 100%; }
+.appbar__wordmark--inline { display: inline-block; height: 22px; vertical-align: middle; margin-left: 4px; }
+.lp-bar .btn, .lp-bar__actions .btn { white-space: nowrap; }
+.lp-bar__wordmark { display: block; height: 30px; width: auto; border-radius: 0 !important; }
 .login__form { display: flex; flex-direction: column; gap: 12px; }
 .login__foot { text-align: center; }
 .tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }

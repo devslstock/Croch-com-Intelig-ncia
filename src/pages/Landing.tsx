@@ -73,7 +73,7 @@ export function Landing({ go }: { go: (r: PublicRoute) => void }) {
   return (
     <div className="landing">
       <header className="lp-bar">
-        <span className="lp-bar__brand"><img src="/logo-symbol.svg" alt="" width={32} height={32} /> {APP_NAME}</span>
+        <span className="lp-bar__brand"><img className="lp-bar__wordmark" src="/logo.svg" alt={APP_NAME} width={149} height={30} /></span>
         <span className="lp-bar__actions">
           <button className="btn btn--ghost" onClick={enter}>Entrar</button>
           <button className="btn btn--primary btn--sm" onClick={create}>Criar conta</button>

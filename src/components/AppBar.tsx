@@ -19,10 +19,10 @@ export function AppBar({ title, onBack, children }: { title?: string; onBack?: (
       <div className="appbar__left">
         {onBack ? (
           <button className="appbar__brand" onClick={onBack} aria-label="Voltar ao início">
-            <span aria-hidden>←</span> {APP_NAME}
+            <span aria-hidden>←</span> <img className="appbar__wordmark appbar__wordmark--inline" src="/logo.svg" alt={APP_NAME} width={110} height={22} />
           </button>
         ) : (
-          <span className="appbar__brand appbar__brand--static"><img className="appbar__logo" src="/logo-symbol.svg" alt="" width={28} height={28} /> {APP_NAME}</span>
+          <span className="appbar__brand appbar__brand--static"><img className="appbar__wordmark" src="/logo.svg" alt={APP_NAME} width={124} height={25} /></span>
         )}
         {title && <span className="appbar__title">{title}</span>}
       </div>
