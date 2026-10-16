@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs'
 const sql = readFileSync(new URL('../migrations/20261015000000_init_tramado.sql', import.meta.url), 'utf8')
 const sqlBilling = readFileSync(new URL('../migrations/20261016000000_assinaturas.sql', import.meta.url), 'utf8')
 const sqlCoupons = readFileSync(new URL('../migrations/20261017000000_cupons_bonus.sql', import.meta.url), 'utf8')
+const sqlLanding = readFileSync(new URL('../migrations/20261018000000_landing_chatbot.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0, fail = 0
 const ok = (name, cond) => { cond ? pass++ : fail++; console.log((cond ? 'OK   ' : 'FALHA'), name) }
@@ -26,6 +27,8 @@ await db.exec(sqlBilling)
 ok('migração de assinaturas aplicou sem erro', true)
 await db.exec(sqlCoupons)
 ok('migração de cupons e bônus aplicou sem erro', true)
+await db.exec(sqlLanding)
+ok('migração da página pública e chatbot aplicou sem erro', true)
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
 await db.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ana"}'), ('${B}', '{"full_name":"Bia Souza"}')`)
@@ -268,6 +271,48 @@ ok('apaga cupom sem pagamentos', (await db.query(`select count(*)::int n from pu
 await rejects('cupom já usado em pagamento não pode ser apagado', () => adm(`select public.admin_delete_coupon('${c1}')`), /cupom_em_uso/)
 const au = (await adm(`select public.admin_audit_list(50) a`)).rows[0].a.map((x) => x.action)
 ok('criação de cupom e bônus ficam no histórico', au.includes('save_coupon') && au.includes('set_bonus') && au.includes('delete_coupon'))
+
+// ---------------------------------------------------------------------------
+// Página pública ("Saiba mais") e chatbot
+// ---------------------------------------------------------------------------
+const asAnon = async (fn) => { await db.exec('set role anon'); try { return await fn() } finally { await db.exec('reset role') } }
+const pub = (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r
+ok('visitante sem login lê preços, bônus, textos e perguntas ativas', pub.prices.basicMonthlyCents === 2490 && pub.prices.signupBonusImages === 3 && pub.items.length === 10 && /assistente/i.test(pub.config.greeting))
+ok('a função pública não expõe nada além disso', JSON.stringify(Object.keys(pub).sort()) === '["config","items","prices"]' && !JSON.stringify(pub).includes('is_admin') && !('email' in pub))
+ok('perguntas padrão já vêm cadastradas, em ordem', pub.items[0].question === 'Como o Tramado funciona?' && pub.items.every((i) => i.answer.length > 20))
+await rejects('visitante não lê a tabela do chatbot', () => asAnon(() => db.query('select * from public.chatbot_items')), /permission denied/)
+await rejects('visitante não chama o painel do chatbot', () => asAnon(() => db.query('select public.admin_list_chatbot()')), /permission denied/)
+await rejects('visitante não lê cupons nem preços direto', () => asAnon(() => db.query('select * from public.coupons')), /permission denied/)
+await rejects('usuária comum não lê a tabela do chatbot', () => as(D, () => db.query('select * from public.chatbot_items')), /permission denied/)
+await rejects('usuária comum não usa o painel do chatbot', () => as(D, () => db.query('select public.admin_list_chatbot()')), /sem_permissao/)
+await rejects('usuária comum não cria pergunta', () => as(D, () => db.query(`select public.admin_save_chatbot_item(null,'Pergunta?','Resposta',null,1,true)`)), /sem_permissao/)
+await rejects('usuária comum não muda os textos do robô', () => as(D, () => db.query(`select public.admin_save_chatbot_config('a','b','')`)), /sem_permissao/)
+
+const botAdmin = (await adm('select public.admin_list_chatbot() r')).rows[0].r
+ok('admin vê perguntas e textos do robô', botAdmin.items.length === 10 && botAdmin.config.whatsapp === '' && botAdmin.items.every((i) => i.active === true))
+
+const newQ = (await adm(`select public.admin_save_chatbot_item(null, '  Vocês fazem entrega?  ', 'Fazemos para todo o Brasil.', 'frete, correios', 5, true) id`)).rows[0].id
+const pub2 = (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r
+ok('pergunta nova aparece primeiro (ordem 5) e sem espaços sobrando', pub2.items.length === 11 && pub2.items[0].question === 'Vocês fazem entrega?' && pub2.items[0].keywords === 'frete, correios')
+await adm(`select public.admin_save_chatbot_item('${newQ}', 'Vocês fazem entrega?', 'Sim, enviamos.', 'frete', 5, false)`)
+const pub3 = (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r
+ok('pergunta pausada some para os visitantes, mas continua no painel', pub3.items.length === 10 && (await adm('select public.admin_list_chatbot() r')).rows[0].r.items.length === 11)
+await rejects('pergunta curta demais é recusada', () => adm(`select public.admin_save_chatbot_item(null, 'ab', 'x', null, 1, true)`), /pergunta_invalida/)
+await rejects('resposta vazia é recusada', () => adm(`select public.admin_save_chatbot_item(null, 'Pergunta ok', '   ', null, 1, true)`), /resposta_invalida/)
+await rejects('editar pergunta que não existe é recusado', () => adm(`select public.admin_save_chatbot_item('99999999-9999-4999-8999-999999999999', 'Pergunta ok', 'x', null, 1, true)`), /item_inexistente/)
+await adm(`select public.admin_delete_chatbot_item('${newQ}')`)
+ok('apagar pergunta remove do painel', (await adm('select public.admin_list_chatbot() r')).rows[0].r.items.length === 10)
+await rejects('apagar pergunta inexistente é recusado', () => adm(`select public.admin_delete_chatbot_item('${newQ}')`), /item_inexistente/)
+
+await adm(`select public.admin_save_chatbot_config('Olá!', 'Chame no zap.', '(81) 99999-0000')`)
+const pub4 = (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r
+ok('textos do robô e WhatsApp (só dígitos) chegam aos visitantes', pub4.config.greeting === 'Olá!' && pub4.config.fallback === 'Chame no zap.' && pub4.config.whatsapp === '81999990000')
+await rejects('WhatsApp com poucos dígitos é recusado', () => adm(`select public.admin_save_chatbot_config('a','b','123')`), /whatsapp_invalido/)
+await rejects('mensagem vazia é recusada', () => adm(`select public.admin_save_chatbot_config('  ','b','')`), /texto_invalido/)
+await adm(`select public.admin_save_chatbot_config('Olá!', 'Chame no zap.', '')`)
+ok('WhatsApp pode ficar vazio', (await asAnon(() => db.query('select public.public_landing() r'))).rows[0].r.config.whatsapp === '')
+const au2 = (await adm(`select public.admin_audit_list(60) a`)).rows[0].a.map((x) => x.action)
+ok('mudanças no chatbot ficam no histórico', au2.includes('save_chatbot_item') && au2.includes('delete_chatbot_item') && au2.includes('save_chatbot_config'))
 
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

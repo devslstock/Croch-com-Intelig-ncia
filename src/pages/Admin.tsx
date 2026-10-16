@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount } from '../billing/AccountProvider'
-import type { AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, CouponInput } from '../billing/adminStore'
+import type { AdminChatbot, AdminChatItem, AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, ChatItemInput, CouponInput } from '../billing/adminStore'
 import { DEFAULT_PRICES, daysLeft, formatCents, PLAN_LABEL, type PaidPlan, type Plan, type Prices } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { NumberField } from '../components/NumberField'
+import type { ChatConfig } from '../landing/chatbot'
 
 type Filter = 'todos' | 'ativos' | 'vencendo' | 'sem' | 'bloqueados' | 'cupom'
 const FILTERS: Array<[Filter, string]> = [['todos', 'Todos'], ['ativos', 'Ativos'], ['vencendo', 'Vencem em 7 dias'], ['sem', 'Sem plano'], ['bloqueados', 'Desativados'], ['cupom', 'Com cupom']]
@@ -292,6 +293,138 @@ function Coupons() {
   )
 }
 
+
+const EMPTY_ITEM: ChatItemInput = { question: '', answer: '', keywords: '', sort: 100, active: true }
+const TOKENS = ['{{basico_mensal}}', '{{basico_anual}}', '{{plus_mensal}}', '{{plus_anual}}', '{{meses_pagos}}', '{{limite_basico}}', '{{bonus}}']
+
+/** Perguntas e respostas do chat da página "Saiba mais" (e da tela de login). */
+function Chatbot() {
+  const { admin } = useAccount()
+  const [data, setData] = useState<AdminChatbot | null>(null)
+  const [form, setForm] = useState<ChatItemInput | null>(null)
+  const [cfg, setCfg] = useState<ChatConfig | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
+
+  const load = useCallback(
+    () => admin.chatbot().then((d) => { setData(d); setCfg((c) => c ?? d.config) }).catch(() => setData({ config: { greeting: '', fallback: '', whatsapp: '' }, items: [] })),
+    [admin],
+  )
+  const set = <K extends keyof ChatItemInput>(k: K, v: ChatItemInput[K]) => setForm((f) => (f ? { ...f, [k]: v } : f))
+
+  const run = async (fn: () => Promise<void>, ok: string) => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      await fn()
+      await load()
+      setMsg({ kind: 'ok', text: ok })
+      return true
+    } catch (e) {
+      setMsg({ kind: 'erro', text: e instanceof Error ? e.message : 'Não foi possível concluir.' })
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const saveItem = async () => {
+    if (form && (await run(() => admin.saveChatItem(form), form.id ? 'Pergunta atualizada.' : 'Pergunta criada.'))) setForm(null)
+  }
+  const edit = (i: AdminChatItem) => {
+    setMsg(null)
+    setForm({ id: i.id, question: i.question, answer: i.answer, keywords: i.keywords, sort: i.sort, active: i.active })
+  }
+  const toggle = (i: AdminChatItem) => run(() => admin.saveChatItem({ ...i, active: !i.active }), i.active ? 'Pergunta pausada: não aparece no chat.' : 'Pergunta ativada.')
+  const remove = (i: AdminChatItem) => {
+    if (!window.confirm(`Apagar a pergunta “${i.question}”?`)) return
+    void run(() => admin.deleteChatItem(i.id), 'Pergunta apagada.')
+  }
+  const saveConfig = () => cfg && run(() => admin.saveChatConfig(cfg), 'Textos do chat salvos.')
+
+  return (
+    <details className="card more" onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) void load() }}>
+      <summary>Chatbot de dúvidas (página “Saiba mais”)</summary>
+      <p className="hint">O chat aparece para quem ainda não entrou. A pessoa toca numa pergunta ou escreve a dela, e o robô responde com a resposta cadastrada mais parecida.</p>
+      {msg && <p className={msg.kind === 'ok' ? 'ok' : 'error'} role={msg.kind === 'ok' ? 'status' : 'alert'}>{msg.text}</p>}
+
+      <h4 className="editor-user__h">Mensagens do robô</h4>
+      {cfg && (
+        <div className="coupon-form">
+          <label className="field">
+            <span>Mensagem de boas-vindas</span>
+            <textarea rows={3} maxLength={300} value={cfg.greeting} onChange={(e) => setCfg({ ...cfg, greeting: e.target.value })} />
+          </label>
+          <label className="field">
+            <span>Quando não achar a resposta</span>
+            <textarea rows={3} maxLength={300} value={cfg.fallback} onChange={(e) => setCfg({ ...cfg, fallback: e.target.value })} />
+          </label>
+          <label className="field">
+            <span>WhatsApp para falar com uma pessoa (opcional)</span>
+            <input inputMode="numeric" maxLength={20} placeholder="5581999990000" value={cfg.whatsapp} onChange={(e) => setCfg({ ...cfg, whatsapp: e.target.value.replace(/\D/g, '') })} />
+            <small className="hint">Só números, com 55 + DDD + número. Vazio = sem botão de WhatsApp no chat.</small>
+          </label>
+          <button className="btn btn--sm" onClick={saveConfig} disabled={busy}>Salvar mensagens</button>
+        </div>
+      )}
+
+      <h4 className="editor-user__h">Perguntas e respostas</h4>
+      {!form && <button className="btn btn--primary btn--sm" onClick={() => { setMsg(null); setForm({ ...EMPTY_ITEM, sort: ((data?.items.at(-1)?.sort ?? 90) + 10) }) }}>+ Nova pergunta</button>}
+
+      {form && (
+        <div className="coupon-form">
+          <h4 className="editor-user__h">{form.id ? 'Editar pergunta' : 'Nova pergunta'}</h4>
+          <label className="field">
+            <span>Pergunta (aparece como botão no chat)</span>
+            <input value={form.question} maxLength={120} placeholder="Ex.: Quanto custa?" onChange={(e) => set('question', e.target.value)} />
+          </label>
+          <label className="field">
+            <span>Resposta</span>
+            <textarea rows={5} maxLength={1200} value={form.answer} onChange={(e) => set('answer', e.target.value)} />
+            <small className="hint">Use estes marcadores para o valor sempre acompanhar o painel de preços: {TOKENS.join('  ')}</small>
+          </label>
+          <label className="field">
+            <span>Palavras-chave (ajudam o robô a achar esta resposta)</span>
+            <input value={form.keywords} maxLength={300} placeholder="preço, valor, custa, mensalidade" onChange={(e) => set('keywords', e.target.value)} />
+            <small className="hint">Separe por vírgula. Pense no que a pessoa digitaria.</small>
+          </label>
+          <div className="row">
+            <NumberField label="Ordem" value={form.sort} max={10000} onChange={(v) => set('sort', Math.round(v))} hint="Menor aparece primeiro." />
+            <label className="field field--inline">
+              <input type="checkbox" checked={form.active} onChange={(e) => set('active', e.target.checked)} />
+              <span>Ativa (aparece no chat)</span>
+            </label>
+          </div>
+          <div className="row row--tight">
+            <button className="btn btn--primary" onClick={saveItem} disabled={busy || form.question.trim().length < 3 || !form.answer.trim()}>{busy ? 'Salvando…' : 'Salvar pergunta'}</button>
+            <button className="btn" onClick={() => { setForm(null); setMsg(null) }} disabled={busy}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {data === null ? <p className="hint">Carregando…</p> : data.items.length === 0 ? <p className="hint">Nenhuma pergunta cadastrada.</p> : (
+        <ul className="coupons">
+          {data.items.map((i) => (
+            <li key={i.id} className="chatbot-item">
+              <div className="coupon-item__top">
+                <b>{i.question}</b>
+                <em className={`pill pill--${i.active ? 'ok' : 'off'}`}>{i.active ? 'Ativa' : 'Pausada'}</em>
+              </div>
+              <small className="hint">{i.answer.length > 140 ? `${i.answer.slice(0, 140)}…` : i.answer}</small>
+              <small className="hint">Ordem {i.sort}{i.keywords ? ` · palavras-chave: ${i.keywords}` : ''}</small>
+              <div className="row row--tight">
+                <button className="btn btn--sm" onClick={() => edit(i)} disabled={busy}>Editar</button>
+                <button className="btn btn--sm" onClick={() => void toggle(i)} disabled={busy}>{i.active ? 'Pausar' : 'Ativar'}</button>
+                <button className="btn btn--sm" onClick={() => remove(i)} disabled={busy}>Apagar</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
+  )
+}
+
 function Settings() {
   const { admin, reload } = useAccount()
   const [p, setP] = useState<Prices>(DEFAULT_PRICES)
@@ -347,6 +480,9 @@ const AUDIT_LABEL: Record<string, string> = {
   save_coupon: 'Cupom salvo',
   delete_coupon: 'Cupom apagado',
   set_bonus: 'Bônus ajustado',
+  save_chatbot_item: 'Pergunta do chatbot salva',
+  delete_chatbot_item: 'Pergunta do chatbot apagada',
+  save_chatbot_config: 'Textos do chatbot salvos',
 }
 
 function Audit() {
@@ -468,6 +604,7 @@ export function Admin({ onBack }: { onBack: () => void }) {
         </section>
 
         <Coupons />
+        <Chatbot />
         <Settings />
         <Audit />
       </div>

@@ -1,14 +1,17 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { appleEnabled, googleEnabled, whatsappEnabled } from '../auth/supabase'
 import { normalizeBrPhone } from '../auth/phone'
 import { APP_NAME, APP_TAGLINE } from '../brand'
+import { ChatBot } from '../components/ChatBot'
+import { usePublicInfo } from '../landing/publicStore'
 
 type Mode = 'entrar' | 'criar'
 
-export function Login() {
+export function Login({ initialMode = 'entrar', initialCoupon = '', onLearnMore }: { initialMode?: Mode; initialCoupon?: string; onLearnMore?: () => void }) {
   const auth = useAuth()
-  const [mode, setMode] = useState<Mode>('entrar')
+  const info = usePublicInfo()
+  const [mode, setMode] = useState<Mode>(initialMode)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -17,7 +20,7 @@ export function Login() {
   const [wa, setWa] = useState<'off' | 'phone' | 'code'>('off')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
-  const [coupon, setCoupon] = useState('')
+  const [coupon, setCoupon] = useState(initialCoupon)
   const [msg, setMsg] = useState<{ kind: 'erro' | 'ok'; text: string } | null>(null)
 
   const run = async (fn: () => Promise<{ ok: boolean; message?: string }>) => {
@@ -126,8 +129,10 @@ export function Login() {
 
         {wa === 'off' && msg && <p className={msg.kind === 'erro' ? 'error' : 'ok'} role={msg.kind === 'erro' ? 'alert' : 'status'}>{msg.text}</p>}
 
+        {wa === 'off' && !demo && !emailOnly && <p className="login__or"><span>ou com e-mail e senha</span></p>}
+
         {wa === 'off' && !demo && (
-          <EmailShell emailOnly={emailOnly}>
+          <div className="login__email">
             <div className="tabs" role="tablist">
               <button role="tab" aria-selected={mode === 'entrar'} className={mode === 'entrar' ? 'tab tab--on' : 'tab'} onClick={() => { setMode('entrar'); setMsg(null) }}>Entrar</button>
               <button role="tab" aria-selected={mode === 'criar'} className={mode === 'criar' ? 'tab tab--on' : 'tab'} onClick={() => { setMode('criar'); setMsg(null) }}>Criar conta</button>
@@ -172,22 +177,17 @@ export function Login() {
               </button>
               {mode === 'entrar' && <button type="button" className="linkbtn" onClick={forgot} disabled={busy}>Esqueci minha senha</button>}
             </form>
-          </EmailShell>
+          </div>
         )}
       </div>
 
+      {onLearnMore && (
+        <p className="login__learn">
+          Ainda não conhece o {APP_NAME}? <button type="button" className="linkbtn" onClick={onLearnMore}>Saiba mais e veja os planos</button>
+        </p>
+      )}
       <p className="hint login__foot">Sua foto é processada no seu aparelho e não é enviada nem guardada.</p>
+      <ChatBot info={info} />
     </div>
-  )
-}
-
-/** Com login social ligado, o e-mail fica recolhido; sem ele, o formulário já vem aberto. */
-function EmailShell({ emailOnly, children }: { emailOnly: boolean; children: ReactNode }) {
-  if (emailOnly) return <div className="login__email">{children}</div>
-  return (
-    <details className="more login__email">
-      <summary>Prefiro usar e-mail e senha</summary>
-      {children}
-    </details>
   )
 }

@@ -62,6 +62,9 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
 - **Login:** e-mail e senha por padrão (a tela já abre o formulário). Google, Apple e WhatsApp são opcionais: aparecem só se `VITE_GOOGLE_AUTH`, `VITE_APPLE_AUTH` ou `VITE_WHATSAPP_AUTH` forem `true`.
 - **Painel de gestão** (`src/pages/Admin.tsx`, só para administradoras): resumo, busca e filtros, ativar/desativar, mudar plano e vencimento
   (+30 dias, +1 ano, sem vencimento), anotações, pagamentos de cada pessoa, preços/limites e histórico de mudanças.
+- **Página "Saiba mais" (sem login):** `#saiba-mais` apresenta o produto, mostra os planos com os preços do painel e leva a "Criar conta"
+  (`#criar`, com cupom em `#criar&cupom=CÓDIGO`). Tem um **chatbot** de respostas predefinidas, cadastradas e editadas no painel de
+  gestão (`src/landing/`, `src/components/ChatBot.tsx`, `src/pages/Landing.tsx`). O login abre direto com e-mail e senha.
 - **Bônus e cupons:** o painel define quantos gráficos de presente cada conta nova ganha e cadastra cupons de desconto (%, R$, planos,
   período, limite de pessoas, validade). O cupom pode ser informado ao criar a conta ou na tela de assinatura, e a anotação da pessoa no
   painel recebe "Cupom usado: CÓDIGO". O preço com desconto é calculado no banco. Detalhes em `supabase/README.md`.

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './auth/supabase'
 import { useAuth } from './auth/AuthProvider'
 import { useAccount } from './billing/AccountProvider'
@@ -9,7 +9,9 @@ import { Plans, type PlansReason } from './pages/Plans'
 import { Converter } from './pages/Converter'
 import { Editor } from './pages/Editor'
 import { Home } from './pages/Home'
+import { Landing } from './pages/Landing'
 import { Login } from './pages/Login'
+import { usePublicRoute } from './landing/route'
 import { ModelEditor } from './pages/ModelEditor'
 import { Models } from './pages/Models'
 import { PriceCalculator } from './pages/PriceCalculator'
@@ -27,9 +29,25 @@ export function App() {
   const { user, loading } = useAuth()
   const { account, loading: loadingAccount, error: accountError, reload, consumeDemoImage } = useAccount()
   const [view, setView] = useState<View>({ name: 'home' })
+  const [route, goPublic] = usePublicRoute()
+
+  // Entrou: limpa o "#criar", "#saiba-mais" etc. do endereço.
+  useEffect(() => {
+    if (user && window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search)
+  }, [user])
 
   if (loading) return <p className="empty">Carregando…</p>
-  if (!user) return <Login />
+  if (!user) {
+    if (route.page === 'landing') return <Landing go={goPublic} />
+    return (
+      <Login
+        key={`${route.mode}|${route.coupon}`}
+        initialMode={route.mode}
+        initialCoupon={route.coupon}
+        onLearnMore={() => goPublic({ page: 'landing' })}
+      />
+    )
+  }
   if (!account) {
     return accountError ? (
       <div className="app"><p className="error" role="alert">{accountError}</p><button className="btn" onClick={() => void reload()}>Tentar de novo</button></div>

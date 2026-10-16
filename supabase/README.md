@@ -12,7 +12,7 @@ Tudo aqui está **preparado, mas não aplicado**. Siga os passos quando o projet
 
 Escolha uma opção:
 
-- **Painel:** SQL Editor → cole e rode, nesta ordem, `migrations/20261015000000_init_tramado.sql`, `migrations/20261016000000_assinaturas.sql` e `migrations/20261017000000_cupons_bonus.sql`.
+- **Painel:** SQL Editor → cole e rode, nesta ordem, `migrations/20261015000000_init_tramado.sql`, `migrations/20261016000000_assinaturas.sql`, `migrations/20261017000000_cupons_bonus.sql` e `migrations/20261018000000_landing_chatbot.sql`.
 - **CLI:** `supabase link --project-ref <ref>` e `supabase db push`.
 - **Pelo Claude:** peça "aplicar a migração do Tramado no projeto <ref>" (usa o conector Supabase).
 
@@ -86,6 +86,19 @@ banco ao criar um gráfico novo; apagar não devolve), tabelas `payments`, `subs
 - **Pagamento:** se o valor pago for menor que a tabela e a conta tem cupom, o pagamento grava o cupom e o desconto. Cupom que já teve
   pagamento não pode ser apagado (pause-o). No cartão **mensal**, o desconto vale em todas as cobranças da assinatura.
 
+### Página "Saiba mais" e chatbot (`20261018000000_landing_chatbot.sql`)
+
+- **Página pública:** `https://seu-site/#saiba-mais` (qualquer pessoa, sem login): apresentação, como funciona, recursos, modelos, planos
+  com preço do painel, perguntas frequentes e botão para criar conta. Na tela de login há o link "Saiba mais e veja os planos".
+  Endereços úteis para divulgar: `#criar` (já abre "Criar conta") e `#criar&cupom=BEMVINDA10` (com o cupom preenchido).
+- **Única porta aberta para visitantes:** a função `public_landing()` (preços, bônus, perguntas ativas e textos do robô). As tabelas
+  continuam fechadas para quem não entrou.
+- **Chatbot:** painel → *Chatbot de dúvidas*. Cadastre perguntas (viram botões), respostas, palavras-chave (ajudam a achar a resposta
+  quando a pessoa digita), ordem e ativo/pausado; ajuste a mensagem de boas-vindas, a de "não achei" e o WhatsApp para falar com uma
+  pessoa. As respostas aceitam marcadores (`{{basico_mensal}}`, `{{plus_mensal}}`, `{{basico_anual}}`, `{{plus_anual}}`,
+  `{{meses_pagos}}`, `{{limite_basico}}`, `{{bonus}}`) que acompanham o painel de preços. A migração já traz 10 perguntas prontas.
+- É um robô de **respostas predefinidas** (sem IA): ele compara o que a pessoa escreve com as perguntas e palavras-chave cadastradas.
+
 ### Tornar você administradora
 
 Depois de entrar uma vez no app, no SQL Editor (troque pelo seu e-mail ou telefone):
@@ -127,7 +140,7 @@ credenciais confirma tudo (use as credenciais de teste primeiro). O Pix recorren
 
 ## Testar a estrutura sem Supabase
 
-`npm run test:db` aplica as três migrações num Postgres local (PGlite) e confere, entre outros: cadastro sem plano, pagamento
+`npm run test:db` aplica as quatro migrações num Postgres local (PGlite) e confere, entre outros: cadastro sem plano, pagamento
 idempotente, renovação, cota de 12 imagens, vencimento/tolerância/bloqueio, funções fechadas para o app e painel só para admin.
 
 ## Fica para depois

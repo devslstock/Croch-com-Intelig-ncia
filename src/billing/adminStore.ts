@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { DEFAULT_PRICES, effectivePlan, type Cycle, type PaidPlan, type Plan, type Prices } from './plans'
+import { DEFAULT_CONFIG, DEFAULT_ITEMS, type ChatConfig } from '../landing/chatbot'
 import { readJson, type StorageLike } from '../tools/storage'
 
 export interface AdminUser {
@@ -40,6 +41,23 @@ export interface AdminCoupon {
   uses: number
   /** Contas com o cupom ligado. */
   attached: number
+}
+
+/** Pergunta do chatbot como o painel enxerga (inclui pausadas e a ordem). */
+export interface AdminChatItem {
+  id: string
+  question: string
+  answer: string
+  keywords: string
+  sort: number
+  active: boolean
+}
+
+export type ChatItemInput = Omit<AdminChatItem, 'id'> & { id?: string }
+
+export interface AdminChatbot {
+  config: ChatConfig
+  items: AdminChatItem[]
 }
 
 /** Campos editáveis de um cupom (sem `id` = cupom novo). */
@@ -96,21 +114,30 @@ export interface AdminStore {
   saveCoupon(c: CouponInput): Promise<void>
   deleteCoupon(id: string): Promise<void>
   setBonus(userId: string, bonus: number): Promise<void>
+  chatbot(): Promise<AdminChatbot>
+  saveChatItem(i: ChatItemInput): Promise<void>
+  deleteChatItem(id: string): Promise<void>
+  saveChatConfig(c: ChatConfig): Promise<void>
 }
 
-export const COUPON_FORM_ERRORS: Record<string, string> = {
+export const ADMIN_ERRORS: Record<string, string> = {
   codigo_invalido: 'O código deve ter de 3 a 32 letras, números, - ou _ (sem espaços).',
   desconto_invalido: 'Desconto inválido: em % use de 1 a 99; em reais, mais que zero.',
   cupom_em_uso: 'Esse cupom já foi usado em pagamentos. Desative-o em vez de apagar.',
   cupom_inexistente: 'Cupom não encontrado.',
   bonus_invalido: 'A quantidade de bônus deve ser de 0 a 10.000.',
+  pergunta_invalida: 'A pergunta deve ter de 3 a 120 caracteres.',
+  resposta_invalida: 'A resposta deve ter de 1 a 1.200 caracteres.',
+  texto_invalido: 'As mensagens de boas-vindas e de "não achei" devem ter de 1 a 300 caracteres.',
+  whatsapp_invalido: 'O WhatsApp deve ter de 10 a 15 números, com DDI e DDD (ex.: 5581999990000).',
+  item_inexistente: 'Pergunta não encontrada.',
 }
 
 const must = <T>(r: { data: T | null; error: { message: string } | null }): T => {
   if (r.error) {
     const msg = r.error.message
-    const known = Object.keys(COUPON_FORM_ERRORS).find((k) => msg.includes(k))
-    if (known) throw new Error(COUPON_FORM_ERRORS[known])
+    const known = Object.keys(ADMIN_ERRORS).find((k) => msg.includes(k))
+    if (known) throw new Error(ADMIN_ERRORS[known])
     if (/duplicate key|coupons_code_key/.test(msg)) throw new Error('Já existe um cupom com esse código.')
     throw new Error(msg.includes('sem_permissao') ? 'Você não tem permissão para o painel.' : 'Não foi possível concluir. Tente de novo.')
   }
@@ -167,6 +194,20 @@ export function supabaseAdminStore(client: SupabaseClient): AdminStore {
     async setBonus(userId, bonus) {
       must(await client.rpc('admin_set_bonus', { p_user: userId, p_bonus: bonus }))
     },
+    async chatbot() {
+      return must(await client.rpc('admin_list_chatbot')) as AdminChatbot
+    },
+    async saveChatItem(i) {
+      must(await client.rpc('admin_save_chatbot_item', {
+        p_id: i.id ?? null, p_question: i.question, p_answer: i.answer, p_keywords: i.keywords, p_sort: i.sort, p_active: i.active,
+      }))
+    },
+    async deleteChatItem(id) {
+      must(await client.rpc('admin_delete_chatbot_item', { p_id: id }))
+    },
+    async saveChatConfig(c) {
+      must(await client.rpc('admin_save_chatbot_config', { p_greeting: c.greeting, p_fallback: c.fallback, p_whatsapp: c.whatsapp }))
+    },
   }
 }
 
@@ -179,7 +220,13 @@ interface DemoAdmin {
   prices: Prices
   audit: AuditEntry[]
   coupons: AdminCoupon[]
+  chatbot: AdminChatbot
 }
+
+const seedChatbot = (): AdminChatbot => ({
+  config: { ...DEFAULT_CONFIG },
+  items: DEFAULT_ITEMS.map((i, n) => ({ ...i, sort: (n + 1) * 10, active: true })),
+})
 
 export const DEMO_ADMIN_KEY = 'tramado:demo:admin'
 const day = 86_400_000
@@ -217,6 +264,7 @@ export function seedDemoAdmin(now: Date): DemoAdmin {
     },
     prices,
     audit: [],
+    chatbot: seedChatbot(),
     coupons: [
       { id: 'c1', code: 'BEMVINDA10', description: 'Boas-vindas', kind: 'percent', value: 10, plans: ['basic', 'plus'], cycles: 'both', maxUses: null, expiresAt: null, active: true, createdAt: iso(-30), uses: 0, attached: 1 },
     ],
@@ -231,6 +279,7 @@ export function localAdminStore(storage: StorageLike, now: () => Date = () => ne
       ? ({
           ...saved,
           coupons: saved.coupons ?? seedDemoAdmin(now()).coupons,
+          chatbot: saved.chatbot ?? seedChatbot(),
           prices: { ...DEFAULT_PRICES, ...saved.prices },
           users: saved.users.map((u) => ({ ...u, bonusImages: u.bonusImages ?? 0, coupon: u.coupon ?? null })),
         } as DemoAdmin)
@@ -304,8 +353,8 @@ export function localAdminStore(storage: StorageLike, now: () => Date = () => ne
     async saveCoupon(c) {
       const d = read()
       const code = c.code.trim().toUpperCase()
-      if (!/^[A-Z0-9_-]{3,32}$/.test(code)) throw new Error(COUPON_FORM_ERRORS.codigo_invalido)
-      if (!Number.isInteger(c.value) || c.value < 1 || (c.kind === 'percent' && c.value > 99)) throw new Error(COUPON_FORM_ERRORS.desconto_invalido)
+      if (!/^[A-Z0-9_-]{3,32}$/.test(code)) throw new Error(ADMIN_ERRORS.codigo_invalido)
+      if (!Number.isInteger(c.value) || c.value < 1 || (c.kind === 'percent' && c.value > 99)) throw new Error(ADMIN_ERRORS.desconto_invalido)
       if (d.coupons.some((x) => x.code === code && x.id !== c.id)) throw new Error('Já existe um cupom com esse código.')
       const base = { code, description: c.description.slice(0, 120), kind: c.kind, value: c.value, plans: c.plans, cycles: c.cycles, maxUses: c.maxUses, expiresAt: c.expiresAt, active: c.active }
       const old = c.id ? d.coupons.find((x) => x.id === c.id) : undefined
@@ -317,14 +366,49 @@ export function localAdminStore(storage: StorageLike, now: () => Date = () => ne
     async deleteCoupon(id) {
       const d = read()
       const c = d.coupons.find((x) => x.id === id)
-      if (!c) throw new Error(COUPON_FORM_ERRORS.cupom_inexistente)
-      if (c.uses > 0) throw new Error(COUPON_FORM_ERRORS.cupom_em_uso)
+      if (!c) throw new Error(ADMIN_ERRORS.cupom_inexistente)
+      if (c.uses > 0) throw new Error(ADMIN_ERRORS.cupom_em_uso)
       d.coupons = d.coupons.filter((x) => x.id !== id)
       d.audit.unshift({ id: Date.now(), action: 'delete_coupon', userId: null, createdAt: now().toISOString(), detail: { code: c.code } })
       write(d)
     },
+    async chatbot() {
+      const c = read().chatbot
+      return { config: c.config, items: [...c.items].sort((a, b) => a.sort - b.sort) }
+    },
+    async saveChatItem(i) {
+      const d = read()
+      const question = i.question.trim()
+      const answer = i.answer.trim()
+      if (question.length < 3 || question.length > 120) throw new Error(ADMIN_ERRORS.pergunta_invalida)
+      if (answer.length < 1 || answer.length > 1200) throw new Error(ADMIN_ERRORS.resposta_invalida)
+      const base = { question, answer, keywords: i.keywords.slice(0, 300), sort: i.sort, active: i.active }
+      const old = i.id ? d.chatbot.items.find((x) => x.id === i.id) : undefined
+      if (i.id && !old) throw new Error(ADMIN_ERRORS.item_inexistente)
+      if (old) Object.assign(old, base)
+      else d.chatbot.items.push({ ...base, id: `q${Date.now()}` })
+      d.audit.unshift({ id: Date.now(), action: 'save_chatbot_item', userId: null, createdAt: now().toISOString(), detail: { question: question.slice(0, 80), active: i.active } })
+      write(d)
+    },
+    async deleteChatItem(id) {
+      const d = read()
+      const q = d.chatbot.items.find((x) => x.id === id)
+      if (!q) throw new Error(ADMIN_ERRORS.item_inexistente)
+      d.chatbot.items = d.chatbot.items.filter((x) => x.id !== id)
+      d.audit.unshift({ id: Date.now(), action: 'delete_chatbot_item', userId: null, createdAt: now().toISOString(), detail: { question: q.question.slice(0, 80) } })
+      write(d)
+    },
+    async saveChatConfig(c) {
+      const wa = c.whatsapp.replace(/\D/g, '')
+      if (!c.greeting.trim() || c.greeting.length > 300 || !c.fallback.trim() || c.fallback.length > 300) throw new Error(ADMIN_ERRORS.texto_invalido)
+      if (wa && !/^[0-9]{10,15}$/.test(wa)) throw new Error(ADMIN_ERRORS.whatsapp_invalido)
+      const d = read()
+      d.chatbot.config = { greeting: c.greeting.trim(), fallback: c.fallback.trim(), whatsapp: wa }
+      d.audit.unshift({ id: Date.now(), action: 'save_chatbot_config', userId: null, createdAt: now().toISOString(), detail: { whatsapp: wa !== '' } })
+      write(d)
+    },
     async setBonus(userId, bonus) {
-      if (!Number.isInteger(bonus) || bonus < 0 || bonus > 10000) throw new Error(COUPON_FORM_ERRORS.bonus_invalido)
+      if (!Number.isInteger(bonus) || bonus < 0 || bonus > 10000) throw new Error(ADMIN_ERRORS.bonus_invalido)
       const d = read()
       const u = d.users.find((x) => x.id === userId)
       if (!u) throw new Error('Usuária não encontrada.')
