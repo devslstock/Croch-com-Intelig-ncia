@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount } from '../billing/AccountProvider'
-import type { AdminChatbot, AdminChatItem, AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, ChatItemInput, CouponInput, PaymentCheck, PaymentConfig, PaymentMode, PaymentSide } from '../billing/adminStore'
+import type { AdminChatbot, AdminChatItem, AdminCoupon, AdminPayment, AdminStats, AdminUser, AuditEntry, ChatItemInput, CouponInput, PaymentCheck, PaymentConfig, PaymentEvent, PaymentMode, PaymentSide } from '../billing/adminStore'
 import { DEFAULT_PRICES, daysLeft, formatCents, PLAN_LABEL, type PaidPlan, type Plan, type Prices } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { NumberField } from '../components/NumberField'
@@ -479,6 +479,15 @@ function Settings() {
 
 const MODE_LABEL: Record<PaymentMode, string> = { test: 'Teste', production: 'Produção' }
 const WEBHOOK_URL = `${(import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? 'https://SEU-PROJETO.supabase.co'}/functions/v1/mp-webhook`
+const EVENT_TEXT: Record<string, string> = {
+  aplicado: 'Plano liberado',
+  ja_aplicado: 'Já tinha sido liberado',
+  assinatura_invalida: 'Recusado: assinatura secreta não confere',
+  nao_configurado: 'Credenciais não configuradas',
+  sem_referencia: 'Sem referência do Tramado',
+  tipo_ignorado: 'Tipo de aviso ignorado',
+  erro: 'Erro ao processar (o Mercado Pago tenta de novo)',
+}
 const CHECK_TEXT: Record<string, string> = {
   sem_token: 'Não há Access Token cadastrado para este modo.',
   token_recusado: 'O Mercado Pago recusou este Access Token. Confira se copiou o valor inteiro e se é do modo escolhido.',
@@ -496,6 +505,8 @@ function Banco() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'ok' | 'erro'; text: string } | null>(null)
   const [check, setCheck] = useState<PaymentCheck | null>(null)
+  const [events, setEvents] = useState<PaymentEvent[] | null>(null)
+  const loadEvents = useCallback(() => admin.paymentEvents().then(setEvents).catch(() => setEvents([])), [admin])
 
   const load = useCallback(
     () => admin.paymentConfig().then((c) => { setCfg(c); setMode(c.mode); setBuyer(c.testBuyerEmail ?? '') }).catch(() => setMsg({ kind: 'erro', text: 'Não consegui carregar as credenciais.' })),
@@ -601,6 +612,20 @@ function Banco() {
         <button className="btn btn--primary" onClick={save} disabled={busy}>{busy ? 'Aguarde…' : 'Salvar'}</button>
         <button className="btn" onClick={test} disabled={busy}>Testar conexão</button>
       </div>
+      <h4 className="editor-user__h">Avisos recebidos do Mercado Pago</h4>
+      <p className="hint">Cada aviso de pagamento ou assinatura que chega ao Tramado aparece aqui. Se você pagou e a lista está vazia, o Mercado Pago não está avisando: confira o endereço do webhook lá.</p>
+      <button className="btn btn--sm" onClick={() => void loadEvents()}>Atualizar lista</button>
+      {events && events.length === 0 && <p className="hint">Nenhum aviso recebido ainda.</p>}
+      {events && events.length > 0 && (
+        <ul className="paylist">
+          {events.map((e, n) => (
+            <li key={`${e.at}-${n}`}>
+              <span>{new Date(e.at).toLocaleString('pt-BR')} · {e.type || 'aviso'} {e.dataId}</span>
+              <b>{EVENT_TEXT[e.outcome] ?? e.outcome}</b>
+            </li>
+          ))}
+        </ul>
+      )}
       {cfg?.updatedAt && <p className="hint">Última alteração: {new Date(cfg.updatedAt).toLocaleString('pt-BR')}. O teste usa o ambiente já salvo.</p>}
     </details>
   )

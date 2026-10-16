@@ -140,6 +140,13 @@ export interface PaymentCheck {
   account?: { id: number | string | null; nickname: string | null; siteId: string | null }
 }
 
+export interface PaymentEvent {
+  at: string
+  type: string
+  dataId: string
+  outcome: string
+}
+
 export interface AdminStore {
   stats(): Promise<AdminStats>
   users(search?: string): Promise<AdminUser[]>
@@ -159,6 +166,7 @@ export interface AdminStore {
   paymentConfig(): Promise<PaymentConfig>
   savePaymentConfig(i: PaymentConfigInput): Promise<void>
   setTestBuyer(email: string): Promise<void>
+  paymentEvents(): Promise<PaymentEvent[]>
   checkPayment(): Promise<PaymentCheck>
 }
 
@@ -267,6 +275,9 @@ export function supabaseAdminStore(client: SupabaseClient): AdminStore {
     },
     async setTestBuyer(email) {
       must(await client.rpc('admin_set_test_buyer', { p_email: email }))
+    },
+    async paymentEvents() {
+      return must(await client.rpc('admin_payment_events')) as PaymentEvent[]
     },
     async checkPayment() {
       const { data, error } = await client.functions.invoke('mp-check')
@@ -501,6 +512,9 @@ export function localAdminStore(storage: StorageLike, now: () => Date = () => ne
       d.payment = next
       d.audit.unshift({ id: Date.now(), action: 'save_payment_config', userId: null, createdAt: now().toISOString(), detail: { mode: i.mode, changed } })
       write(d)
+    },
+    async paymentEvents() {
+      return []
     },
     async setTestBuyer(email) {
       const v = email.trim().toLowerCase()

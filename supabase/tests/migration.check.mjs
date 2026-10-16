@@ -10,6 +10,7 @@ const sqlFix = readFileSync(new URL('../migrations/20261019000000_corrige_salvar
 const sqlTrial = readFileSync(new URL('../migrations/20261020000000_periodo_gratis.sql', import.meta.url), 'utf8')
 const sqlBank = readFileSync(new URL('../migrations/20261021000000_banco_pagamento.sql', import.meta.url), 'utf8')
 const sqlBuyer = readFileSync(new URL('../migrations/20261022000000_comprador_teste.sql', import.meta.url), 'utf8')
+const sqlEvents = readFileSync(new URL('../migrations/20261023000000_avisos_pagamento.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0, fail = 0
 const ok = (name, cond) => { cond ? pass++ : fail++; console.log((cond ? 'OK   ' : 'FALHA'), name) }
@@ -41,6 +42,8 @@ await db.exec(sqlBank)
 ok('migração do banco (credenciais de pagamento) aplicou sem erro', true)
 await db.exec(sqlBuyer)
 ok('migração do comprador de teste aplicou sem erro', true)
+await db.exec(sqlEvents)
+ok('migração dos avisos de pagamento aplicou sem erro', true)
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
 await db.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ana"}'), ('${B}', '{"full_name":"Bia Souza"}')`)
@@ -409,6 +412,18 @@ await adm(`select public.admin_set_test_buyer('  Test_User_123@TestUser.com ')`)
 ok('guarda o comprador de teste em minúsculas; o painel e o servidor o leem', (await db.query('select public.get_payment_config() c')).rows[0].c.testBuyerEmail === 'test_user_123@testuser.com' && (await cfgNow()).testBuyerEmail === 'test_user_123@testuser.com')
 await adm(`select public.admin_set_test_buyer('')`)
 ok('vazio apaga o comprador de teste', (await db.query('select public.get_payment_config() c')).rows[0].c.testBuyerEmail === null)
+
+// Registro dos avisos do Mercado Pago
+await rejects('usuária comum não lê os avisos', () => as(D, () => db.query('select public.admin_payment_events()')), /sem_permissao/)
+await rejects('usuária comum não lê a tabela de avisos', () => as(D, () => db.query('select * from public.payment_events')), /permission denied/)
+await rejects('usuária comum não grava aviso', () => as(D, () => db.query(`select public.log_payment_event('payment','1','aplicado')`)), /permission denied/)
+await rejects('visitante não grava aviso', () => asAnon(() => db.query(`select public.log_payment_event('payment','1','aplicado')`)), /permission denied/)
+await db.query(`select public.log_payment_event('payment', '123', 'aplicado')`)
+await db.query(`select public.log_payment_event('subscription_preapproval', 'abc', 'assinatura_authorized')`)
+const evs = (await adm('select public.admin_payment_events() e')).rows[0].e
+ok('a gestão vê os avisos, do mais novo para o mais antigo', evs.length === 2 && evs[0].type === 'subscription_preapproval' && evs[1].outcome === 'aplicado')
+for (let i = 0; i < 230; i++) await db.query(`select public.log_payment_event('payment', '${i}', 'ok')`)
+ok('guarda só os últimos 200 avisos', (await db.query('select count(*)::int n from public.payment_events')).rows[0].n <= 201)
 
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

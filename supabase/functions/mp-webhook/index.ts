@@ -69,10 +69,22 @@ async function onPreapproval(id: string) {
   return `assinatura_${s.status}`
 }
 
+/** Anota o aviso e o que foi feito com ele (aparece no painel, cartão Banco). Nunca derruba o webhook. */
+async function note(type: string, dataId: string, outcome: string) {
+  try {
+    await admin.rpc('log_payment_event', { p_type: type, p_data_id: dataId, p_outcome: outcome })
+  } catch {
+    /* sem registro */
+  }
+}
+
 Deno.serve(async (req) => {
   const cfg = await loadPaymentConfig(admin)
   const secret = cfg.webhookSecret
-  if (!secret || !cfg.accessToken) return new Response('nao_configurado', { status: 503 })
+  if (!secret || !cfg.accessToken) {
+    await note('', '', 'nao_configurado')
+    return new Response('nao_configurado', { status: 503 })
+  }
   token = cfg.accessToken
 
   const url = new URL(req.url)
@@ -86,8 +98,14 @@ Deno.serve(async (req) => {
     requestId: req.headers.get('x-request-id'),
     dataId: url.searchParams.get('data.id') ?? (body?.data?.id != null ? String(body.data.id) : null),
   })
-  if (!valid) return new Response('assinatura_invalida', { status: 401 })
-  if (!dataId) return new Response('sem_id', { status: 200 })
+  if (!valid) {
+    await note(type, dataId, 'assinatura_invalida')
+    return new Response('assinatura_invalida', { status: 401 })
+  }
+  if (!dataId) {
+    await note(type, '', 'sem_id')
+    return new Response('sem_id', { status: 200 })
+  }
 
   try {
     let result = 'tipo_ignorado'
@@ -95,10 +113,12 @@ Deno.serve(async (req) => {
     else if (type === 'subscription_authorized_payment') result = await onAuthorizedPayment(dataId)
     else if (type === 'subscription_preapproval' || type === 'preapproval') result = await onPreapproval(dataId)
     console.log('mp-webhook', type, dataId, result)
+    await note(type, dataId, result)
     return new Response(result, { status: 200 })
   } catch (e) {
     // 500 faz o Mercado Pago tentar de novo mais tarde.
     console.error('mp-webhook falhou', type, dataId, e instanceof Error ? e.message : e)
+    await note(type, dataId, 'erro')
     return new Response('erro', { status: 500 })
   }
 })
