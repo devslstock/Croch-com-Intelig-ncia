@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { useAccount } from '../billing/AccountProvider'
+import { canUseTools, imageLimit, imagesLeft, PLAN_LABEL } from '../billing/plans'
 import { AppBar } from '../components/AppBar'
 import { ChartThumb } from '../components/ChartThumb'
 import { toChartResult, type ChartStore, type SavedChart } from '../storage/charts'
@@ -19,8 +21,9 @@ const TOOLS: Tool[] = [
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-export function Home({ store, onNew, onModels, onTool, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
+export function Home({ store, onNew, onModels, onTool, onPlans, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onPlans: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
+  const { account } = useAccount()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -63,6 +66,16 @@ export function Home({ store, onNew, onModels, onTool, onOpen }: { store: ChartS
           <p className="notice" role="status">Modo demonstração: seus gráficos ficam só neste navegador e não vão para a nuvem.</p>
         )}
 
+        {account && (
+          <button className="planchip" onClick={onPlans} aria-label="Minha assinatura">
+            <b>Plano {PLAN_LABEL[account.effective]}</b>
+            <span>
+              {imageLimit(account) === null ? 'Imagens ilimitadas' : `${imagesLeft(account)} de ${imageLimit(account)} imagens restantes este mês`}
+            </span>
+            <em>Ver</em>
+          </button>
+        )}
+
         <section className="home-grid" aria-label="Começar">
           <button className="tile tile--main" onClick={onNew}>
             <span className="tile__icon" aria-hidden>📷</span>
@@ -83,6 +96,7 @@ export function Home({ store, onNew, onModels, onTool, onOpen }: { store: ChartS
               <span className="tile__icon" aria-hidden>{t.icon}</span>
               <b>{t.title}</b>
               <span>{t.text}</span>
+              {account && !canUseTools(account) && <em className="badge">🔒 Plus</em>}
             </button>
           ))}
         </section>

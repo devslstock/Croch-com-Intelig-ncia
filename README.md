@@ -54,6 +54,17 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
   fica fixo no topo.
 - A lógica pura (alfabeto, pintura, balde, histórico, carreiras) está em `src/editor/` e tem testes.
 
+## Assinaturas e painel de gestão
+
+- **Planos:** *Básico* (usar a plataforma, até 12 imagens novas por mês) e *Plus* (imagens ilimitadas + Calculadora de preço + Assistente de vendas).
+  Mensal ou anual (anual = 2 mensalidades de desconto). Os valores (exemplo: R$ 19,90 e R$ 39,90) e o limite ficam no painel.
+- **Pagamento:** Mercado Pago, com cartão ou Pix (`supabase/functions/mp-checkout`, `mp-webhook`). O webhook libera e renova o plano sozinho.
+- **Login sem senha:** Google, Apple e WhatsApp (código de 6 dígitos); e-mail e senha continua como opção.
+- **Painel de gestão** (`src/pages/Admin.tsx`, só para administradoras): resumo, busca e filtros, ativar/desativar, mudar plano e vencimento
+  (+30 dias, +1 ano, sem vencimento), anotações, pagamentos de cada pessoa, preços/limites e histórico de mudanças.
+- Cota e acesso valem **no banco** (gatilho em `charts`), não só na tela. Configuração e passo a passo em `supabase/README.md`.
+- Em **modo demonstração** tudo isso funciona no navegador com pagamento simulado e usuárias de mentira, para testar as telas.
+
 ## Ferramentas
 
 - **Calculadora de preço** (`src/pages/PriceCalculator.tsx`, lógica em `src/tools/pricing.ts`): fio (preço e peso do novelo, gramas

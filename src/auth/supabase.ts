@@ -7,3 +7,5 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 export const supabase: SupabaseClient | null = url && key ? createClient(url, key) : null
 export const authConfigured = supabase !== null
 export const googleEnabled = import.meta.env.VITE_GOOGLE_AUTH === 'true'
+export const appleEnabled = import.meta.env.VITE_APPLE_AUTH === 'true'
+export const whatsappEnabled = import.meta.env.VITE_WHATSAPP_AUTH === 'true'

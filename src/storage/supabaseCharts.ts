@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PaletteEntry, StartSide } from '../engine/types'
+import { AccessError, INACTIVE_MESSAGE, LIMIT_MESSAGE } from '../billing/plans'
 import { toSaved, type ChartStore, type SavedChart } from './charts'
 
 /** Linha da tabela public.charts (supabase/migrations). */
@@ -74,7 +75,12 @@ export function supabaseChartStore(client: SupabaseClient): ChartStore {
       }
       const saved = toSaved(input, existing)
       const { data, error } = await client.from('charts').upsert(savedToRow(saved)).select(CHART_COLUMNS).single()
-      if (error) fail('Não foi possível salvar o gráfico. Tente de novo.')
+      if (error) {
+        // Mensagens levantadas pelo gatilho enforce_chart_quota (migração de assinaturas).
+        if (error.message.includes('limite_mensal')) throw new AccessError('limite_mensal', LIMIT_MESSAGE)
+        if (error.message.includes('assinatura_inativa')) throw new AccessError('assinatura_inativa', INACTIVE_MESSAGE)
+        fail('Não foi possível salvar o gráfico. Tente de novo.')
+      }
       return rowToSaved(data as ChartRow)
     },
     async remove(_userId, id) {
