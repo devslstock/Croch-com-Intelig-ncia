@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { APP_SLUG } from '../brand'
+import { imageBlobToPdf } from '../chart/pdf'
 import { printImage } from '../chart/print'
 import { chartToPngBlob, MARGIN, type RenderOptions } from '../chart/render'
 import { shoppingSheetToPng } from '../chart/shoppingPng'
@@ -254,6 +255,8 @@ export function Editor({ saved, startInCrochetar, onBack, onSave }: EditorProps)
   const baseName = name.trim() || 'grafico'
   const pngOptions = { cell: 20, symbols: true, startSide, legendLabels }
   const downloadChart = async () => download(await chartToPngBlob(chart, pngOptions), `${baseName}-${APP_SLUG}.png`)
+  const downloadPdf = async () =>
+    download(await imageBlobToPdf(await chartToPngBlob(chart, pngOptions), baseName), `${baseName}-${APP_SLUG}.pdf`)
   const printChart = async () => printImage(await chartToPngBlob(chart, pngOptions))
   const downloadShopping = async () => {
     if (!yarn) return
@@ -404,6 +407,7 @@ export function Editor({ saved, startInCrochetar, onBack, onSave }: EditorProps)
                   {view === 'croche' ? '↩ Voltar ao gráfico' : '🧶 Como fica em crochê'}
                 </button>
                 <button className="tbtn" onClick={downloadChart}>⬇ Baixar imagem</button>
+                <button className="tbtn" onClick={downloadPdf}>📄 Baixar PDF</button>
                 <button className="tbtn" onClick={printChart}>🖨 Imprimir</button>
                 <button className="tbtn" onClick={downloadShopping} disabled={!yarn} title={yarn ? '' : 'Escolha um fio para gerar a lista'}>🧾 Lista de compras</button>
               </div>

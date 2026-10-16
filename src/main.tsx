@@ -5,6 +5,13 @@ import { AuthProvider } from './auth/AuthProvider'
 import { AccountProvider } from './billing/AccountProvider'
 import './styles.css'
 
+// PWA: o service worker só roda na versão publicada (no `npm run dev` atrapalharia o recarregamento).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>

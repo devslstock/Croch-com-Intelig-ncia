@@ -86,7 +86,16 @@ O app é pensado primeiro para o celular. Conferido em 390, 360 e 320 px de larg
 rolagem lateral, os botões têm pelo menos 40 px, os campos têm 16 px (sem zoom automático no iPhone) e o toque com o dedo
 pinta um ponto, enquanto arrastar o dedo rola a imagem. Foto em gráfico, Modelos e Crochetar mantêm o gráfico fixo no topo
 enquanto o resto rola; o editor usa 3 fileiras de ferramentas que deslizam para o lado. Ainda **não** foi testado em aparelho
-real (iOS Safari/Chrome Android) e não há instalação como app (PWA).
+real (iOS Safari/Chrome Android).
+
+### PDF e instalação como app (PWA)
+
+- **Baixar PDF** (editor): uma página A4 com o gráfico e a legenda, em retrato ou paisagem conforme a proporção
+  (`src/chart/pdf.ts`, gerador próprio, sem dependências). Gráficos muito largos ficam com pontos pequenos na página.
+- **PWA:** `public/manifest.webmanifest`, ícones em `public/` (gerados por `node scripts/gerar-icones.mjs`) e service worker
+  `public/sw.js` (registrado só em produção). Os arquivos do app ficam em cache e a tela abre sem internet; login, nuvem e
+  pagamento continuam precisando de conexão e nunca passam pelo cache. No Android o Chrome oferece "Instalar app"; no iPhone,
+  Safari → Compartilhar → Adicionar à Tela de Início.
 
 ## Rodar
 
@@ -109,7 +118,7 @@ src/components/, src/App.tsx, src/styles.css   interface
 
 1. Cartela de fios (Círculo etc.) com 3 alternativas por cor e lista de compras.
 2. Editor ponto a ponto (lápis, balde, conta-gotas, texto, desfazer/refazer).
-3. Visão "Como fica em crochê", modo Crochetar, PDF.
+3. Visão "Como fica em crochê", modo Crochetar (PDF e PWA já feitos).
 4. Conta e gráficos na nuvem (Supabase), planos e pagamento.
 
 ## Cuidados
