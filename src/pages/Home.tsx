@@ -1,3 +1,5 @@
+import { InstallPrompt } from '../components/InstallPrompt'
+import { useOfflineReady } from '../offline/useOnline'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAccount } from '../billing/AccountProvider'
@@ -35,6 +37,7 @@ const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day
 export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onPlans: () => void; onUpgrade: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
   const { account } = useAccount()
+  const offlineReady = useOfflineReady()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [upgrade, setUpgrade] = useState(false)
@@ -78,6 +81,8 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpe
           <p className="notice" role="status">Modo demonstração: seus gráficos ficam só neste navegador e não vão para a nuvem.</p>
         )}
 
+        <InstallPrompt />
+
         {account && (
           <button className="planchip" onClick={onPlans} aria-label="Minha assinatura">
             <b>{account.effective === 'none' ? 'Sem plano ativo' : account.trialEndsAt ? `Teste grátis · até ${fmtDate(account.trialEndsAt)}` : `Plano ${PLAN_LABEL[account.effective]}`}</b>
@@ -85,6 +90,7 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpe
             <em>Ver</em>
           </button>
         )}
+        {offlineReady && !user.demo && <p className="offline-ready">📴 Pronto para usar sem internet</p>}
 
         <section className="home-grid" aria-label="Começar">
           <button className="tile tile--main" onClick={onNew}>

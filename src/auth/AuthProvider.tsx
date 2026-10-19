@@ -38,6 +38,28 @@ const Ctx = createContext<AuthApi | null>(null)
 
 const DEMO: AppUser = { id: 'demo', email: 'demo@local', name: 'Visitante', demo: true }
 
+/** Quem entrou fica guardado no aparelho para o app abrir sem internet (a sessão do Supabase não renova sem rede). */
+const USER_KEY = 'tramado:offline:user'
+const rememberUser = (u: AppUser | null) => {
+  try {
+    if (u && !u.demo) window.localStorage.setItem(USER_KEY, JSON.stringify(u))
+    else window.localStorage.removeItem(USER_KEY)
+  } catch {
+    /* sem armazenamento */
+  }
+}
+/** Só vale se a sessão do Supabase ainda existe no aparelho (quem saiu da conta não volta por aqui). */
+function restorableUser(): AppUser | null {
+  try {
+    const hasSession = Object.keys(window.localStorage).some((k) => /^sb-.*-auth-token$/.test(k))
+    const raw = window.localStorage.getItem(USER_KEY)
+    const u = raw ? (JSON.parse(raw) as AppUser) : null
+    return hasSession && u && typeof u.id === 'string' ? u : null
+  } catch {
+    return null
+  }
+}
+
 function fromSupabase(u: SbUser): AppUser {
   const email = u.email ?? ''
   const meta = (u.user_metadata ?? {}) as { name?: string; full_name?: string }
@@ -66,13 +88,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return
     let alive = true
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
       if (!alive) return
-      setUser(data.session ? fromSupabase(data.session.user) : null)
+      if (data.session) {
+        const u = fromSupabase(data.session.user)
+        rememberUser(u)
+        setUser(u)
+      } else {
+        // Sem rede a sessão pode não renovar: entra com a pessoa que já estava logada neste aparelho.
+        setUser(error || !navigator.onLine ? restorableUser() : null)
+      }
       setLoading(false)
     })
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session ? fromSupabase(session.user) : null)
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session && event !== 'SIGNED_OUT' && restorableUser() && (!navigator.onLine || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) return
+      const u = session ? fromSupabase(session.user) : null
+      rememberUser(u)
+      setUser(u)
     })
     return () => {
       alive = false
@@ -136,7 +168,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    if (supabase) await supabase.auth.signOut()
+    rememberUser(null)
+    if (supabase) await supabase.auth.signOut().catch(() => undefined)
     setUser(null)
   }, [])
 

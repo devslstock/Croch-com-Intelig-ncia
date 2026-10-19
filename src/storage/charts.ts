@@ -21,6 +21,8 @@ export interface SavedChart {
 
 export type SavedChartInput = Omit<SavedChart, 'id' | 'createdAt' | 'grid' | 'width' | 'height' | 'palette' | 'progress' | 'progressStitch'> & {
   id?: string
+  /** Data de criação já conhecida (gráfico feito sem internet e enviado depois). */
+  createdAt?: string
   chart: ChartResult
   progress?: number
   progressStitch?: number
@@ -47,7 +49,7 @@ export function toSaved(input: SavedChartInput, existing?: SavedChart): SavedCha
   return {
     id: input.id ?? existing?.id ?? crypto.randomUUID(),
     name: input.name.trim() || 'Gráfico sem nome',
-    createdAt: existing?.createdAt ?? new Date().toISOString(),
+    createdAt: existing?.createdAt ?? input.createdAt ?? new Date().toISOString(),
     width: input.chart.width,
     height: input.chart.height,
     grid: encodeGrid(input.chart.grid),
@@ -60,10 +62,24 @@ export function toSaved(input: SavedChartInput, existing?: SavedChart): SavedCha
   }
 }
 
+/** Falha de conexão (sem internet ou servidor inacessível): quem chama pode guardar para enviar depois. */
+export class OfflineError extends Error {
+  constructor() {
+    super('Sem conexão com a internet.')
+    this.name = 'OfflineError'
+  }
+}
+
+/** Reconhece o erro que o navegador/Supabase devolve quando não há rede. */
+export const looksOffline = (message: string) => (typeof navigator !== 'undefined' && navigator.onLine === false) || /failed to fetch|load failed|networkerror|network request failed|fetch failed/i.test(message)
+
+/** Resultado de um salvamento; `queued` = ficou só neste aparelho, a espera de internet para ir à nuvem. */
+export type SaveResult = SavedChart & { queued?: boolean }
+
 /** Contrato de armazenamento. Hoje fica no navegador; depois troca por Supabase sem mudar as telas. */
 export interface ChartStore {
   list(userId: string): Promise<SavedChart[]>
-  save(userId: string, input: SavedChartInput): Promise<SavedChart>
+  save(userId: string, input: SavedChartInput): Promise<SaveResult>
   remove(userId: string, id: string): Promise<void>
 }
 

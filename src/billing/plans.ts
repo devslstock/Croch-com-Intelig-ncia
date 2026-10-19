@@ -58,6 +58,8 @@ export interface Account {
   coupon: AccountCoupon | null
   prices: Prices
   demo?: boolean
+  /** A conta veio da cópia guardada no aparelho (sem internet). */
+  offline?: boolean
 }
 
 export const PLAN_LABEL: Record<Plan, string> = { none: 'Sem assinatura', basic: 'Básico', plus: 'Plus' }

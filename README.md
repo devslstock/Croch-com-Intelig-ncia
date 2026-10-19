@@ -65,6 +65,18 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
 - **Página "Saiba mais" (sem login):** `#saiba-mais` apresenta o produto, mostra os planos com os preços do painel e leva a "Criar conta"
   (`#criar`, com cupom em `#criar&cupom=CÓDIGO`). Tem um **chatbot** de respostas predefinidas, cadastradas e editadas no painel de
   gestão (`src/landing/`, `src/components/ChatBot.tsx`, `src/pages/Landing.tsx`). O login abre direto com e-mail e senha.
+- **Uso sem internet (100% offline):** o app inteiro fica guardado no aparelho na primeira visita (service worker com todos os arquivos,
+  lista gerada no build por `vite.config.ts`). Sem conexão, abre, converte foto em gráfico, usa o editor, o modo Crochetar, o PDF e as
+  ferramentas normalmente. **Como funciona:**
+  - *Gráficos:* cada gráfico é salvo primeiro no aparelho e depois enviado à nuvem. Sem internet (ou com conexão lenta, passados 10 s)
+    entra numa fila que vai sozinha quando a conexão volta (`src/storage/offlineCharts.ts`). Vários envios do mesmo gráfico viram um só.
+    Se a nuvem recusar na volta (limite do plano), o gráfico continua no aparelho e a pessoa é avisada.
+  - *Login e plano:* quem já entrou no aparelho continua entrando sem rede. O plano é guardado e o vencimento é conferido pelo relógio do
+    aparelho; a cota de imagens segue a mesma regra do banco. Depois de **30 dias** sem verificar com a internet, pede para conectar
+    (`src/billing/offlineAccount.ts`). **Primeiro acesso, pagamento e painel de gestão precisam de internet.**
+  - *Avisos:* faixa amarela no topo (sem internet, gráficos aguardando envio, recusas) e convite para instalar o app na tela inicial.
+  - *Testar:* `npm run build` e abra `dist/` por um servidor estático; com o DevTools em "Offline" o app deve abrir e salvar. O teste
+    automático da fila e do plano guardado está em `src/storage/offline.test.ts`.
 - **Período grátis:** no painel, *Preços e limites* → "Dias grátis no cadastro". Contas novas usam o Básico de graça por esses dias (limite mensal do Básico, sem o Plus); depois precisam assinar. Quem assina durante o teste começa a pagar quando o teste acaba. Só vale para quem se cadastra depois de ligar. Migração `20261020000000_periodo_gratis.sql`.
 - **Bônus e cupons:** o painel define quantos gráficos de presente cada conta nova ganha e cadastra cupons de desconto (%, R$, planos,
   período, limite de pessoas, validade). O cupom pode ser informado ao criar a conta ou na tela de assinatura, e a anotação da pessoa no

@@ -6,3 +6,4 @@ dist
 .vercel
 
 supabase/.temp
+dist-*

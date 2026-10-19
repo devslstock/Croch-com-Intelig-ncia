@@ -5,12 +5,14 @@ import { normalizeBrPhone } from '../auth/phone'
 import { APP_NAME, APP_TAGLINE } from '../brand'
 import { ChatBot } from '../components/ChatBot'
 import { usePublicInfo } from '../landing/publicStore'
+import { useOnline } from '../offline/useOnline'
 
 type Mode = 'entrar' | 'criar'
 
 export function Login({ initialMode = 'entrar', initialCoupon = '', onLearnMore }: { initialMode?: Mode; initialCoupon?: string; onLearnMore?: () => void }) {
   const auth = useAuth()
   const info = usePublicInfo()
+  const online = useOnline()
   const [mode, setMode] = useState<Mode>(initialMode)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -89,6 +91,12 @@ export function Login({ initialMode = 'entrar', initialCoupon = '', onLearnMore 
         {demo && (
           <p className="notice" role="status">
             O login ainda não foi configurado neste endereço: você está em <b>modo demonstração</b>. Os botões abaixo entram sem conta real e nada é salvo na nuvem.
+          </p>
+        )}
+
+        {!online && (
+          <p className="notice" role="status">
+            📴 Sem internet. Para entrar pela primeira vez neste aparelho é preciso estar conectada. Se você já entrou aqui antes, abra o app novamente: ele continua funcionando sem internet.
           </p>
         )}
 

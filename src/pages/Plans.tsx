@@ -85,6 +85,10 @@ export function Plans({ reason, preselect, onBack, onAdmin }: { reason: PlansRea
 
   const pay = async () => {
     if (!choice) return
+    if (!navigator.onLine) {
+      setError('Sem internet: o pagamento precisa de conexão. Conecte-se e tente de novo.')
+      return
+    }
     setBusy(true)
     setError(null)
     startExpiry.current = account.expiresAt

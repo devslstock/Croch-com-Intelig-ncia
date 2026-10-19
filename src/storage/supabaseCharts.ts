@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PaletteEntry, StartSide } from '../engine/types'
 import { AccessError, INACTIVE_MESSAGE, LIMIT_MESSAGE } from '../billing/plans'
-import { toSaved, type ChartStore, type SavedChart } from './charts'
+import { looksOffline, OfflineError, toSaved, type ChartStore, type SavedChart } from './charts'
 
 /** Linha da tabela public.charts (supabase/migrations). */
 export interface ChartRow {
@@ -64,7 +64,10 @@ export function supabaseChartStore(client: SupabaseClient): ChartStore {
   return {
     async list() {
       const { data, error } = await client.from('charts').select(CHART_COLUMNS).order('created_at', { ascending: false })
-      if (error) fail('Não consegui carregar seus gráficos.')
+      if (error) {
+        if (looksOffline(error.message)) throw new OfflineError()
+        fail('Não consegui carregar seus gráficos.')
+      }
       return ((data ?? []) as ChartRow[]).map(rowToSaved)
     },
     async save(_userId, input) {
@@ -76,6 +79,7 @@ export function supabaseChartStore(client: SupabaseClient): ChartStore {
       const saved = toSaved(input, existing)
       const { data, error } = await client.from('charts').upsert(savedToRow(saved)).select(CHART_COLUMNS).single()
       if (error) {
+        if (looksOffline(error.message)) throw new OfflineError()
         // Mensagens levantadas pelo gatilho enforce_chart_quota (migração de assinaturas).
         if (error.message.includes('limite_mensal')) throw new AccessError('limite_mensal', LIMIT_MESSAGE)
         if (error.message.includes('assinatura_inativa')) throw new AccessError('assinatura_inativa', INACTIVE_MESSAGE)
@@ -85,7 +89,10 @@ export function supabaseChartStore(client: SupabaseClient): ChartStore {
     },
     async remove(_userId, id) {
       const { error } = await client.from('charts').delete().eq('id', id)
-      if (error) fail('Não foi possível apagar o gráfico.')
+      if (error) {
+        if (looksOffline(error.message)) throw new OfflineError()
+        fail('Não foi possível apagar o gráfico.')
+      }
     },
   }
 }
