@@ -1,4 +1,4 @@
-import { DEFAULT_DETAIL, DEFAULT_WEIGHT } from './risco'
+import { DEFAULT_DETAIL } from './risco'
 
 export type HoopShape = 'redondo' | 'quadrado' | 'retangular'
 
@@ -60,8 +60,6 @@ export interface EmbProject {
   hoop: Hoop
   view: PhotoView
   detail: number
-  /** Espessura e força das linhas (0–100). Bordados antigos não têm: usam o padrão. */
-  weight?: number
   strokes: Stroke[]
   texts: TextItem[]
   yarnId: string
@@ -79,7 +77,6 @@ export function newProject(photo: string, name: string, yarnId: string): EmbProj
     hoop: { shape: 'redondo', cm: 20 },
     view: { ...DEFAULT_VIEW },
     detail: DEFAULT_DETAIL,
-    weight: DEFAULT_WEIGHT,
     strokes: [],
     texts: [],
     yarnId,

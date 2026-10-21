@@ -77,7 +77,7 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
   - *Avisos:* faixa amarela no topo (sem internet, gráficos aguardando envio, recusas) e convite para instalar o app na tela inicial.
   - *Testar:* `npm run build` e abra `dist/` por um servidor estático; com o DevTools em "Offline" o app deve abrir e salvar. O teste
     automático da fila e do plano guardado está em `src/storage/offline.test.ts`.
-- **Bordado (risco):** foto → contornos para passar ao tecido (`src/embroidery/`). Detecção de bordas (Sobel + afinamento + limiar duplo, `risco.ts`): linhas contínuas de espessura uniforme; pedaços curtos em regiões muito densas (folhagem, textura) são descartados. Controles de detalhe e espessura. Sem grade.
+- **Bordado (risco):** foto → contornos para passar ao tecido (`src/embroidery/`). Diferença de gaussianas (`risco.ts`), sem grade.
   A pessoa enquadra a foto no bastidor (redondo, quadrado ou retangular), ajusta o detalhe, apaga linhas com a borracha e adiciona textos;
   a aba **Fios** sugere os números DMC/Anchor (`palette.ts`, reaproveita as tabelas de `src/yarn/data/ponto-cruz`) e um ponto por cor
   (sugestão: atrás, cheio, haste, nó francês). Exporta PDF em **tamanho real** (`pdfPages.ts`: 1 folha A4 até 20 cm; acima disso várias

@@ -10,7 +10,7 @@ import {
   type EmbProject, type HoopShape, type TextItem,
 } from '../embroidery/project'
 import { buildLineLayer, buildRiscoPdf, canvasSize, canvasToPng, composeRisco, photoRaw, renderFull, setTextFont } from '../embroidery/render'
-import { DEFAULT_WEIGHT, MAX_DETAIL, MIN_DETAIL } from '../embroidery/risco'
+import { MAX_DETAIL, MIN_DETAIL } from '../embroidery/risco'
 import { KIND_LABEL, YARN_PALETTES, defaultYarnId } from '../yarn/library'
 
 const PREVIEW_SIDE = 900
@@ -74,7 +74,6 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
   const hoop = project?.hoop
   const view = project?.view
   const detail = project?.detail ?? 0
-  const weight = project?.weight ?? DEFAULT_WEIGHT
   const size = hoop ? canvasSize(hoop, PREVIEW_SIDE) : { w: 1, h: 1 }
 
   const raw = useMemo(
@@ -85,9 +84,9 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
   // As linhas são recalculadas (com pequena espera) quando a foto, o enquadramento ou o detalhe mudam.
   useEffect(() => {
     if (!raw) return
-    const t = setTimeout(() => setLines(buildLineLayer(raw, detail, undefined, weight)), 50)
+    const t = setTimeout(() => setLines(buildLineLayer(raw, detail)), 50)
     return () => clearTimeout(t)
-  }, [raw, detail, weight])
+  }, [raw, detail])
 
   // Borracha e textos só redesenham por cima das linhas.
   useEffect(() => {
@@ -277,12 +276,6 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
                 <span className="side-label">Detalhes do risco</span>
                 <input type="range" min={MIN_DETAIL} max={MAX_DETAIL} value={project.detail} onChange={(e) => patch({ detail: Number(e.target.value) })} />
                 <span className="hint">Menos detalhes = só o essencial. Mais detalhes = mais linhas.</span>
-              </label>
-
-              <label className="field">
-                <span className="side-label">Espessura das linhas</span>
-                <input type="range" min={0} max={100} value={project.weight ?? DEFAULT_WEIGHT} onChange={(e) => patch({ weight: Number(e.target.value) })} />
-                <span className="hint">Mais à direita = linhas mais grossas e mais marcadas.</span>
               </label>
     </>
   )
