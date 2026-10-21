@@ -7,6 +7,7 @@ import { canUseTools, imageLimit, monthlyLeft, PLAN_LABEL, type Account } from '
 import { AppBar } from '../components/AppBar'
 import { ChartThumb } from '../components/ChartThumb'
 import { UpgradeModal } from '../components/UpgradeModal'
+import { embroideryStore, type EmbProject } from '../embroidery/project'
 import { toChartResult, type ChartStore, type SavedChart } from '../storage/charts'
 import { YARN_PALETTES } from '../yarn/library'
 
@@ -34,13 +35,15 @@ function quotaText(a: Account): string {
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onTool: (t: 'assistente' | 'calculadora') => void; onPlans: () => void; onUpgrade: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
+export function Home({ store, onNew, onModels, onBordado, onTool, onPlans, onUpgrade, onOpen }: { store: ChartStore; onNew: () => void; onModels: () => void; onBordado: (p?: EmbProject) => void; onTool: (t: 'assistente' | 'calculadora') => void; onPlans: () => void; onUpgrade: () => void; onOpen: (c: SavedChart, crochetar?: boolean) => void }) {
   const { user } = useAuth()
   const { account } = useAccount()
   const offlineReady = useOfflineReady()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [upgrade, setUpgrade] = useState(false)
+  const embStore = embroideryStore(user?.id ?? 'x', window.localStorage)
+  const [embs, setEmbs] = useState<EmbProject[]>(() => embStore.list())
 
   useEffect(() => {
     if (!user) return
@@ -103,6 +106,11 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpe
             <b>Modelos</b>
             <span>Desenhos, nomes e alfabeto prontos para usar.</span>
           </button>
+          <button className="tile" onClick={() => onBordado()}>
+            <span className="tile__icon" aria-hidden>🪡</span>
+            <b>Bordado</b>
+            <span>Foto em risco para bordar, com tamanho real e fios.</span>
+          </button>
         </section>
 
         <h2 className="section-title">Ferramentas</h2>
@@ -121,6 +129,36 @@ export function Home({ store, onNew, onModels, onTool, onPlans, onUpgrade, onOpe
             </button>
           ))}
         </section>
+
+        {embs.length > 0 && (
+          <>
+            <h2 className="section-title">Meus bordados</h2>
+            <section className="my-charts">
+              {embs.map((p) => (
+                <article key={p.id} className="chart-card">
+                  <div className="chart-card__thumb"><img className="emb-thumb" src={p.photo} alt="" /></div>
+                  <div className="chart-card__body">
+                    <h3>{p.name}</h3>
+                    <p className="hint">Bastidor {p.hoop.shape} · {p.hoop.cm} cm · {fmtDate(p.updatedAt)}</p>
+                    <div className="row row--tight">
+                      <button className="btn btn--primary btn--sm" onClick={() => onBordado(p)}>Abrir</button>
+                      <button
+                        className="btn btn--sm"
+                        onClick={() => {
+                          if (!window.confirm(`Apagar “${p.name}”? Isso não pode ser desfeito.`)) return
+                          embStore.remove(p.id)
+                          setEmbs(embStore.list())
+                        }}
+                      >
+                        Apagar
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </section>
+          </>
+        )}
 
         <h2 className="section-title">Meus gráficos</h2>
         {error && <p className="error" role="alert">{error}</p>}

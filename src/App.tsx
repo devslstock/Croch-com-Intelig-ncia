@@ -10,6 +10,8 @@ import { Admin } from './pages/Admin'
 import { Plans, type PlansReason } from './pages/Plans'
 import { Converter } from './pages/Converter'
 import { Editor } from './pages/Editor'
+import { Embroidery } from './pages/Embroidery'
+import type { EmbProject } from './embroidery/project'
 import { Home } from './pages/Home'
 import { Landing } from './pages/Landing'
 import { Login } from './pages/Login'
@@ -27,7 +29,7 @@ import { supabaseChartStore } from './storage/supabaseCharts'
 const cloudStore = supabase ? offlineChartStore(supabaseChartStore(supabase), window.localStorage) : null
 const NO_SYNC = { pending: 0, rejected: [] as never[] }
 
-type View = { name: 'home' } | { name: 'new' } | { name: 'models' } | { name: 'assistente' } | { name: 'calculadora' } | { name: 'model'; model: Model } | { name: 'edit'; chart: SavedChart; crochetar?: boolean } | { name: 'plans'; reason: PlansReason; preselect?: PaidPlan } | { name: 'admin' }
+type View = { name: 'home' } | { name: 'new' } | { name: 'models' } | { name: 'bordado'; project?: EmbProject } | { name: 'assistente' } | { name: 'calculadora' } | { name: 'model'; model: Model } | { name: 'edit'; chart: SavedChart; crochetar?: boolean } | { name: 'plans'; reason: PlansReason; preselect?: PaidPlan } | { name: 'admin' }
 
 /** Login primeiro; depois a assinatura; depois a página inicial. Foto → gráfico → salvar → editor. */
 export function App() {
@@ -109,6 +111,7 @@ export function App() {
         ? <SalesAssistant onBack={home} onCalculator={() => setView({ name: 'calculadora' })} />
         : <PriceCalculator store={store} onBack={home} onAssistant={() => setView({ name: 'assistente' })} />
     }
+    if (view.name === 'bordado') return <Embroidery initial={view.project} onBack={home} />
     if (view.name === 'models') return <Models onBack={home} onPick={(model) => (canCreateImage(account) ? setView({ name: 'model', model }) : setView({ name: 'plans', reason: 'limit' }))} />
     if (view.name === 'model') {
       return <ModelEditor model={view.model} onBack={() => setView({ name: 'models' })} onSave={save} onSaved={(chart) => setView({ name: 'edit', chart })} />
@@ -119,6 +122,7 @@ export function App() {
         store={store}
         onNew={() => (canCreateImage(account) ? setView({ name: 'new' }) : setView({ name: 'plans', reason: 'limit' }))}
         onModels={() => setView({ name: 'models' })}
+        onBordado={(project) => setView({ name: 'bordado', project })}
         onTool={(t) => (canUseTools(account) ? setView(t === 'assistente' ? { name: 'assistente' } : { name: 'calculadora' }) : setView({ name: 'plans', reason: 'tools' }))}
         onPlans={nav.goPlans}
         onUpgrade={() => setView({ name: 'plans', reason: 'tools', preselect: 'plus' })}

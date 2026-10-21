@@ -77,6 +77,12 @@ baixar PNG ficam no editor. Depois de **Salvar gráfico**, abre o editor (`src/p
   - *Avisos:* faixa amarela no topo (sem internet, gráficos aguardando envio, recusas) e convite para instalar o app na tela inicial.
   - *Testar:* `npm run build` e abra `dist/` por um servidor estático; com o DevTools em "Offline" o app deve abrir e salvar. O teste
     automático da fila e do plano guardado está em `src/storage/offline.test.ts`.
+- **Bordado (risco):** foto → contornos para passar ao tecido (`src/embroidery/`). Diferença de gaussianas (`risco.ts`), sem grade.
+  A pessoa enquadra a foto no bastidor (redondo, quadrado ou retangular), ajusta o detalhe, apaga linhas com a borracha e adiciona textos;
+  a aba **Fios** sugere os números DMC/Anchor (`palette.ts`, reaproveita as tabelas de `src/yarn/data/ponto-cruz`) e um ponto por cor
+  (sugestão: atrás, cheio, haste, nó francês). Exporta PDF em **tamanho real** (`pdfPages.ts`: 1 folha A4 até 20 cm; acima disso várias
+  folhas com 1 cm de sobreposição e marcas de encaixe) e PNG, com opção de espelhar. Tudo roda no aparelho (funciona offline); os projetos
+  ficam em `localStorage` por usuária (até 12, foto reduzida a 1000 px) e **não vão para a nuvem**. Sem cota de imagens: vale em qualquer plano ativo.
 - **Período grátis:** no painel, *Preços e limites* → "Dias grátis no cadastro". Contas novas usam o Básico de graça por esses dias (limite mensal do Básico, sem o Plus); depois precisam assinar. Quem assina durante o teste começa a pagar quando o teste acaba. Só vale para quem se cadastra depois de ligar. Migração `20261020000000_periodo_gratis.sql`.
 - **Bônus e cupons:** o painel define quantos gráficos de presente cada conta nova ganha e cadastra cupons de desconto (%, R$, planos,
   período, limite de pessoas, validade). O cupom pode ser informado ao criar a conta ou na tela de assinatura, e a anotação da pessoa no
