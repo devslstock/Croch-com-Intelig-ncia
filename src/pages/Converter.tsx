@@ -5,6 +5,7 @@ import { ChartCanvas, type ViewMode } from '../components/ChartCanvas'
 import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
 import { Stepper } from '../components/Stepper'
+import { Embroidery } from './Embroidery'
 import { fitCell, useViewport } from '../hooks/useViewport'
 import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
@@ -54,6 +55,8 @@ export interface ConverterProps {
 
 export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [bordado, setBordado] = useState(false)
   const [crop, setCrop] = useState<Crop>(FULL_CROP)
   const [params, setParams] = useState<EngineParams>(DEFAULT_PARAMS)
   const [startSide, setStartSide] = useState<StartSide>(() => (localStorage.getItem('tramado:side') as StartSide) || 'right')
@@ -93,7 +96,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
 
   // Gera de novo (com pequena espera) sempre que foto, recorte ou ajustes mudam.
   useEffect(() => {
-    if (!loaded) return
+    if (!loaded || bordado) return
     const id = ++run.current
     setBusy(true)
     const t = setTimeout(async () => {
@@ -111,7 +114,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
       }
     }, 250)
     return () => clearTimeout(t)
-  }, [loaded, crop, params])
+  }, [loaded, crop, params, bordado])
 
   // Miniaturas dos estilos (pequenas e rápidas): só mudam com a foto e o recorte.
   useEffect(() => {
@@ -137,6 +140,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
     try {
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
       setLoaded({ bitmap, url: URL.createObjectURL(file), name: file.name.replace(/\.[^.]+$/, '') })
+      setFile(file)
       setCrop(FULL_CROP)
       setChart(null)
       setPreviews({})
@@ -182,14 +186,16 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
 
   return (
     <div className="studio-page">
-      <AppBar title="Foto em gráfico" onBack={onBack} />
+      <AppBar title="Enviar sua foto" onBack={onBack} />
 
       <div className="studio studio--flat">
         <aside className="studio__side" aria-label="Opções do gráfico">
+          {!bordado && (
           <label className="field">
             <span className="side-label">Nome do gráfico</span>
             <input className="input" value={name} onChange={(e) => { setName(e.target.value); setNameTouched(true); setSaveMsg(null) }} />
           </label>
+          )}
 
           <div>
             <span className="side-label">Estilo</span>
@@ -198,18 +204,29 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
                 <button
                   key={s.id}
                   role="radio"
-                  aria-checked={params.style === s.id}
-                  className={params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
-                  onClick={() => set('style', s.id)}
+                  aria-checked={!bordado && params.style === s.id}
+                  className={!bordado && params.style === s.id ? 'style-tile style-tile--on' : 'style-tile'}
+                  onClick={() => { setBordado(false); set('style', s.id) }}
                   disabled={!loaded}
                 >
                   <span className="style-tile__img">{previews[s.id] ? <ChartThumb chart={previews[s.id]!} /> : <span className="style-tile__empty" aria-hidden>▦</span>}</span>
                   <span>{s.label}</span>
                 </button>
               ))}
+              <button
+                role="radio"
+                aria-checked={bordado}
+                className={bordado ? 'style-tile style-tile--on' : 'style-tile'}
+                onClick={() => setBordado(true)}
+                disabled={!loaded}
+              >
+                <span className="style-tile__img"><span className="style-tile__empty" aria-hidden>🪡</span></span>
+                <span>Bordado</span>
+              </button>
             </div>
           </div>
 
+          {!bordado && (
           <label className="field">
             <span className="side-label">Fio</span>
             <select value={yarnId} onChange={(e) => setYarnId(e.target.value)}>
@@ -229,8 +246,9 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
               })}
             </select>
           </label>
+          )}
 
-          {loaded && (
+          {loaded && !bordado && (
             <details className="fold" open>
               <summary>Ajustes</summary>
               <div className="fold__body">
@@ -274,14 +292,15 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
               {loaded ? 'Trocar foto' : 'Escolher foto'}
               <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
             </label>
-            <button className="btn btn--primary" onClick={save} disabled={!chart}>{savedId ? 'Atualizar gráfico' : 'Salvar gráfico'}</button>
+            {!bordado && <button className="btn btn--primary" onClick={save} disabled={!chart}>{savedId ? 'Atualizar gráfico' : 'Salvar gráfico'}</button>}
           </div>
-          {saveMsg && <p className={saveMsg.ok ? 'ok' : 'error'} role="status">{saveMsg.text}</p>}
-          {error && <p className="error" role="alert">{error}</p>}
+          {bordado && loaded && <Embroidery embedded file={file} onBack={onBack} />}
+          {!bordado && saveMsg && <p className={saveMsg.ok ? 'ok' : 'error'} role="status">{saveMsg.text}</p>}
+          {!bordado && error && <p className="error" role="alert">{error}</p>}
 
           {!loaded && (
             <div className="card dropzone">
-              <p><b>Escolha uma foto</b> para ver o gráfico aparecer.</p>
+              <p><b>Escolha uma foto</b> e depois o estilo: gráfico realista, preto e branco ou bordado.</p>
               <label className="btn btn--primary">
                 Escolher foto
                 <input type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
@@ -290,7 +309,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
             </div>
           )}
 
-          {chart && (
+          {!bordado && chart && (
             <>
               <div className="viewtabs" role="tablist">
                 <button role="tab" aria-selected={tab === 'grafico'} className={tab === 'grafico' ? 'viewtab viewtab--on' : 'viewtab'} onClick={() => setTab('grafico')}>Gráfico</button>

@@ -46,7 +46,7 @@ async function shrink(file: File): Promise<string> {
 }
 
 /** Bordado: foto → risco (contornos) → ajustes (foto, textos, borracha) → PDF em tamanho real + cores dos fios. */
-export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject; onBack: () => void; onSaved?: () => void }) {
+export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initial?: EmbProject; file?: File | null; embedded?: boolean; onBack: () => void; onSaved?: () => void }) {
   const { user } = useAuth()
   const store = useMemo(() => embroideryStore(user?.id ?? 'x', window.localStorage), [user?.id])
   const [project, setProject] = useState<EmbProject | null>(initial ?? null)
@@ -101,6 +101,11 @@ export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject;
   const yarn = YARN_PALETTES.find((y) => y.id === project?.yarnId) ?? YARN_PALETTES.find((y) => y.kind === 'ponto-cruz')
   const items = useMemo(() => (raw && yarn ? photoPalette(raw, yarn, colors) : []), [raw, yarn, colors])
 
+  const onFileRef = useRef<(f: File | undefined) => Promise<void>>()
+  useEffect(() => {
+    if (file) void onFileRef.current?.(file)
+  }, [file])
+
   if (!user) return null
 
   const patch = (p: Partial<EmbProject>) => setProject((cur) => (cur ? { ...cur, ...p } : cur))
@@ -121,6 +126,8 @@ export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject;
       setMsg({ ok: false, text: 'Não consegui abrir essa foto. Tente um JPG ou PNG.' })
     }
   }
+
+  onFileRef.current = onFile
 
   // Posição do toque em fração da área do bastidor.
   const frac = (e: React.PointerEvent) => {
@@ -233,13 +240,8 @@ export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject;
   const nSheets = sheets.cols * sheets.rows
   const round = hoop?.shape === 'redondo'
 
-  return (
-    <div className="studio-page">
-      <AppBar title="Bordado" onBack={onBack} />
-      <div className="studio studio--flat">
-        <aside className="studio__side" aria-label="Opções do bordado">
-          {project && (
-            <>
+  const settings = project && (
+    <>
               <label className="field">
                 <span className="side-label">Nome do bordado</span>
                 <input className="input" value={project.name} onChange={(e) => patch({ name: e.target.value })} />
@@ -275,33 +277,10 @@ export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject;
                 <input type="range" min={MIN_DETAIL} max={MAX_DETAIL} value={project.detail} onChange={(e) => patch({ detail: Number(e.target.value) })} />
                 <span className="hint">Menos detalhes = só o essencial. Mais detalhes = mais linhas.</span>
               </label>
-            </>
-          )}
-        </aside>
-
-        <main className="studio__main">
-          <div className="toolbar">
-            <label className="btn">
-              {project ? 'Trocar foto' : 'Escolher foto'}
-              <input type="file" accept="image/*" hidden onChange={(e) => void onFile(e.target.files?.[0])} />
-            </label>
-            {project && <button className="btn btn--primary" onClick={save}>Salvar</button>}
-          </div>
-          {msg && <p className={msg.ok ? 'ok' : 'error'} role="status">{msg.text}</p>}
-
-          {!project && (
-            <div className="card dropzone">
-              <p><b>Escolha uma foto</b> para criar o risco do bordado: só as linhas, prontas para passar ao tecido.</p>
-              <label className="btn btn--primary">
-                Escolher foto
-                <input type="file" accept="image/*" hidden onChange={(e) => void onFile(e.target.files?.[0])} />
-              </label>
-              <p className="hint">A foto e o risco ficam no seu aparelho. Funciona sem internet.</p>
-            </div>
-          )}
-
-          {project && (
-            <>
+    </>
+  )
+  const body = project && (
+    <>
               <div className="viewtabs" role="tablist" aria-label="O que ajustar">
                 {([['foto', '🖼 Foto'], ['texto', '✏️ Texto'], ['apagar', '🧽 Apagar'], ['cores', '🧵 Fios']] as Array<[Tab, string]>).map(([id, label]) => (
                   <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? 'viewtab viewtab--on' : 'viewtab'} onClick={() => setTab(id)}>{label}</button>
@@ -391,7 +370,7 @@ export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject;
                       </select>
                       <span className="hint">{KIND_LABEL['ponto-cruz']}</span>
                     </label>
-                    <Stepper label="Quantas cores" unit="cores" value={colors} min={2} max={12} onChange={setColors} />
+                    <Stepper label="Quantas cores" unit="cores" value={colors} min={1} max={12} onChange={setColors} />
                     <ul className="emb-yarns">
                       {items.map((it) => (
                         <li key={it.yarn.code}>
@@ -424,8 +403,55 @@ export function Embroidery({ initial, onBack, onSaved }: { initial?: EmbProject;
                   <button className="btn" disabled={!lines || busy !== null} onClick={() => void exportAs('png')}>{busy === 'png' ? 'Gerando…' : '⬇ Baixar imagem'}</button>
                 </div>
               </section>
-            </>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <div className="emb-embedded">
+        {project && (
+          <>
+            <section className="card embcard">{settings}</section>
+            <div className="toolbar"><button className="btn btn--primary" onClick={save}>Salvar bordado</button></div>
+            {msg && <p className={msg.ok ? 'ok' : 'error'} role="status">{msg.text}</p>}
+            {body}
+          </>
+        )}
+        {!project && msg && <p className="error" role="status">{msg.text}</p>}
+      </div>
+    )
+  }
+
+  return (
+    <div className="studio-page">
+      <AppBar title="Bordado" onBack={onBack} />
+      <div className="studio studio--flat">
+        <aside className="studio__side" aria-label="Opções do bordado">
+          {project && settings}
+        </aside>
+
+        <main className="studio__main">
+          <div className="toolbar">
+            <label className="btn">
+              {project ? 'Trocar foto' : 'Escolher foto'}
+              <input type="file" accept="image/*" hidden onChange={(e) => void onFile(e.target.files?.[0])} />
+            </label>
+            {project && <button className="btn btn--primary" onClick={save}>Salvar</button>}
+          </div>
+          {msg && <p className={msg.ok ? 'ok' : 'error'} role="status">{msg.text}</p>}
+
+          {!project && (
+            <div className="card dropzone">
+              <p><b>Escolha uma foto</b> para criar o risco do bordado: só as linhas, prontas para passar ao tecido.</p>
+              <label className="btn btn--primary">
+                Escolher foto
+                <input type="file" accept="image/*" hidden onChange={(e) => void onFile(e.target.files?.[0])} />
+              </label>
+              <p className="hint">A foto e o risco ficam no seu aparelho. Funciona sem internet.</p>
+            </div>
           )}
+
+          {project && body}
         </main>
       </div>
     </div>

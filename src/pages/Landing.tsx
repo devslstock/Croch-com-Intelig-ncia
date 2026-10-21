@@ -16,7 +16,7 @@ const STEPS = [
 ]
 
 const FEATURES = [
-  { icon: '📷', title: 'Foto em gráfico', text: 'Qualquer foto vira um gráfico com carreiras numeradas e cores separadas. Sua foto não sai do seu aparelho.' },
+  { icon: '📷', title: 'Enviar sua foto', text: 'Qualquer foto vira um gráfico com carreiras numeradas e cores separadas, ou um risco de bordado em tamanho real. Sua foto não sai do seu aparelho.' },
   { icon: '🧸', title: 'Modelos prontos', text: `${MODELS.length} desenhos próprios, com nome e data em pontos: bebê, pet, casal, alfabeto e números.` },
   { icon: '✏️', title: 'Editor ponto a ponto', text: 'Lápis, balde de tinta, conta-gotas, texto e desfazer. Veja também como a peça fica em crochê.' },
   { icon: '🧾', title: 'Lista de fios', text: 'Cores sugeridas das cartelas DMC e Anchor, com opções parecidas e a conta dos novelos.' },

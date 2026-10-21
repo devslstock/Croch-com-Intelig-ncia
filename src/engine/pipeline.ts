@@ -5,7 +5,7 @@ import type { ChartResult, EngineParams, PaletteEntry, RawImage } from './types'
 const SEED = 1337
 export const MIN_WIDTH = 20
 export const MAX_WIDTH = 150
-export const MIN_COLORS = 2
+export const MIN_COLORS = 1
 export const MAX_COLORS = 24
 const MAX_HIGHLIGHTS = 2
 const SYMBOLS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')

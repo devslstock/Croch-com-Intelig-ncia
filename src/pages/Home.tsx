@@ -98,18 +98,13 @@ export function Home({ store, onNew, onModels, onBordado, onTool, onPlans, onUpg
         <section className="home-grid" aria-label="Começar">
           <button className="tile tile--main" onClick={onNew}>
             <span className="tile__icon" aria-hidden>📷</span>
-            <b>Foto em gráfico</b>
-            <span>Envie uma foto e receba o gráfico com os fios certos.</span>
+            <b>Enviar sua foto</b>
+            <span>Vire gráfico de crochê ou risco de bordado, com os fios certos.</span>
           </button>
           <button className="tile" onClick={onModels}>
             <span className="tile__icon" aria-hidden>🧸</span>
             <b>Modelos</b>
             <span>Desenhos, nomes e alfabeto prontos para usar.</span>
-          </button>
-          <button className="tile" onClick={() => onBordado()}>
-            <span className="tile__icon" aria-hidden>🪡</span>
-            <b>Bordado</b>
-            <span>Foto em risco para bordar, com tamanho real e fios.</span>
           </button>
         </section>
 

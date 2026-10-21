@@ -65,7 +65,7 @@ export interface Account {
 export const PLAN_LABEL: Record<Plan, string> = { none: 'Sem assinatura', basic: 'Básico', plus: 'Plus' }
 
 export const PLAN_FEATURES: Record<PaidPlan, string[]> = {
-  basic: ['Foto em gráfico, Modelos, editor e modo Crochetar', 'Até {limit} imagens novas por mês', 'Lista de fios e Meus gráficos'],
+  basic: ['Enviar sua foto (gráfico ou bordado), Modelos, editor e modo Crochetar', 'Até {limit} imagens novas por mês', 'Lista de fios e Meus gráficos'],
   plus: ['Tudo do Básico', 'Imagens ilimitadas', 'Calculadora de preço', 'Assistente de vendas'],
 }
 

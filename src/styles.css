@@ -729,3 +729,6 @@ body:has(.landing)::after { display: none; }
 .emb-yarn__main small { color: #6b6b6b; }
 .emb-yarn__pct { font-weight: 700; }
 .emb-thumb { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.styles { grid-template-columns: repeat(3, 1fr); }
+.emb-embedded { display: flex; flex-direction: column; gap: 12px; }
+.emb-embedded .toolbar { justify-content: flex-end; }
