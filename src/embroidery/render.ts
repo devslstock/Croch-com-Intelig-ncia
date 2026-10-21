@@ -1,7 +1,7 @@
 import type { RawImage } from '../engine/types'
 import { buildPdfPages, SHEET, sheetGrid } from './pdfPages'
 import { FONTS, hoopCm, type EmbProject, type Hoop, type PhotoView, type TextItem } from './project'
-import { lineArt } from './risco'
+import { DEFAULT_WEIGHT, lineArt } from './risco'
 
 /** Funções de desenho (precisam do navegador). O risco é uma camada de linhas; borracha e textos vão por cima. */
 
@@ -42,8 +42,8 @@ export function photoRaw(img: CanvasImageSource & { width: number; height: numbe
 }
 
 /** Camada de linhas (fundo transparente) a partir da foto já enquadrada. */
-export function buildLineLayer(raw: RawImage, detail: number, scale?: number): HTMLCanvasElement {
-  const ink = lineArt(raw, detail, scale)
+export function buildLineLayer(raw: RawImage, detail: number, scale?: number, weight = DEFAULT_WEIGHT): HTMLCanvasElement {
+  const ink = lineArt(raw, detail, scale, weight)
   const c = makeCanvas(raw.width, raw.height)
   const ctx = c.getContext('2d')!
   const out = ctx.createImageData(raw.width, raw.height)
@@ -172,7 +172,7 @@ const toJpeg = (c: HTMLCanvasElement) =>
 export function renderFull(img: CanvasImageSource & { width: number; height: number }, p: EmbProject, mirror: boolean): HTMLCanvasElement {
   const { w, h } = exportSize(p.hoop)
   const raw = photoRaw(img, p.hoop, p.view, Math.max(w, h))
-  const lines = buildLineLayer(raw, p.detail, Math.max(w, h) / 900)
+  const lines = buildLineLayer(raw, p.detail, Math.max(w, h) / 900, p.weight ?? DEFAULT_WEIGHT)
   return composeRisco(lines, p, w, h, { guides: true, mirror })
 }
 

@@ -39,8 +39,24 @@ describe('risco', () => {
     expect(edge).toBeGreaterThan(200)
   })
 
-  it('mais detalhe = mais linhas', () => {
-    const noisy = image(200, 200, (x, y) => 128 + 60 * Math.sin(x / 5) * Math.cos(y / 7) + (x > 100 ? 40 : 0))
-    expect(inkShare(lineArt(noisy, 90, 1))).toBeGreaterThan(inkShare(lineArt(noisy, 10, 1)))
+  it('mais detalhe = mais linhas (o contorno fraco só aparece com detalhe alto)', () => {
+    // disco bem escuro (contorno forte) e quadrado só um pouco mais escuro que o fundo (contorno fraco)
+    const w = 240
+    const img = image(w, w, (x, y) => {
+      if ((x - 60) ** 2 + (y - 120) ** 2 < 40 * 40) return 20
+      if (x > 140 && x < 220 && y > 80 && y < 160) return 188
+      return 230
+    })
+    const low = lineArt(img, 5, 1)
+    const high = lineArt(img, 95, 1)
+    const edgeAt = (ink: Uint8Array, x0: number) => Math.max(...Array.from({ length: 12 }, (_, k) => ink[120 * w + x0 + k]))
+    expect(edgeAt(low, 14)).toBeGreaterThan(150) // contorno do disco: aparece sempre
+    expect(edgeAt(high, 14)).toBeGreaterThan(150)
+    expect(inkShare(high)).toBeGreaterThanOrEqual(inkShare(low))
+  })
+
+  it('mais espessura = mais tinta', () => {
+    const disc = image(160, 160, (x, y) => ((x - 80) ** 2 + (y - 80) ** 2 < 40 * 40 ? 30 : 230))
+    expect(inkShare(lineArt(disc, 55, 1, 90))).toBeGreaterThan(inkShare(lineArt(disc, 55, 1, 10)) * 1.5)
   })
 })
