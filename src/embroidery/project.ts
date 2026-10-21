@@ -47,9 +47,48 @@ export interface TextItem {
   y: number
   /** Altura da letra, em fração da largura da área. */
   size: number
-  /** Graus, de -90 a 90. */
+  /** Graus (-90 a 90 no texto reto; -180 a 180 no curvo). */
   rotate: number
   font: FontId
+  /** Reto (padrão) ou ao longo de um arco. */
+  curve?: 'reto' | 'curvo'
+  /** Só no curvo: em volta do bastidor, em cima ou embaixo, ou um arco suave no centro. */
+  place?: 'centro' | 'acima' | 'abaixo'
+  /** Só no curvo: raio do arco, em fração da largura (0,2 a 0,6). */
+  radius?: number
+}
+
+/** Desenho pronto (da biblioteca de elementos) colocado sobre o risco. */
+export interface ElementItem {
+  id: string
+  /** Identificador do desenho em `elements.ts`. */
+  kind: string
+  /** Centro, em fração da área (0–1). */
+  x: number
+  y: number
+  /** Largura do desenho, em fração da largura da área. */
+  size: number
+  rotate: number
+  flipX: boolean
+  flipY: boolean
+}
+
+export type RegionShape = 'elipse' | 'retangulo'
+
+/** Área marcada na tela, em fração da área do bastidor. */
+export interface Region {
+  shape: RegionShape
+  x0: number
+  y0: number
+  x1: number
+  y1: number
+}
+
+/** O que a pessoa escolheu no início (guiou os ajustes do risco). */
+export interface EmbOptions {
+  kind: 'pessoas' | 'pet' | 'outros'
+  face: 'com' | 'sem'
+  background: 'sim' | 'nao'
 }
 
 /** Um traço da borracha: pontos em fração da área e raio em fração da largura. */
@@ -76,7 +115,13 @@ export interface EmbProject {
   /** Parâmetros do motor (faltando algum, vale o padrão). */
   params?: Partial<EngineParams>
   strokes: Stroke[]
+  /** Áreas apagadas de uma vez (ex.: o rosto). */
+  regions?: Region[]
+  /** Só esta área fica: o resto do risco é apagado ("remover fundo" manual). */
+  keep?: Region
   texts: TextItem[]
+  elements?: ElementItem[]
+  opts?: EmbOptions
   yarnId: string
   /** Foto reduzida (data URL JPEG). */
   photo: string
@@ -112,7 +157,11 @@ export function projectParams(p: EmbProject): EngineParams {
 }
 
 export function newText(text: string, x = 0.5, y = 0.5): TextItem {
-  return { id: crypto.randomUUID(), text, x, y, size: 0.12, rotate: 0, font: 'cursiva' }
+  return { id: crypto.randomUUID(), text, x, y, size: 0.12, rotate: 0, font: 'cursiva', curve: 'reto', place: 'centro', radius: 0.36 }
+}
+
+export function newElement(kind: string, x = 0.5, y = 0.5, size = 0.3): ElementItem {
+  return { id: crypto.randomUUID(), kind, x, y, size, rotate: 0, flipX: false, flipY: false }
 }
 
 interface StorageLike {

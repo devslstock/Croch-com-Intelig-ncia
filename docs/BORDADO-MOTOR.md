@@ -30,6 +30,19 @@ Tudo roda **no aparelho da pessoa**, em TypeScript, sem servidor e sem IA.
 
 Se um dia a qualidade pedir algo que o TypeScript não entrega (por exemplo, filtros de borda mais avançados), a ordem lógica é: OpenCV.js carregado sob demanda; só depois um serviço separado.
 
+## 1.1 Editor (tela do bordado)
+
+Organização inspirada no editor do Bordai (posições dos controles), com a identidade visual do Tramado. Tudo roda no aparelho, sem créditos (os créditos ficam reservados para uma futura IA).
+
+- **Perguntas iniciais** (ao enviar a foto): Pessoas, Pet ou Outros; com ou sem rosto; desenhar o fundo sim ou não. Elas ajustam os parâmetros do risco. "Sem rosto" apaga o rosto sozinho nos aparelhos que têm a API `FaceDetector` (alguns Chrome no Android); nos demais, a tela pede para marcar o rosto com "Apagar área". "Fundo: não" liga a simplificação do fundo.
+- **Barra do topo:** desfazer, refazer (histórico de até 100 passos; mudanças seguidas no mesmo controle viram um passo), baixar e salvar.
+- **Desenho com zoom** de 100 a 300% e a nota "medidas baseadas em papel A4".
+- **Abas:** Bastidor (nome, formato, tamanho, enquadramento da foto), Ajustar (Borracha em pincel ou em área, Espessura, Restaurar, Remover fundo manual, método e ajustes, ver a foto original), Elementos, Texto e Fios.
+- **Elementos:** 38 desenhos em linha, de criação própria (formas geradas por código), em 6 categorias; mover, tamanho, girar, espelhar, virar, duplicar, apagar.
+- **Texto:** vários, letra, tamanho, reto ou curvo (acima, centro ou abaixo do bastidor, com curvatura), girar; o texto curvo acima/abaixo gira ao arrastar em volta do bastidor.
+- **Baixar:** "Ocultar bastidor", "Espelhar", PDF A4 em tamanho real, PNG e "Enviar" (menu de compartilhar do aparelho: e-mail, WhatsApp...; o arquivo não passa por servidor nosso).
+- **Limites:** "Remover fundo" e "Apagar área" são marcações manuais (não há segmentação automática). O envio por e-mail pelo servidor não foi feito: exigiria enviar o arquivo a um serviço externo, decisão à parte.
+
 ## 2. Métodos
 
 Todos devolvem a "tinta" (0 a 255) por pixel e são independentes (`runMethod(id, imagem, parâmetros)`).
@@ -108,7 +121,7 @@ Tempo de processamento (pré-visualização de 700 px, Edge headless no computad
 
 **Memória e CPU não foram medidas** (o navegador não oferece medida confiável e portátil). Não há conclusão sobre celulares: **não testei em Android nem iPhone**. A exportação em 80 px/cm é bem mais lenta do que a pré-visualização (o filtro bilateral é o mais caro).
 
-Também executados: 68 testes do bordado (motor, validação, exportação, parâmetros; suíte completa do projeto: 243 testes passando, `tsc` sem erros) e um teste de ponta a ponta no navegador (arquivo falso e corrompido recusados, os 6 métodos, comparar com o original, ajuste que muda o risco, PNG com fundo branco e proporção original, PDF de 1 e 2 folhas).
+Também executados: 82 testes do bordado (motor, validação, exportação, parâmetros; suíte completa do projeto: 243 testes passando, `tsc` sem erros) e um teste de ponta a ponta no navegador (arquivo falso e corrompido recusados, os 6 métodos, comparar com o original, ajuste que muda o risco, PNG com fundo branco e proporção original, PDF de 1 e 2 folhas).
 
 ## 7. Limitações conhecidas
 

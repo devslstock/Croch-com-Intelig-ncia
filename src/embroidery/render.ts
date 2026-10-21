@@ -2,7 +2,9 @@ import type { RawImage } from '../engine/types'
 import { buildPdfPages, SHEET, sheetGrid } from './pdfPages'
 import { FONTS, hoopCm, type EmbProject, type Hoop, type PhotoView, type TextItem } from './project'
 import { computeInk } from './engine/client'
-import { projectMethod, projectParams } from './project'
+import { ELEMENT_BY_ID } from './elements'
+import { curvedLayout, mapPhotoToFrame } from './geometry'
+import { projectMethod, projectParams, type Region } from './project'
 
 /** Funções de desenho (precisam do navegador). O risco é uma camada de linhas; borracha e textos vão por cima. */
 
@@ -98,14 +100,59 @@ export function composeRisco(lines: HTMLCanvasElement, p: EmbProject, w: number,
     ctx.stroke()
   }
 
+  // Áreas apagadas de uma vez (ex.: o rosto) e "manter só esta área" (remover fundo).
+  ctx.fillStyle = '#fff'
+  for (const r of p.regions ?? []) {
+    ctx.beginPath()
+    regionPath(ctx, r, w, h)
+    ctx.fill()
+  }
+  if (p.keep) {
+    ctx.beginPath()
+    ctx.rect(0, 0, w, h)
+    regionPath(ctx, p.keep, w, h)
+    ctx.fill('evenodd')
+  }
+
+  // Elementos da biblioteca (por cima do que foi apagado).
+  ctx.strokeStyle = INK
+  for (const e of p.elements ?? []) {
+    const path = elementPath(e.kind)
+    if (!path) continue
+    const k = (e.size * w) / 100
+    ctx.save()
+    ctx.translate(e.x * w, e.y * h)
+    ctx.rotate((e.rotate * Math.PI) / 180)
+    ctx.scale(e.flipX ? -k : k, e.flipY ? -k : k)
+    ctx.translate(-50, -50)
+    ctx.lineWidth = Math.max(1.4, w * 0.0035) / k
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.stroke(path)
+    ctx.restore()
+  }
+
   ctx.fillStyle = INK
   for (const t of p.texts) {
     if (!t.text.trim()) continue
     ctx.save()
-    ctx.translate(t.x * w, t.y * h)
-    ctx.rotate((t.rotate * Math.PI) / 180)
     setTextFont(ctx, t, w)
-    ctx.fillText(t.text, 0, 0)
+    if (t.curve === 'curvo') {
+      // Letra por letra, ao longo do arco.
+      const chars = [...t.text]
+      const placed = curvedLayout(t, w, h, chars.map((ch) => ctx.measureText(ch).width))
+      chars.forEach((ch, i) => {
+        ctx.save()
+        ctx.translate(placed[i].x, placed[i].y)
+        ctx.rotate(placed[i].rot)
+        ctx.fillText(ch, 0, 0)
+        ctx.restore()
+      })
+    } else {
+      ctx.translate(t.x * w, t.y * h)
+      ctx.rotate((t.rotate * Math.PI) / 180)
+      ctx.fillText(t.text, 0, 0)
+    }
     ctx.restore()
   }
 
@@ -126,6 +173,61 @@ export function composeRisco(lines: HTMLCanvasElement, p: EmbProject, w: number,
   }
   if (opts.guides) drawGuides(ctx, p.hoop, w, h)
   return opts.mirror ? mirrored(c) : c
+}
+
+const pathCache = new Map<string, Path2D>()
+function elementPath(kind: string): Path2D | null {
+  const def = ELEMENT_BY_ID.get(kind)
+  if (!def) return null
+  let p = pathCache.get(kind)
+  if (!p) {
+    p = new Path2D(def.d)
+    pathCache.set(kind, p)
+  }
+  return p
+}
+
+function regionPath(ctx: CanvasRenderingContext2D, r: Region, w: number, h: number) {
+  const x = r.x0 * w
+  const y = r.y0 * h
+  const rw = (r.x1 - r.x0) * w
+  const rh = (r.y1 - r.y0) * h
+  if (r.shape === 'retangulo') ctx.rect(x, y, rw, rh)
+  else {
+    ctx.moveTo(x + rw, y + rh / 2)
+    ctx.ellipse(x + rw / 2, y + rh / 2, rw / 2, rh / 2, 0, 0, Math.PI * 2)
+  }
+}
+
+/** Largura (px) do texto no desenho; para tocar e escolher o texto curvo. */
+export function textWidthPx(ctx: CanvasRenderingContext2D, t: TextItem, w: number): number {
+  ctx.save()
+  setTextFont(ctx, t, w)
+  const m = [...(t.text || ' ')].reduce((a, ch) => a + ctx.measureText(ch).width, 0)
+  ctx.restore()
+  return m
+}
+
+/**
+ * Rostos pela API do navegador (só em alguns aparelhos, como Chrome no Android). Devolve áreas elípticas sobre os rostos
+ * no enquadramento atual, ou null se o aparelho não souber detectar. Nada é enviado para fora.
+ */
+export async function detectFaceRegions(bitmap: ImageBitmap, hoop: Hoop, view: PhotoView): Promise<Region[] | null> {
+  const FD = (globalThis as unknown as { FaceDetector?: new (o?: { fastMode?: boolean; maxDetectedFaces?: number }) => { detect(i: ImageBitmap): Promise<Array<{ boundingBox: { x: number; y: number; width: number; height: number } }>> } }).FaceDetector
+  if (!FD) return null
+  try {
+    const faces = await new FD({ fastMode: true, maxDetectedFaces: 6 }).detect(bitmap)
+    const c = hoopCm(hoop)
+    return faces.map((f) => {
+      const b = f.boundingBox
+      const shrink = 0.12
+      const a = mapPhotoToFrame(bitmap.width, bitmap.height, c.w, c.h, view, b.x + b.width * shrink, b.y + b.height * shrink)
+      const z = mapPhotoToFrame(bitmap.width, bitmap.height, c.w, c.h, view, b.x + b.width * (1 - shrink), b.y + b.height * (1 - shrink))
+      return { shape: 'elipse' as const, x0: a.x, y0: a.y, x1: z.x, y1: z.y }
+    })
+  } catch {
+    return null
+  }
 }
 
 function mirrored(c: HTMLCanvasElement): HTMLCanvasElement {
@@ -170,11 +272,11 @@ const toJpeg = (c: HTMLCanvasElement) =>
   )
 
 /** O risco em tamanho real, já com as guias; `mirror` espelha para transferir pelo verso. */
-export async function renderFull(img: CanvasImageSource & { width: number; height: number }, p: EmbProject, mirror: boolean): Promise<HTMLCanvasElement> {
+export async function renderFull(img: CanvasImageSource & { width: number; height: number }, p: EmbProject, mirror: boolean, guides = true): Promise<HTMLCanvasElement> {
   const { w, h } = exportSize(p.hoop)
   const raw = photoRaw(img, p.hoop, p.view, Math.max(w, h))
   const lines = await buildLineLayer(raw, p, Math.max(w, h) / 900, 'export')
-  return composeRisco(lines, p, w, h, { guides: true, mirror })
+  return composeRisco(lines, p, w, h, { guides, mirror })
 }
 
 export function canvasToPng(c: HTMLCanvasElement): Promise<Blob> {
