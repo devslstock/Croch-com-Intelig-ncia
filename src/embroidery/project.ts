@@ -1,23 +1,34 @@
+import { DEFAULT_METHOD, normalizeParams, type EngineParams, type MethodId } from './engine/params'
 import { DEFAULT_DETAIL } from './risco'
 
-export type HoopShape = 'redondo' | 'quadrado' | 'retangular'
+export type HoopShape = 'redondo' | 'quadrado' | 'retangular' | 'foto'
 
 export interface Hoop {
   shape: HoopShape
-  /** Diâmetro (redondo), lado (quadrado) ou largura (retangular), em cm. */
+  /** Diâmetro (redondo), lado (quadrado), largura (retangular) ou lado maior (foto inteira), em cm. */
   cm: number
+  /** Só na foto inteira: largura ÷ altura da foto. */
+  aspect?: number
 }
 
 export const HOOP_SIZES: Record<HoopShape, number[]> = {
   redondo: [10, 13, 15, 18, 20, 25, 30],
   quadrado: [10, 15, 20, 25],
   retangular: [15, 20, 25, 30],
+  foto: [15, 20, 25, 30],
 }
-export const HOOP_LABEL: Record<HoopShape, string> = { redondo: 'Redondo', quadrado: 'Quadrado', retangular: 'Retangular' }
+export const HOOP_LABEL: Record<HoopShape, string> = { redondo: 'Redondo', quadrado: 'Quadrado', retangular: 'Retangular', foto: 'Foto inteira' }
 
 /** Largura e altura da área de bordado, em cm. O retangular é 4:3 deitado. */
 export function hoopCm(h: Hoop): { w: number; h: number } {
-  return h.shape === 'retangular' ? { w: h.cm, h: Math.round(((h.cm * 3) / 4) * 10) / 10 } : { w: h.cm, h: h.cm }
+  if (h.shape === 'retangular') return { w: h.cm, h: Math.round(((h.cm * 3) / 4) * 10) / 10 }
+  if (h.shape === 'foto') {
+    // Mantém a proporção da foto: o lado maior mede `cm`.
+    const a = h.aspect && h.aspect > 0 ? h.aspect : 1
+    const r = (v: number) => Math.round(v * 10) / 10
+    return a >= 1 ? { w: h.cm, h: r(h.cm / a) } : { w: r(h.cm * a), h: h.cm }
+  }
+  return { w: h.cm, h: h.cm }
 }
 
 export const FONTS = [
@@ -60,6 +71,10 @@ export interface EmbProject {
   hoop: Hoop
   view: PhotoView
   detail: number
+  /** Método de conversão (ausente em bordados antigos: usa o clássico, como eram feitos). */
+  method?: MethodId
+  /** Parâmetros do motor (faltando algum, vale o padrão). */
+  params?: Partial<EngineParams>
   strokes: Stroke[]
   texts: TextItem[]
   yarnId: string
@@ -77,12 +92,23 @@ export function newProject(photo: string, name: string, yarnId: string): EmbProj
     hoop: { shape: 'redondo', cm: 20 },
     view: { ...DEFAULT_VIEW },
     detail: DEFAULT_DETAIL,
+    method: DEFAULT_METHOD,
+    params: normalizeParams(),
     strokes: [],
     texts: [],
     yarnId,
     photo,
     updatedAt: new Date().toISOString(),
   }
+}
+
+/** Método de um bordado: os antigos (sem método) continuam no clássico, com o "detalhe" que tinham. */
+export function projectMethod(p: EmbProject): MethodId {
+  return p.method ?? 'classico'
+}
+
+export function projectParams(p: EmbProject): EngineParams {
+  return normalizeParams({ ...p.params, detail: p.params?.detail ?? p.detail })
 }
 
 export function newText(text: string, x = 0.5, y = 0.5): TextItem {

@@ -1,7 +1,8 @@
 import type { RawImage } from '../engine/types'
 import { buildPdfPages, SHEET, sheetGrid } from './pdfPages'
 import { FONTS, hoopCm, type EmbProject, type Hoop, type PhotoView, type TextItem } from './project'
-import { lineArt } from './risco'
+import { computeInk } from './engine/client'
+import { projectMethod, projectParams } from './project'
 
 /** Funções de desenho (precisam do navegador). O risco é uma camada de linhas; borracha e textos vão por cima. */
 
@@ -42,8 +43,8 @@ export function photoRaw(img: CanvasImageSource & { width: number; height: numbe
 }
 
 /** Camada de linhas (fundo transparente) a partir da foto já enquadrada. */
-export function buildLineLayer(raw: RawImage, detail: number, scale?: number): HTMLCanvasElement {
-  const ink = lineArt(raw, detail, scale)
+export async function buildLineLayer(raw: RawImage, p: EmbProject, scale?: number, channel: 'preview' | 'export' = 'preview'): Promise<HTMLCanvasElement> {
+  const ink = await computeInk(raw, projectMethod(p), projectParams(p), scale ?? Math.max(raw.width, raw.height) / 900, channel)
   const c = makeCanvas(raw.width, raw.height)
   const ctx = c.getContext('2d')!
   const out = ctx.createImageData(raw.width, raw.height)
@@ -169,10 +170,10 @@ const toJpeg = (c: HTMLCanvasElement) =>
   )
 
 /** O risco em tamanho real, já com as guias; `mirror` espelha para transferir pelo verso. */
-export function renderFull(img: CanvasImageSource & { width: number; height: number }, p: EmbProject, mirror: boolean): HTMLCanvasElement {
+export async function renderFull(img: CanvasImageSource & { width: number; height: number }, p: EmbProject, mirror: boolean): Promise<HTMLCanvasElement> {
   const { w, h } = exportSize(p.hoop)
   const raw = photoRaw(img, p.hoop, p.view, Math.max(w, h))
-  const lines = buildLineLayer(raw, p.detail, Math.max(w, h) / 900)
+  const lines = await buildLineLayer(raw, p, Math.max(w, h) / 900, 'export')
   return composeRisco(lines, p, w, h, { guides: true, mirror })
 }
 

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Galeria de métodos do bordado (desenvolvimento)</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 16px; background: #fafafa; color: #222; }
+      h1 { font-size: 1.2rem; }
+      .row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 20px; overflow-x: auto; }
+      figure { margin: 0; flex: none; width: 340px; }
+      figure canvas, figure img { width: 340px; height: auto; border: 1px solid #ccc; background: #fff; display: block; }
+      figcaption { font-size: 0.8rem; padding: 4px 0; }
+      .name { font-weight: 700; margin: 12px 0 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>Galeria de métodos do bordado</h1>
+    <p>Lê as fotos de <code>test-photos/</code> (fora do git), roda todos os métodos com os parâmetros padrão e mostra o resultado e o tempo.</p>
+    <div id="out"></div>
+    <script type="module" src="/src/gallery/main.ts"></script>
+  </body>
+</html>

@@ -6,14 +6,16 @@ import { photoPalette } from '../embroidery/palette'
 import { STITCH_HINT, STITCH_LABEL } from '../embroidery/palette'
 import { sheetGrid } from '../embroidery/pdfPages'
 import {
-  embroideryStore, FONTS, HOOP_LABEL, HOOP_SIZES, hoopCm, newProject, newText,
+  embroideryStore, FONTS, HOOP_LABEL, HOOP_SIZES, hoopCm, newProject, newText, projectMethod, projectParams,
   type EmbProject, type HoopShape, type TextItem,
 } from '../embroidery/project'
-import { buildLineLayer, buildRiscoPdf, canvasSize, canvasToPng, composeRisco, photoRaw, renderFull, setTextFont } from '../embroidery/render'
-import { MAX_DETAIL, MIN_DETAIL } from '../embroidery/risco'
+import { Superseded } from '../embroidery/engine/client'
+import { METHODS, PARAM_SPECS, defaultParams, type EngineParams, type MethodId } from '../embroidery/engine/params'
+import { buildLineLayer, buildRiscoPdf, canvasSize, canvasToPng, composeRisco, drawPhoto, photoRaw, renderFull, setTextFont } from '../embroidery/render'
+import { checkDimensions, checkFile, uploadLimits } from '../embroidery/validate'
 import { KIND_LABEL, YARN_PALETTES, defaultYarnId } from '../yarn/library'
 
-const PREVIEW_SIDE = 900
+const previewSide = (m: MethodId) => (m === 'classico' ? 900 : 720)
 const MAX_PHOTO = 1000
 type Tab = 'foto' | 'texto' | 'apagar' | 'cores'
 
@@ -33,7 +35,21 @@ function download(blob: Blob, filename: string) {
 
 /** Reduz a foto (já com o EXIF aplicado) para guardar no aparelho. */
 async function shrink(file: File): Promise<string> {
-  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  const limits = uploadLimits()
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer())
+  const ok = checkFile(file.size, head, limits)
+  if (!ok.ok) throw new Error(ok.message)
+  let bmp: ImageBitmap
+  try {
+    bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  } catch {
+    throw new Error('Não consegui abrir essa foto: o arquivo parece estar corrompido.')
+  }
+  const dim = checkDimensions(bmp.width, bmp.height, limits)
+  if (!dim.ok) {
+    bmp.close()
+    throw new Error(dim.message)
+  }
   const k = Math.min(1, MAX_PHOTO / Math.max(bmp.width, bmp.height))
   const c = document.createElement('canvas')
   c.width = Math.max(1, Math.round(bmp.width * k))
@@ -59,6 +75,10 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [colors, setColors] = useState(6)
+  const [showOriginal, setShowOriginal] = useState(false)
+  const [regen, setRegen] = useState(0)
+  const [working, setWorking] = useState(false)
+  const lineRun = useRef(0)
   const display = useRef<HTMLCanvasElement>(null)
   const measure = useRef<CanvasRenderingContext2D | null>(null)
   const drag = useRef<{ kind: 'photo' | 'text' | 'erase'; x: number; y: number; id?: string; stroke?: number } | null>(null)
@@ -73,30 +93,60 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
 
   const hoop = project?.hoop
   const view = project?.view
-  const detail = project?.detail ?? 0
-  const size = hoop ? canvasSize(hoop, PREVIEW_SIDE) : { w: 1, h: 1 }
+  const method = project ? projectMethod(project) : 'E'
+  const params = project ? projectParams(project) : defaultParams()
+  const side = previewSide(method)
+  const size = hoop ? canvasSize(hoop, side) : { w: 1, h: 1 }
+  const paramsKey = JSON.stringify(params)
+
+  // Foto inteira: guarda a proporção da foto assim que ela abre.
+  useEffect(() => {
+    if (bitmap && project && project.hoop.shape === 'foto' && !project.hoop.aspect) {
+      setProject({ ...project, hoop: { ...project.hoop, aspect: bitmap.width / bitmap.height } })
+    }
+  }, [bitmap, project?.hoop.shape]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const raw = useMemo(
-    () => (bitmap && hoop && view ? photoRaw(bitmap, hoop, view, PREVIEW_SIDE) : null),
-    [bitmap, hoop?.shape, hoop?.cm, view?.zoom, view?.x, view?.y], // eslint-disable-line react-hooks/exhaustive-deps
+    () => (bitmap && hoop && view ? photoRaw(bitmap, hoop, view, side) : null),
+    [bitmap, hoop?.shape, hoop?.cm, hoop?.aspect, view?.zoom, view?.x, view?.y, side], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  // As linhas são recalculadas (com pequena espera) quando a foto, o enquadramento ou o detalhe mudam.
+  // As linhas são recalculadas, em segundo plano e com espera, quando a foto, o enquadramento, o método ou os ajustes mudam.
   useEffect(() => {
-    if (!raw) return
-    const t = setTimeout(() => setLines(buildLineLayer(raw, detail)), 50)
+    if (!raw || !project) return
+    const id = ++lineRun.current
+    const t = setTimeout(async () => {
+      setWorking(true)
+      try {
+        const layer = await buildLineLayer(raw, project)
+        if (id === lineRun.current) { setLines(layer); setMsg((m) => (m && !m.ok ? null : m)) }
+      } catch (e) {
+        if (e instanceof Superseded) return
+        if (id === lineRun.current) setMsg({ ok: false, text: 'Não foi possível gerar o risco com esse método. Tente outro método ou outra foto.' })
+      } finally {
+        if (id === lineRun.current) setWorking(false)
+      }
+    }, method === 'classico' ? 60 : 180)
     return () => clearTimeout(t)
-  }, [raw, detail])
+  }, [raw, method, paramsKey, regen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Borracha e textos só redesenham por cima das linhas.
   useEffect(() => {
     const c = display.current
-    if (!c || !lines || !project) return
+    if (!c || !project) return
+    if (showOriginal) {
+      if (!bitmap) return
+      c.width = size.w
+      c.height = size.h
+      drawPhoto(c.getContext('2d')!, bitmap, size.w, size.h, project.view)
+      return
+    }
+    if (!lines) return
     const out = composeRisco(lines, project, size.w, size.h)
     c.width = size.w
     c.height = size.h
     c.getContext('2d')!.drawImage(out, 0, 0)
-  }, [lines, project?.strokes, project?.texts, project?.hoop, size.w, size.h]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lines, showOriginal, bitmap, project?.view, project?.strokes, project?.texts, project?.hoop, size.w, size.h]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const yarn = YARN_PALETTES.find((y) => y.id === project?.yarnId) ?? YARN_PALETTES.find((y) => y.kind === 'ponto-cruz')
   const items = useMemo(() => (raw && yarn ? photoPalette(raw, yarn, colors) : []), [raw, yarn, colors])
@@ -122,8 +172,8 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
       setSelected(null)
       setMsg(null)
       setTab('foto')
-    } catch {
-      setMsg({ ok: false, text: 'Não consegui abrir essa foto. Tente um JPG ou PNG.' })
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error && e.message ? e.message : 'Não consegui abrir essa foto. Tente um JPG, PNG ou WebP.' })
     }
   }
 
@@ -225,7 +275,7 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
     setMsg(null)
     try {
       await new Promise((r) => setTimeout(r, 30)) // deixa o aviso aparecer antes do cálculo pesado
-      const full = renderFull(bitmap, project, mirror)
+      const full = await renderFull(bitmap, project, mirror)
       const base = project.name.trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'bordado'
       if (kind === 'png') download(await canvasToPng(full), `${base}-risco.png`)
       else download(await buildRiscoPdf(full, project), `${base}-risco.pdf`)
@@ -256,27 +306,52 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
                       role="radio"
                       aria-checked={project.hoop.shape === s}
                       className={project.hoop.shape === s ? 'seg__btn seg__btn--on' : 'seg__btn'}
-                      onClick={() => patch({ hoop: { shape: s, cm: HOOP_SIZES[s].includes(project.hoop.cm) ? project.hoop.cm : HOOP_SIZES[s][2] } })}
+                      onClick={() => patch({ hoop: { shape: s, cm: HOOP_SIZES[s].includes(project.hoop.cm) ? project.hoop.cm : HOOP_SIZES[s][2], aspect: s === 'foto' && bitmap ? bitmap.width / bitmap.height : undefined } })}
                     >
                       {HOOP_LABEL[s]}
                     </button>
                   ))}
                 </div>
                 <label className="field">
-                  <span className="hint">{project.hoop.shape === 'redondo' ? 'Diâmetro' : project.hoop.shape === 'quadrado' ? 'Lado' : 'Largura'}</span>
+                  <span className="hint">{project.hoop.shape === 'redondo' ? 'Diâmetro' : project.hoop.shape === 'quadrado' ? 'Lado' : project.hoop.shape === 'foto' ? 'Lado maior' : 'Largura'}</span>
                   <select value={project.hoop.cm} onChange={(e) => patch({ hoop: { ...project.hoop, cm: Number(e.target.value) } })}>
                     {HOOP_SIZES[project.hoop.shape].map((cm) => (
-                      <option key={cm} value={cm}>{cm} cm{project.hoop.shape === 'retangular' ? ` × ${hoopCm({ shape: 'retangular', cm }).h} cm` : ''}</option>
+                      <option key={cm} value={cm}>{cm} cm{project.hoop.shape === 'retangular' || project.hoop.shape === 'foto' ? ` (${hoopCm({ ...project.hoop, cm }).w} × ${hoopCm({ ...project.hoop, cm }).h} cm)` : ''}</option>
                     ))}
                   </select>
                 </label>
               </div>
 
               <label className="field">
-                <span className="side-label">Detalhes do risco</span>
-                <input type="range" min={MIN_DETAIL} max={MAX_DETAIL} value={project.detail} onChange={(e) => patch({ detail: Number(e.target.value) })} />
-                <span className="hint">Menos detalhes = só o essencial. Mais detalhes = mais linhas.</span>
+                <span className="side-label">Método do risco</span>
+                <select value={method} onChange={(e) => patch({ method: e.target.value as MethodId })}>
+                  {METHODS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                </select>
+                <span className="hint">{METHODS.find((m) => m.id === method)?.description}</span>
               </label>
+
+              <details className="fold" open>
+                <summary>Ajustes do risco</summary>
+                <div className="fold__body">
+                  {METHODS.find((m) => m.id === method)?.uses.map((k) => (
+                    <label className="field" key={k}>
+                      <span className="side-label">{PARAM_SPECS[k].label} <small>{params[k]}</small></span>
+                      <input
+                        type="range"
+                        min={PARAM_SPECS[k].min}
+                        max={PARAM_SPECS[k].max}
+                        value={params[k]}
+                        onChange={(e) => patch({ params: { ...project.params, [k]: Number(e.target.value) } as Partial<EngineParams> })}
+                      />
+                      <span className="hint">{PARAM_SPECS[k].hint}</span>
+                    </label>
+                  ))}
+                  <div className="row row--gap">
+                    <button className="btn btn--sm" onClick={() => patch({ params: defaultParams() })}>Restaurar padrão</button>
+                    <button className="btn btn--sm" onClick={() => setRegen((n) => n + 1)}>Gerar de novo</button>
+                  </div>
+                </div>
+              </details>
     </>
   )
   const body = project && (
@@ -298,7 +373,14 @@ export function Embroidery({ initial, file, embedded, onBack, onSaved }: { initi
                     onPointerUp={onUp}
                     onPointerCancel={onUp}
                   />
-                  {!lines && <span className="emb-wait">Criando o risco…</span>}
+                  {!lines && !showOriginal && <span className="emb-wait">Criando o risco…</span>}
+                  {working && lines && !showOriginal && <span className="emb-busy">atualizando…</span>}
+                </div>
+                <div className="row row--gap emb-compare">
+                  <button className={showOriginal ? 'btn btn--sm btn--primary' : 'btn btn--sm'} aria-pressed={showOriginal} onClick={() => setShowOriginal((v) => !v)}>
+                    {showOriginal ? 'Ver o risco' : 'Ver a foto original'}
+                  </button>
+                  <button className="btn btn--sm" onClick={() => setRegen((n) => n + 1)} disabled={working}>Gerar de novo</button>
                 </div>
 
                 {tab === 'foto' && (

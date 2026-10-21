@@ -732,3 +732,7 @@ body:has(.landing)::after { display: none; }
 .styles { grid-template-columns: repeat(3, 1fr); }
 .emb-embedded { display: flex; flex-direction: column; gap: 12px; }
 .emb-embedded .toolbar { justify-content: flex-end; }
+
+.seg--3 { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); }
+.emb-busy { position: absolute; right: 10px; bottom: 8px; font-size: 0.75rem; background: rgba(255,255,255,0.85); padding: 2px 8px; border-radius: 999px; color: #6b6b6b; }
+.emb-compare { justify-content: center; }

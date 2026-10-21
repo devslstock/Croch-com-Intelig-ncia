@@ -3,7 +3,8 @@ import type { RawImage } from '../engine/types'
 import { parseYarnCsv } from '../yarn/yarn'
 import { photoPalette, suggestStitch } from './palette'
 import { buildPdfPages, sheetGrid } from './pdfPages'
-import { embroideryStore, hoopCm, newProject, StorageFullError } from './project'
+import { embroideryStore, hoopCm, newProject, projectMethod, projectParams, StorageFullError } from './project'
+import { exportSize } from './render'
 
 const mem = () => {
   const m = new Map<string, string>()
@@ -85,5 +86,22 @@ describe('bordados guardados no aparelho', () => {
   it('bastidor retangular é 4:3', () => {
     expect(hoopCm({ shape: 'retangular', cm: 20 })).toEqual({ w: 20, h: 15 })
     expect(hoopCm({ shape: 'redondo', cm: 20 })).toEqual({ w: 20, h: 20 })
+  })
+
+  it('foto inteira mantém a proporção da foto (retrato e paisagem)', () => {
+    expect(hoopCm({ shape: 'foto', cm: 20, aspect: 4 / 3 })).toEqual({ w: 20, h: 15 })
+    expect(hoopCm({ shape: 'foto', cm: 20, aspect: 3 / 4 })).toEqual({ w: 15, h: 20 })
+    expect(hoopCm({ shape: 'foto', cm: 20 })).toEqual({ w: 20, h: 20 })
+    const size = exportSize({ shape: 'foto', cm: 25, aspect: 1.5 })
+    expect(size.w / size.h).toBeCloseTo(1.5, 1)
+  })
+
+  it('bordados antigos (sem método) continuam no clássico com o detalhe que tinham', () => {
+    const old = { ...newProject('data:x', 'Antigo', ''), detail: 70 } as ReturnType<typeof newProject>
+    delete old.method
+    delete old.params
+    expect(projectMethod(old)).toBe('classico')
+    expect(projectParams(old).detail).toBe(70)
+    expect(projectMethod(newProject('data:x', 'Novo', ''))).toBe('E')
   })
 })

@@ -7,3 +7,9 @@ dist
 
 supabase/.temp
 dist-*
+
+# fotos de teste (autorizadas) e saídas da galeria: ficam só na máquina
+test-photos/*
+!test-photos/LEIAME.md
+docs/galeria/
+!.env.example

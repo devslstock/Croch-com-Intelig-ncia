@@ -6,6 +6,7 @@ import { ChartThumb } from '../components/ChartThumb'
 import { CropPicker, FULL_CROP, type Crop } from '../components/CropPicker'
 import { Stepper } from '../components/Stepper'
 import { Embroidery } from './Embroidery'
+import { checkDimensions, checkFile, uploadLimits } from '../embroidery/validate'
 import { fitCell, useViewport } from '../hooks/useViewport'
 import { generateChart } from '../engine/client'
 import { MAX_COLORS, MAX_WIDTH, MIN_COLORS, MIN_WIDTH } from '../engine/pipeline'
@@ -138,7 +139,15 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
   const onFile = async (file: File | undefined) => {
     if (!file) return
     try {
+      const limits = uploadLimits()
+      const ok = checkFile(file.size, new Uint8Array(await file.slice(0, 16).arrayBuffer()), limits)
+      if (!ok.ok) return setError(ok.message)
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+      const dim = checkDimensions(bitmap.width, bitmap.height, limits)
+      if (!dim.ok) {
+        bitmap.close()
+        return setError(dim.message)
+      }
       setLoaded({ bitmap, url: URL.createObjectURL(file), name: file.name.replace(/\.[^.]+$/, '') })
       setFile(file)
       setCrop(FULL_CROP)
@@ -149,7 +158,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
       setSaveMsg(null)
       if (!nameTouched) setName(`Meu gráfico · ${today()}`)
     } catch {
-      setError('Não consegui abrir essa foto. Tente um JPG ou PNG.')
+      setError('Não consegui abrir essa foto: o arquivo pode estar corrompido. Tente um JPG, PNG ou WebP.')
     }
   }
 
@@ -296,7 +305,7 @@ export function Converter({ onBack, onSave, onSaved }: ConverterProps) {
           </div>
           {bordado && loaded && <Embroidery embedded file={file} onBack={onBack} />}
           {!bordado && saveMsg && <p className={saveMsg.ok ? 'ok' : 'error'} role="status">{saveMsg.text}</p>}
-          {!bordado && error && <p className="error" role="alert">{error}</p>}
+          {error && <p className="error" role="alert">{error}</p>}
 
           {!loaded && (
             <div className="card dropzone">

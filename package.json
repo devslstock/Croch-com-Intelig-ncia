@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "test:db": "node supabase/tests/migration.check.mjs"
+    "test:db": "node supabase/tests/migration.check.mjs",
+    "gallery": "vite build --config vite.gallery.config.ts",
+    "gallery:serve": "vite preview --config vite.gallery.config.ts --outDir dist-gallery --port 4180"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
